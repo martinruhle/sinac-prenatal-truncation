@@ -1,0 +1,43 @@
+[project]
+name = "sinac-truncation"
+version = "0.1.0"
+description = "Sesgo por truncamiento en medidas de atención prenatal y parto pretérmino (SINAC, México)"
+readme = "README.md"
+authors = [
+    { name = "martinruhle", email = "martinruhle@gmail.com" }
+]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "duckdb>=1.5.5",
+    "pandas>=3.0.5",
+    "psycopg[binary]>=3.3.5",
+    "pyyaml>=6.0.3",
+    "sqlalchemy>=2.0.54",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.15,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.3.1",
+    "pre-commit>=4.6.2",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.16.8",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP"]
+
+[tool.mypy]
+strict = true
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers"]

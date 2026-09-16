@@ -1,0 +1,17 @@
+# Datos y secretos: nunca entran a git
+data/
+.env
+
+# Entorno de Python
+.venv/
+__pycache__/
+
+# Cachés y reportes de herramientas
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Contexto local para Claude
+CLAUDE.md

@@ -1,0 +1,46 @@
+# Base Postgres para el modelo OMOP del proyecto; Adminer opcional para inspeccionarla.
+#
+#   cp .env.example .env
+#   docker compose up -d                   # solo Postgres
+#   docker compose --profile dev up -d     # Postgres + Adminer
+#
+# Puertos: se publican solo los que usa alguien desde el host, y solo en 127.0.0.1 para que la
+# base no quede expuesta a la red local.
+#   - Postgres: scripts/ y notebooks/ corren en el host con `uv run`, fuera de Docker.
+#   - Adminer:  se abre desde el navegador.
+# Adminer llega a Postgres por la red interna de Compose (host "postgres"), no por el puerto
+# publicado.
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Falta POSTGRES_USER en .env (ver .env.example)}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env (ver .env.example)}
+      POSTGRES_DB: ${POSTGRES_DB:?Falta POSTGRES_DB en .env (ver .env.example)}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Por TCP: durante initdb la imagen levanta un servidor temporal que solo escucha por
+      # socket, así que un chequeo por socket podría dar "sano" antes de terminar la inicialización.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  adminer:
+    image: adminer
+    profiles: ["dev"]
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - "127.0.0.1:${ADMINER_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
