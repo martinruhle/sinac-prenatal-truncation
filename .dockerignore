@@ -1,0 +1,19 @@
+# Datos y secretos: nunca entran a un contexto de build
+data/
+.env
+
+# Control de versiones y entorno local
+.git/
+.github/
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Salidas y contexto local
+resultados/
+notebooks/
+CLAUDE.md

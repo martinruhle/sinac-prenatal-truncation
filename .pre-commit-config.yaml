@@ -1,0 +1,26 @@
+# Hooks locales: usan las versiones de uv.lock, las mismas que el CI y la terminal.
+# Instalar una vez por clon:  uv run pre-commit install
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff
+        entry: uv run ruff check --fix
+        language: system
+        types_or: [python, pyi, jupyter]
+        require_serial: true
+
+      - id: ruff-format
+        name: ruff-format
+        entry: uv run ruff format
+        language: system
+        types_or: [python, pyi, jupyter]
+        require_serial: true
+
+      - id: mypy
+        name: mypy
+        entry: uv run mypy
+        language: system
+        types: [python]
+        # mypy toma los archivos de [tool.mypy] en pyproject.toml para ver el proyecto completo.
+        pass_filenames: false
