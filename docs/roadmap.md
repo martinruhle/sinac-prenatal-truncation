@@ -1,131 +1,176 @@
-# Hoja de ruta
+# Roadmap
 
-Este documento separa tres cosas: lo que se entrega en el curso, los extras que se intentarán si hay
-tiempo y lo que queda para después del semestre como parte del proyecto doctoral. La pregunta, la
-población y el método están en [`protocolo.md`](protocolo.md).
+This document separates three things: what the course delivers, what was left out of this
+semester, and what continues after it as part of the doctoral project. The question, the
+population and the method live in [`protocol.md`](protocol.md) (PENDING: written later in the
+semester). Every scope change stated here is recorded in [`decisions.md`](decisions.md), and
+the proposal it is stated against is translated in [`proposal_v2.md`](proposal_v2.md).
 
-## 1. Núcleo: entrega del curso
+## 1. Core: the course deliverable
 
-Es el compromiso para la entrega final. Todo se reconstruye desde la descarga pública de SINAC; **el
-repositorio no contiene datos**, solo el código que los carga y transforma.
+This is the commitment for the final submission. Everything is rebuilt from the public SINAC
+download; **the repository contains no data**, only the code that loads and transforms it.
 
-| Componente | Contenido |
+| Component | Content |
 |---|---|
-| Modelo de datos | Postgres con un subconjunto del OMOP CDM v5.4 y ETL reproducible desde la descarga (SINAC 2019–2023, versión estandarizada del INSP) |
-| Cohortes | Definiciones en SQL documentadas, con tabla de atrición por definición |
-| Exposiciones | (a) total de consultas; (b) índice APNCU aproximado; (c) inicio de la atención en el primer trimestre; (d) total de consultas en cohortes landmark (semanas 28, 32 y 34) |
-| Simulación | Asociación que produce el truncamiento por sí solo, bajo la hipótesis nula (calendario NOM-007-SSA2-2016) |
-| Sensibilidad | Corte de pretérmino (37/34/32), embarazos múltiples, nacimientos <22 semanas, años 2020–2021, mes asignado dentro del trimestre para el APNCU; gradiente por entidad y derechohabiencia |
-| Ingeniería | `compose.yml`, pytest, CI en GitHub Actions, diccionario de datos |
-| Documentación | README reproducible, limitaciones, declaración de uso de asistentes de IA |
+| Data model | Postgres with a subset of the OMOP CDM v5.4 and a reproducible ETL from the DGIS open-data download (see [Data source](#2-data-source)). Study period: PENDING; development runs on 2023 (D-009) |
+| Cohorts | Documented cohort definitions in SQL, with an attrition table per definition |
+| Exposures | (a) total number of visits; (b) approximate APNCU index; (c) care started in the first trimester; (d) total visits in landmark cohorts, with one or two landmark weeks instead of three (D-004) |
+| Association estimates | Crude and adjusted odds ratios for each measure, with a reduced covariate set (D-007) |
+| Simulation | The association that truncation produces on its own, under the null hypothesis (NOM-007-SSA2-2016 schedule), with 2–3 fixed adherence scenarios (D-010) |
+| Sensitivity | Preterm cut-off (37/34/32), multiple pregnancies, births before week 22, the years 2020–2021 if the chosen period covers them; gradient by state and by insurance. The full grid runs for measures (a) and (c) only (D-003) |
+| Engineering | `compose.yml`, pytest, CI on GitHub Actions, a single entry point (`scripts/pipeline.py`), and a data dictionary covering the variables actually used (D-011) |
+| Documentation | Reproducible README, limitations, AI-assistance statement, decision log |
 
-### Decisiones de mapeo a OMOP previstas
+### Planned OMOP mapping decisions
 
-Se documentan en detalle en el diccionario de datos; estas son las que condicionan el esquema.
+The detail lives in `docs/omop_mapping.md` and `docs/data_dictionary.md` (D-017); these are the
+ones that shape the schema.
 
-| Dato de SINAC | Destino en OMOP | Nota |
+| SINAC item | OMOP destination | Note |
 |---|---|---|
-| Madre y recién nacido | `PERSON` (dos registros) | Enlazados con `FACT_RELATIONSHIP` |
-| Nacimiento | `VISIT_OCCURRENCE` | Unidad de atención en `CARE_SITE`, entidad en `LOCATION` |
-| Semanas de gestación, peso al nacer | `MEASUREMENT` | Gestación sobre la madre, peso sobre el recién nacido |
-| Total de consultas, trimestre de la primera consulta | `OBSERVATION` | Es un **conteo declarado**, no una fila por consulta; no se modela como visitas |
-| Derechohabiencia | `PAYER_PLAN_PERIOD` | |
-| Variables sin concepto estándar | `concept_id = 0` + `*_source_value` | Convención de OMOP; se listan en el diccionario |
+| Mother and newborn | `PERSON` (two records) | Linked through `FACT_RELATIONSHIP` |
+| Birth | `VISIT_OCCURRENCE` | Care unit in `CARE_SITE`, state in `LOCATION` |
+| Gestational weeks, birth weight | `MEASUREMENT` | Gestation on the mother, weight on the newborn |
+| Total visits, trimester of the first visit | `OBSERVATION` | This is a **declared count**, not one row per visit; it is not modelled as visits |
+| Insurance | `PAYER_PLAN_PERIOD` | |
+| Variables with no standard concept | `concept_id = 0` + `*_source_value` | OMOP convention; they are listed in the dictionary |
 
-## 2. Hitos del semestre
+## 2. Data source
 
-| Sesión | Hito |
+The source changed after the proposal was submitted (D-001, D-002). What this implies:
+
+| Proposal v2 | Now | Consequence |
+|---|---|---|
+| SINAC in the **INSP standardized version** (RIISP catalogue, `MEX-INSP-SINAC-2008-2023`), 31,486,699 records and 91 variables | **SSA/DGIS open data**, one ZIP per year | The record and variable counts of the proposal **do not apply**: they have to be measured on the DGIS files and reported |
+| A standardized series, already harmonized by the INSP | Annual series, not harmonized across catalogue periods | Harmonization across years is our own work, and it is part of the study-period decision |
+| Citation under the INSP licence | Citation under the SSA/DGIS terms of free use | The credit line is kept verbatim in Spanish in the README (D-035) |
+| The download date is recorded | Also the URL with its `?V=` parameter, size and sha256, in `config/sources.yml` | `?V=` is the version DGIS publishes; if it changes, the hash stops matching and the pipeline fails on purpose |
+| — | The files are served over **HTTP without TLS** | The sha256 detects later changes, it does **not** authenticate the first download. This is a limitation, stated in the README and in `protocol.md` |
+
+The proposal committed to 2019–2023. The period is now PENDING (D-041): it is decided after the
+source inventory, which measures what harmonizing the earlier catalogue period costs.
+Development runs on 2023 regardless of the period finally chosen (D-009).
+
+## 3. Milestones of the semester
+
+| Milestone | Date | Committed content | Release |
+|---|---|---|---|
+| `v0.1-cohort` | Fri 9 Oct 2026 (session 18) | OMOP ETL of the vertical slice on 2023, base cohort in SQL with its attrition table, SQL tests in CI, README with the evidence map v1 and the source and scope changes written down | tag + release + clean-clone test |
+| `v0.2-progress` | Thu 29 Oct 2026 (tag), Fri 30 Oct (progress review, session 24) | Full period loaded, remaining mapping and covariate ETL, exposures a–d, crude and adjusted odds ratios, null simulation v1, one or two sensitivity axes (D-012) | tag + release + clean-clone test |
+| `v1.0` | Fri 20 Nov 2026 (session 30, submission) | Remaining sensitivity axes and gradients, analysis image, complete entry point, documentation closed, security review, DOI (D-025) | tag + release + clean-clone test + Zenodo |
+| presentation | Tue 24 Nov 2026 (session 31) | 12 minutes plus 5 for questions | — |
+
+The `v0.2-progress` tag is cut on the Thursday, the day before the progress review: the review
+sees a stable state, and the feedback goes into the re-planning rather than into work in
+progress. Every milestone tag is reproduced from a clean clone before it is released (D-020).
+
+## 4. Out of scope for this semester (future work)
+
+The weekly time budget does not cover everything the proposal described as possible. What
+follows is out of the semester, not out of the project.
+
+### 4.1 Artifact demonstration with ML + SHAP
+
+Not started this semester (D-042); proposal v2 already described it as conditional.
+
+- **What:** two gradient boosting models (LightGBM) that predict preterm birth. The *naive*
+  model uses the raw total number of visits; the *truncation-free* model uses first-trimester
+  start and sociodemographic variables.
+- **Variables excluded from both:** gestational weeks, birth weight and anything derived from
+  them (including APNCU), because they contain the outcome.
+- **Explanation:** SHAP on a stratified subsample, because TreeSHAP over 10 million records is
+  neither necessary nor practical.
+- **What it is meant to show:** whether the naive model uses truncation as its main signal. It
+  is contrasted with the null simulation.
+- **What it is not:** an estimator of the association. With a truncated count, a predictive
+  model learns exactly the bias the study wants to measure; that is why it is used to
+  demonstrate it.
+
+### 4.2 Interactive dashboard
+
+Not started this semester (D-042); proposal v2 already described it as conditional.
+
+- **What:** an interface to change the cohort definition (preterm cut-off, landmark week,
+  exclusions) and see how the estimate of each prenatal care measure moves, APNCU included.
+- **How:** on top of the sensitivity table and pre-aggregated counts, so the estimates are
+  recomputed in real time without querying the 10 million records again.
+
+### 4.3 Definition axes left out of the sensitivity analysis
+
+Each one is a scope change against proposal v2, recorded in `decisions.md`; the reason in every
+case is the weekly time budget.
+
+| Left out | Decision |
 |---|---|
-| 18 | ETL a OMOP funcionando, cohorte base definida en SQL y tabla de atrición |
-| 24 | Exposiciones a–d calculadas, primera versión de la simulación bajo la nula, CI en verde |
-| 30 | Núcleo completo: tabla de sensibilidad, documentación y README reproducible |
-| 31 | Presentación |
+| The full sensitivity grid for measures (b) APNCU and (d) landmark cohorts; they appear in the main analysis only | D-003 |
+| The third landmark week: one or two are used instead of three | D-004 |
+| Sensitivity to the month assigned within the first-visit trimester for APNCU; a single documented rule is used instead | D-005 |
+| Sensitivity using birth weight <2500 g as an alternative outcome | D-006 |
+| The full covariate set in the adjusted odds ratios | D-007 |
 
-## 3. Extras condicionales
+### 4.4 Engineering left for later
 
-Se empiezan **solo cuando el núcleo esté cerrado**: CI en verde y tablas de atrición y sensibilidad
-generadas. **Tienen riesgo real de no terminarse dentro del semestre** por la complejidad y el trabajo
-adicional que implican. Si no se completan, se continúan terminado el semestre y su estado se actualiza
-en este documento; el núcleo no depende de ellos.
+The analysis image (`Dockerfile`) is built after milestone `v0.1-cohort` within a two-hour
+timebox; whatever does not fit in that timebox is future work as well (D-015).
 
-### 3.1 Demostración del artefacto con ML + SHAP
+## 5. After the semester: continuity with the doctoral project
 
-- **Qué:** dos modelos de gradient boosting (LightGBM) que predicen parto pretérmino. El modelo
-  *ingenuo* usa el total crudo de consultas; el modelo *libre de truncamiento* usa inicio en primer
-  trimestre y variables sociodemográficas.
-- **Variables excluidas de ambos:** semanas de gestación, peso al nacer y cualquier variable derivada de
-  ellas (incluido el APNCU), porque contienen el desenlace.
-- **Explicación:** SHAP sobre una submuestra estratificada, porque TreeSHAP sobre 10 millones de
-  registros no es necesario ni práctico.
-- **Qué se espera mostrar:** si el modelo ingenuo usa el truncamiento como su señal principal. Se
-  contrasta con la simulación bajo la nula.
-- **Qué no es:** un estimador de la asociación. Con un conteo truncado, un modelo predictivo aprende
-  precisamente el sesgo que el estudio quiere medir; por eso se usa para demostrarlo.
+### 5.1 What does not transfer: a model trained on SINAC
 
-### 3.2 Dashboard interactivo
+A model trained on SINAC cannot be applied to the INPer cohort. The variables of the two
+sources overlap very little:
 
-- **Qué:** una interfaz para cambiar la definición de la cohorte (corte de pretérmino, semana landmark,
-  exclusiones) y ver cómo cambian las estimaciones de cada medida de atención prenatal, incluido el
-  APNCU.
-- **Cómo:** sobre la tabla de sensibilidad y conteos pre-agregados, de modo que las estimaciones se
-  recalculan en tiempo real sin volver a consultar los 10 millones de registros.
-
-## 4. Después del semestre: continuidad con el proyecto doctoral
-
-### 4.1 Lo que no se traslada: un modelo entrenado en SINAC
-
-Un modelo entrenado en SINAC no puede aplicarse a la cohorte del INPer. Las variables de ambas fuentes
-coinciden muy poco:
-
-| Variable | SINAC | Cohorte INPer (variables de análisis) |
+| Variable | SINAC | INPer cohort (analysis variables) |
 |---|---|---|
-| Edad materna | Sí | Sí |
-| Escolaridad | Sí | Sí, con 4 niveles (requiere recodificación) |
-| Estado civil | Sí | Sí |
-| Total de consultas prenatales | Sí | No |
-| Trimestre de la primera consulta | Sí | No |
-| Derechohabiencia | Sí | No (y sería casi constante) |
-| Entidad de residencia | Sí | No |
-| Embarazo múltiple | Sí | No |
-| Semanas de gestación al parto | Sí | Sí (define el desenlace; no es predictor) |
-| Peso al nacer, sexo del recién nacido | Sí | Sí (posteriores al desenlace; no son predictores) |
-| Semana de gestación de cada muestra | No | Sí |
-| Microbioma vaginal | No | Sí |
+| Maternal age | Yes | Yes |
+| Education | Yes | Yes, with 4 levels (needs recoding) |
+| Marital status | Yes | Yes |
+| Total prenatal visits | Yes | No |
+| Trimester of the first visit | Yes | No |
+| Insurance | Yes | No (and it would be almost constant) |
+| State of residence | Yes | No |
+| Multiple pregnancy | Yes | No |
+| Gestational weeks at delivery | Yes | Yes (defines the outcome; not a predictor) |
+| Birth weight, newborn sex | Yes | Yes (posterior to the outcome; not predictors) |
+| Gestational week of each sample | No | Yes |
+| Vaginal microbiome | No | Yes |
 
-Entre las variables previas al parto solo coinciden edad, escolaridad y estado civil. Además, la
-cohorte proviene de un hospital de referencia para embarazos de alto riesgo, que no es representativo
-del registro nacional. La tabla refleja las variables de análisis de la cohorte; queda pendiente
-revisar si la metadata clínica completa contiene alguna de las que faltan.
+Among the variables that precede delivery, only age, education and marital status coincide. The
+cohort also comes from a referral hospital for high-risk pregnancies, which is not
+representative of the national registry. The table reflects the analysis variables of the
+cohort; whether the full clinical metadata contains any of the missing ones is still to be
+reviewed.
 
-Una posibilidad limitada, que se evaluará pero no se compromete, es un puntaje de riesgo
-sociodemográfico derivado de SINAC usado como una sola covariable en la cohorte. Requiere recodificar
-las variables igual en ambas fuentes y no garantiza calibración entre poblaciones.
+One limited possibility, to be evaluated but not committed to, is a sociodemographic risk score
+derived from SINAC and used as a single covariate in the cohort. It requires recoding the
+variables the same way in both sources and does not guarantee calibration across populations.
 
-### 4.2 Lo que sí se traslada
+### 5.2 What does transfer
 
-1. **El modelo de datos.** La cohorte del INPer entra como una segunda fuente sobre el mismo esquema:
-   - `PERSON`, una por participante;
-   - `OBSERVATION_PERIOD`, desde la primera visita hasta el parto;
-   - `SPECIMEN`, las muestras vaginales con su semana de gestación de recolección;
-   - `MEASUREMENT`, las variables clínicas por visita.
+1. **The data model.** The INPer cohort enters as a second source on the same schema:
+   - `PERSON`, one per participant;
+   - `OBSERVATION_PERIOD`, from the first visit to delivery;
+   - `SPECIMEN`, the vaginal samples with the gestational week of collection;
+   - `MEASUREMENT`, the clinical variables per visit.
 
-   La metadata clínica de-identificada se lee desde su repositorio de origen; no se copia a este.
-2. **La lógica de semana índice y cohortes landmark.** Las mismas definiciones SQL se aplican a las
-   muestras: usar solo muestras tomadas antes de la semana X, sobre participantes que llegaron a la
-   semana X.
-3. **La simulación bajo la nula**, adaptada al calendario de muestreo de la cohorte. Sirve para evaluar
-   cuánta información sobre la duración del embarazo transportan la semana de gestación al muestreo y
-   el número de muestras por participante.
-4. **El dashboard**, como herramienta de exploración de la ventana de muestreo. La ventana principal se
-   preespecifica antes de mirar resultados; con 43 participantes y 14 eventos, elegirla a posteriori
-   invalidaría la estimación.
+   The de-identified clinical metadata is read from its source repository; it is not copied
+   into this one.
+2. **The index-week and landmark cohort logic.** The same SQL definitions apply to the samples:
+   use only samples taken before week X, on participants who reached week X.
+3. **The null simulation**, adapted to the sampling schedule of the cohort. It serves to assess
+   how much information about pregnancy duration is carried by the gestational week at sampling
+   and by the number of samples per participant.
+4. **The dashboard**, as a tool for exploring the sampling window. The main window is
+   pre-specified before looking at results; with 43 participants and 14 events, choosing it
+   afterwards would invalidate the estimate.
 
-### 4.3 Fuera de alcance, también después del semestre
+### 5.3 Out of scope, also after the semester
 
-- Integrar las abundancias del microbioma en OMOP más allá del registro de la muestra en `SPECIMEN`.
-- Enlazar registros de SINAC con participantes del INPer; no es posible ni se pretende.
+- Integrating microbiome abundances into OMOP beyond recording the sample in `SPECIMEN`.
+- Linking SINAC records to INPer participants; it is neither possible nor intended.
 
-## Repositorios relacionados
+## Related repositories
 
-- Análisis del proyecto doctoral: <https://github.com/martinruhle/Mexican-PretermBirth-analysis>
-- Procesamiento de secuencias 16S: <https://github.com/martinruhle/Mexican-PretermBirth-16S-processing>
+- Doctoral project analysis: <https://github.com/martinruhle/Mexican-PretermBirth-analysis>
+- 16S sequence processing: <https://github.com/martinruhle/Mexican-PretermBirth-16S-processing>
