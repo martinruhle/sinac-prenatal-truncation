@@ -1,8 +1,8 @@
-# Datos y secretos: nunca entran a un contexto de build
+# Data and secrets: never in a build context
 data/
 .env
 
-# Control de versiones y entorno local
+# Version control and local environment
 .git/
 .github/
 .venv/
@@ -13,7 +13,9 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Salidas y contexto local
-resultados/
+# Outputs and local context
+results/
 notebooks/
+.planning/
 CLAUDE.md
+CLAUDE.local.md

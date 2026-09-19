@@ -1,17 +1,18 @@
-# Datos y secretos: nunca entran a git
-data/
+# Data and secrets: never in git
+/data/
 .env
 
-# Entorno de Python
+# Python environment
 .venv/
 __pycache__/
 
-# Cachés y reportes de herramientas
+# Tool caches and reports
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
 .coverage
 htmlcov/
 
-# Contexto local para Claude
-CLAUDE.md
+# Local context, not versioned
+CLAUDE.local.md
+/.planning/

@@ -1,7 +1,7 @@
 [project]
 name = "sinac-truncation"
 version = "0.1.0"
-description = "Sesgo por truncamiento en medidas de atención prenatal y parto pretérmino (SINAC, México)"
+description = "Truncation bias in prenatal care measures and preterm birth (SINAC, Mexico)"
 readme = "README.md"
 authors = [
     { name = "martinruhle", email = "martinruhle@gmail.com" }
