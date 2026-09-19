@@ -1,4 +1,4 @@
-"""Análisis del sesgo por truncamiento en la atención prenatal registrada en SINAC.
+"""Truncation bias in the prenatal care recorded by SINAC.
 
-Este paquete contiene solo funciones puras: no lee ni escribe archivos. El I/O vive en scripts/.
+This package holds pure functions only: it neither reads nor writes files. I/O lives in scripts/.
 """

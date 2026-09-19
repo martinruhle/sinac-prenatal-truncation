@@ -14,14 +14,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # setup-uv no publica etiquetas de versión mayor (no existe "v10"): va la versión completa.
+      # setup-uv publishes no major-version tags (there is no "v10"): the full version goes here.
       - uses: astral-sh/setup-uv@v10.1.0
         with:
           enable-cache: true
 
-      # Toma la versión de Python de .python-version. No descarga datos: los tests usan fixtures
-      # sintéticas.
-      - name: Instalar dependencias
+      # Takes the Python version from .python-version. It downloads no data: the tests use
+      # synthetic fixtures.
+      - name: Install dependencies
         run: uv sync --locked
 
       - name: Ruff
