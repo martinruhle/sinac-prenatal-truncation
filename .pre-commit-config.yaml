@@ -1,5 +1,5 @@
-# Hooks locales: usan las versiones de uv.lock, las mismas que el CI y la terminal.
-# Instalar una vez por clon:  uv run pre-commit install
+# Local hooks: they use the versions in uv.lock, the same ones as CI and the terminal.
+# Install once per clone:  uv run pre-commit install
 repos:
   - repo: local
     hooks:
@@ -22,5 +22,5 @@ repos:
         entry: uv run mypy
         language: system
         types: [python]
-        # mypy toma los archivos de [tool.mypy] en pyproject.toml para ver el proyecto completo.
+        # mypy takes the files from [tool.mypy] in pyproject.toml to see the whole project.
         pass_filenames: false
