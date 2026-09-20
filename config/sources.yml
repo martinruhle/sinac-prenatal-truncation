@@ -1,0 +1,26 @@
+# Provenance of every file this project does not write itself.
+#
+# vendored:  code or specifications copied into the repository from another project, pinned to a
+#            commit. They are never edited here (see sql/ddl/ohdsi/SOURCE.md).
+# downloads: the SSA/DGIS open-data files. Added in task 1.2.1, with the URL including the `?V=`
+#            version parameter DGIS publishes, the retrieval timestamp, size and sha256.
+
+vendored:
+  - name: omop-cdm-5.4-postgresql-ddl
+    description: Official OMOP CDM v5.4 DDL for PostgreSQL (tables, primary keys, indices).
+    repository: https://github.com/OHDSI/CommonDataModel
+    path: inst/ddl/5.4/postgresql
+    commit: 40ff52f7cb1e634dd45c3d7157307a47b1b78652
+    retrieved: 2026-09-19
+    license: Apache-2.0
+    target_dir: sql/ddl/ohdsi
+    files:
+      - name: OMOPCDM_postgresql_5.4_ddl.sql
+        bytes: 18301
+        sha256: c340fc1723cc71c411aa7d5d67844882ec720bed1135eca2b8a9029d0a3ef854
+      - name: OMOPCDM_postgresql_5.4_primary_keys.sql
+        bytes: 2886
+        sha256: d8f50617f9a698bd9fbfe8d4106d76dcd543949a6976032786f64a91c1941f81
+      - name: OMOPCDM_postgresql_5.4_indices.sql
+        bytes: 10279
+        sha256: ea23abbb327ee94e974728196cce2b2db466c7ad4bb4313f36fa3ce2388e8776

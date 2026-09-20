@@ -89,3 +89,5 @@ the author's sign-off.
   Rejected: deciding before measuring the harmonisation cost. Why: the cost of including 2019 is unknown until the descriptors and catalogues are compared.
 - **D-042 · 2026-09-19** The two conditional extras of proposal v2 (ML + SHAP demonstration, interactive dashboard) are not started this semester; they move to the future-work section of docs/roadmap.md.
   Rejected: keeping them as conditional work inside the semester. Why: 6 h/week budget; proposal v2 already framed them as conditional, so this is not a scope change.
+- **D-043 · 2026-09-19** The data model is OMOP CDM **v5.4** (open decision A1); the DDL is vendored unmodified from OHDSI/CommonDataModel, pinned to commit 40ff52f (`sql/ddl/ohdsi/SOURCE.md`).
+  Rejected: v5.5, released 2026-08-25. Why: the OHDSI analytic tools this project leans on (ATLAS, Achilles, DQD, CohortDiagnostics) still target 5.4, and proposal v2 and the roadmap are written against it, so migrating mid-project would be a scope change with no benefit for the question asked.

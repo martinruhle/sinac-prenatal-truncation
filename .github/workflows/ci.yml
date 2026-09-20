@@ -11,6 +11,14 @@ permissions:
 jobs:
   lint-test:
     runs-on: ubuntu-latest
+    env:
+      # Database of the run. The password is generated below and is never written in the
+      # repository (D-039); the rest matches .env.example so local and CI read the same names.
+      POSTGRES_USER: sinac
+      POSTGRES_DB: sinac
+      POSTGRES_PORT: 5432
+      # Without this the database tests would skip, and a broken database would look green.
+      REQUIRE_DB: 1
     steps:
       - uses: actions/checkout@v7
 
@@ -27,5 +35,26 @@ jobs:
       - name: Ruff
         run: uv run ruff check .
 
+      - name: Ruff format
+        run: uv run ruff format --check .
+
+      - name: Mypy
+        run: uv run mypy
+
+      # Generated per run and masked in the log: no database password exists in the repository.
+      - name: Generate the database password
+        run: |
+          PASSWORD="$(openssl rand -hex 24)"
+          echo "::add-mask::$PASSWORD"
+          echo "POSTGRES_PASSWORD=$PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Start the database
+        run: docker compose up -d --wait postgres
+
+      # The deliverable command, exercised end to end. The tests use their own temporary
+      # schemas and do not depend on it.
+      - name: Apply the OMOP schema
+        run: uv run python scripts/pipeline.py db-init
+
       - name: Pytest
-        run: uv run pytest
+        run: uv run pytest --cov --cov-report=term-missing

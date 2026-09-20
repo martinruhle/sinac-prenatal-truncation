@@ -34,10 +34,32 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "UP"]
 
+[tool.ruff.lint.isort]
+# scripts/ is on the path as top-level modules, not as an installed package.
+known-first-party = ["sinac_truncation", "pipeline", "sql_runner"]
+
 [tool.mypy]
 strict = true
-files = ["src", "tests"]
+files = ["src", "scripts", "tests"]
+# scripts/ holds top-level modules, so mypy resolves `import sql_runner` the same way
+# Python does when pipeline.py runs.
+mypy_path = "scripts"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = ["--strict-markers"]
+# Lets the tests import the runner that scripts/pipeline.py uses, not a copy of it.
+pythonpath = ["scripts"]
+markers = [
+    "db: needs the compose database (`docker compose up -d --wait`)",
+]
+
+# The coverage floor (D-030) lives here, but the --cov flags are passed by CI: with them
+# in addopts, a partial run such as `pytest -m db` would measure the whole package and
+# fail on code its tests never touch.
+[tool.coverage.run]
+source = ["src"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
