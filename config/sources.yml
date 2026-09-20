@@ -9,8 +9,11 @@
 #            if DGIS republishes a file, the hash stops matching and the command fails (D-044).
 #
 # Only the files the project actually uses are listed. The study period is still open (D-041), so
-# for now that is the 2023 records; the descriptors and catalogues arrive with the source
-# inventory. URLs, versions and published sizes are copied from the source page, not built.
+# these are the files the source inventory measures in order to close it: the 2019-2023 records,
+# the two descriptors consulted for them (no descriptor is published for 2015-2019) and the
+# catalogues of both catalogue periods.
+# The 2024 and 2025 files are deliberately not listed (D-048). URLs, versions and the announced
+# sizes are copied from the source page, not built.
 
 vendored:
   - name: omop-cdm-5.4-postgresql-ddl
@@ -54,3 +57,122 @@ downloads:
     retrieved_at: "2026-09-20T12:44:57Z"
     size_bytes: 65441383
     sha256: "6440cc1bc2b4ec0637cdde9c04c43b38b4597faa42efa203a0d6db612afb264e"
+
+  - id: dgis_sinac_2019
+    publisher: Secretaría de Salud / Dirección General de Información en Salud (DGIS)
+    description: SINAC birth records for 2019, one ZIP as published in DGIS open data.
+    page: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/da_nacimientos_gobmx.html
+    url: http://www.dgis.salud.gob.mx/descargas/datosabiertos/nacimientos/sinac_2019.zip?V=1.1
+    version: "1.1"
+    terms: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/Datos_Abiertos_gobmx.html
+    notes: >-
+      Served over plain HTTP, without TLS: the sha256 detects any later change to the file, it
+      does not authenticate the first download. Announced on the page as 62.6 Mb. 2019 is the
+      last year of the 2015-2019 catalogue period, for which DGIS publishes no variable
+      descriptor; what that costs is measured in docs/source_inventory.md.
+    retrieved_at: "2026-09-20T13:39:39Z"
+    size_bytes: 65668263
+    sha256: "6f4889d778230cf5d6857552c7ffa1faff63e36e614b486726c52d2cc32d01cb"
+
+  - id: dgis_sinac_2020
+    publisher: Secretaría de Salud / Dirección General de Información en Salud (DGIS)
+    description: SINAC birth records for 2020, one ZIP as published in DGIS open data.
+    page: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/da_nacimientos_gobmx.html
+    url: http://www.dgis.salud.gob.mx/descargas/datosabiertos/nacimientos/sinac_2020.zip?V=1.1
+    version: "1.1"
+    terms: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/Datos_Abiertos_gobmx.html
+    notes: >-
+      Served over plain HTTP, without TLS: the sha256 detects any later change to the file, it
+      does not authenticate the first download. Announced on the page as 64.5 Mb.
+    retrieved_at: "2026-09-20T13:40:05Z"
+    size_bytes: 67723114
+    sha256: "e13f0b82ad6a35447008c8890a00f7dd2c5a71e655ccf532ca7bc32c7d2b90b5"
+
+  - id: dgis_sinac_2021
+    publisher: Secretaría de Salud / Dirección General de Información en Salud (DGIS)
+    description: SINAC birth records for 2021, one ZIP as published in DGIS open data.
+    page: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/da_nacimientos_gobmx.html
+    url: http://www.dgis.salud.gob.mx/descargas/datosabiertos/nacimientos/sinac_2021.zip?V=1.1
+    version: "1.1"
+    terms: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/Datos_Abiertos_gobmx.html
+    notes: >-
+      Served over plain HTTP, without TLS: the sha256 detects any later change to the file, it
+      does not authenticate the first download. Announced on the page as 63.8 Mb.
+    retrieved_at: "2026-09-20T13:40:28Z"
+    size_bytes: 66957000
+    sha256: "03f30739ba4efcf091d6a1292a112120cf8ee90789c3703b83163bbc46fc83c2"
+
+  - id: dgis_sinac_2022
+    publisher: Secretaría de Salud / Dirección General de Información en Salud (DGIS)
+    description: SINAC birth records for 2022, one ZIP as published in DGIS open data.
+    page: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/da_nacimientos_gobmx.html
+    url: http://www.dgis.salud.gob.mx/descargas/datosabiertos/nacimientos/sinac_2022.zip?V=2023.05.23
+    version: "2023.05.23"
+    terms: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/Datos_Abiertos_gobmx.html
+    notes: >-
+      Served over plain HTTP, without TLS: the sha256 detects any later change to the file, it
+      does not authenticate the first download. Announced on the page as 66.5 Mb.
+    retrieved_at: "2026-09-20T13:40:54Z"
+    size_bytes: 69760730
+    sha256: "3ab100466dc4ff046c87f354269e0041697b07a3589c580d696224b52bd0e80b"
+
+  - id: dgis_sinac_descriptores_2014
+    publisher: Secretaría de Salud / Dirección General de Información en Salud (DGIS)
+    description: SINAC variable descriptors for 2014.
+    page: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/da_nacimientos_gobmx.html
+    url: http://www.dgis.salud.gob.mx/descargas/datosabiertos/nacimientos/sinac_descriptores_2014.zip?V=1.1
+    version: "1.1"
+    terms: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/Datos_Abiertos_gobmx.html
+    notes: >-
+      Served over plain HTTP, without TLS: the sha256 detects any later change to the file, it
+      does not authenticate the first download. Announced on the page as 1.71 Kb. DGIS publishes
+      descriptors for 2008-2013, 2014 and 2020-2025 only: this is the closest published
+      descriptor to the 2015-2019 period. It describes 2014, so the source inventory consults it
+      as a reference and never as a substitute for the descriptor that does not exist.
+    retrieved_at: "2026-09-20T13:38:30Z"
+    size_bytes: 1758
+    sha256: "04377adcfb83b93b1b63f155ec495343b2af4b1bf53ade3ad1c1b6683d49f7d5"
+
+  - id: dgis_sinac_descriptores_2020_2025
+    publisher: Secretaría de Salud / Dirección General de Información en Salud (DGIS)
+    description: SINAC variable descriptors for 2020 to 2025.
+    page: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/da_nacimientos_gobmx.html
+    url: http://www.dgis.salud.gob.mx/descargas/datosabiertos/nacimientos/sinac_descriptores_2020_2025.zip?V=2026.07.09
+    version: "2026.07.09"
+    terms: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/Datos_Abiertos_gobmx.html
+    notes: >-
+      Served over plain HTTP, without TLS: the sha256 detects any later change to the file, it
+      does not authenticate the first download. Announced on the page as 13.0 Kb.
+    retrieved_at: "2026-09-20T13:38:33Z"
+    size_bytes: 13347
+    sha256: "61be6ed40d78713f5ebf4d79388e74c565ccae23fa58b5f5e268c01bef82ef67"
+
+  - id: dgis_sinac_catalogos_2015_2019
+    publisher: Secretaría de Salud / Dirección General de Información en Salud (DGIS)
+    description: Code catalogues for the SINAC variables of 2015 to 2019.
+    page: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/da_nacimientos_gobmx.html
+    url: http://www.dgis.salud.gob.mx/descargas/datosabiertos/nacimientos/sinac_catalogos_2015-2019.zip?V=1.1
+    version: "1.1"
+    terms: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/Datos_Abiertos_gobmx.html
+    notes: >-
+      Served over plain HTTP, without TLS: the sha256 detects any later change to the file, it
+      does not authenticate the first download. Announced on the page as 3.23 Mb. The file name
+      spells this period with a hyphen (`2015-2019`) while the 2020-2023 one uses an underscore;
+      both are copied from the page as they are published.
+    retrieved_at: "2026-09-20T13:38:54Z"
+    size_bytes: 3395980
+    sha256: "e327fca7a92b184d8a4d097dc2b8fd2b04a02c28b1c21423029528326b39d96c"
+
+  - id: dgis_sinac_catalogos_2020_2023
+    publisher: Secretaría de Salud / Dirección General de Información en Salud (DGIS)
+    description: Code catalogues for the SINAC variables of 2020 to 2023.
+    page: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/da_nacimientos_gobmx.html
+    url: http://www.dgis.salud.gob.mx/descargas/datosabiertos/nacimientos/sinac_catalogos_2020_2023.zip?V=1.1
+    version: "1.1"
+    terms: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/Datos_Abiertos_gobmx.html
+    notes: >-
+      Served over plain HTTP, without TLS: the sha256 detects any later change to the file, it
+      does not authenticate the first download. Announced on the page as 23.2 Mb.
+    retrieved_at: "2026-09-20T13:39:12Z"
+    size_bytes: 24408182
+    sha256: "9c7dcd52dd8fdb2cfb9c7de3711e0ccc323cfa9cff86712eaeeb3e883141cb4e"
