@@ -2,8 +2,15 @@
 #
 # vendored:  code or specifications copied into the repository from another project, pinned to a
 #            commit. They are never edited here (see sql/ddl/ohdsi/SOURCE.md).
-# downloads: the SSA/DGIS open-data files. Added in task 1.2.1, with the URL including the `?V=`
-#            version parameter DGIS publishes, the retrieval timestamp, size and sha256.
+# downloads: the SSA/DGIS open-data files, with the URL including the `?V=` version parameter
+#            DGIS publishes. `retrieved_at`, `size_bytes` and `sha256` are empty until the file
+#            is first downloaded, and are then written by
+#            `pipeline.py download --id <id> --record`. They are never overwritten afterwards:
+#            if DGIS republishes a file, the hash stops matching and the command fails (D-044).
+#
+# Only the files the project actually uses are listed. The study period is still open (D-041), so
+# for now that is the 2023 records; the descriptors and catalogues arrive with the source
+# inventory. URLs, versions and published sizes are copied from the source page, not built.
 
 vendored:
   - name: omop-cdm-5.4-postgresql-ddl
@@ -24,3 +31,26 @@ vendored:
       - name: OMOPCDM_postgresql_5.4_indices.sql
         bytes: 10279
         sha256: ea23abbb327ee94e974728196cce2b2db466c7ad4bb4313f36fa3ce2388e8776
+
+downloads:
+  - id: dgis_sinac_2023
+    publisher: Secretaría de Salud / Dirección General de Información en Salud (DGIS)
+    description: SINAC birth records for 2023, one ZIP as published in DGIS open data.
+    page: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/da_nacimientos_gobmx.html
+    url: http://www.dgis.salud.gob.mx/descargas/datosabiertos/nacimientos/sinac_2023.zip?V=2024.05.14
+    version: "2024.05.14"
+    terms: http://www.dgis.salud.gob.mx/contenidos/basesdedatos/Datos_Abiertos_gobmx.html
+    notes: >-
+      Served over plain HTTP, without TLS: the sha256 detects any later change to the file, it
+      does not authenticate the first download. The page states "Última modificación: Jueves 09
+      de julio de 2026" and announces this file as 54.8 Mb, which does not match the 65,441,383
+      bytes downloaded on 2026-09-20; the ZIP holds a single member, Nacimientos_2023.csv, with
+      an internal date of 2024-05-08, consistent with the published version 2024.05.14. The
+      announced size is recorded here as an observation and is not used for verification:
+      `size_bytes` and `sha256` are what the file actually is. The "Términos y Condiciones"
+      link of that page (http://www.dgis.salud.gob.mx/terminos) returns 404, so `terms` points
+      at the Datos Abiertos page, which publishes the Términos de Libre Uso in full (D-046).
+    # Written by `pipeline.py download --id dgis_sinac_2023 --record`; empty means not recorded.
+    retrieved_at: "2026-09-20T12:44:57Z"
+    size_bytes: 65441383
+    sha256: "6440cc1bc2b4ec0637cdde9c04c43b38b4597faa42efa203a0d6db612afb264e"
