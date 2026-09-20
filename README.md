@@ -20,14 +20,18 @@ uv run pre-commit install
 cp .env.example .env
 docker compose up -d --wait
 uv run --env-file .env python scripts/pipeline.py db-init
+uv run --env-file .env python scripts/pipeline.py download --id dgis_sinac_2023
 uv run --env-file .env pytest
 uv run --env-file .env python scripts/pipeline.py --help
 ```
 
 `uv sync` installs the locked dependencies, `pre-commit install` is needed once per clone, and
 `.env` is created from `.env.example` and never committed. The database needs Docker running and
-`db-init` puts the OMOP schema in it. The tests use synthetic fixtures and download nothing;
-the ones marked `db` need the compose database.
+`db-init` puts the OMOP schema in it. `download` fetches one file declared in
+[`config/sources.yml`](config/sources.yml) into `data/raw/dgis/` and checks its sha256 against
+the one recorded there, so a download that does not match what this repository was built on
+fails instead of being used; a file already on disk is verified, never fetched again. The tests
+use synthetic fixtures and download nothing; the ones marked `db` need the compose database.
 
 ## Requirements → evidence
 
@@ -103,9 +107,13 @@ used, so for the 2023 file it reads:
 
 PENDING: the final year or years depend on the study period, which is still open (D-041).
 
-Each downloaded file is recorded in `config/sources.yml` with its page, its URL including the
-`?V=` version parameter DGIS publishes, the retrieval timestamp, the size and the sha256. If
-DGIS republishes a file, the hash stops matching and the pipeline fails on purpose.
+Each downloaded file is recorded in [`config/sources.yml`](config/sources.yml) with its page, its
+URL including the `?V=` version parameter DGIS publishes, the retrieval timestamp, the size and
+the sha256. The hash and the size are written once, on the first download, and are never
+overwritten afterwards (D-044): if DGIS republishes a file, the hash stops matching and the
+pipeline fails on purpose. Only the files the project uses are listed, so while the study period
+is open (D-041) that is the 2023 records alone; the descriptors and catalogues are added with the
+source inventory.
 
 ## Limitations
 

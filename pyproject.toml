@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "duckdb>=1.5.5",
+    "httpx>=0.28.1",
     "pandas>=3.0.5",
     "psycopg[binary]>=3.3.5",
     "pyyaml>=6.0.3",
@@ -26,6 +27,7 @@ dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
     "ruff>=0.16.8",
+    "types-pyyaml>=6.0.12.20260906",
 ]
 
 [tool.ruff]
@@ -36,7 +38,7 @@ select = ["E", "W", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.isort]
 # scripts/ is on the path as top-level modules, not as an installed package.
-known-first-party = ["sinac_truncation", "pipeline", "sql_runner"]
+known-first-party = ["sinac_truncation", "download", "pipeline", "sql_runner"]
 
 [tool.mypy]
 strict = true

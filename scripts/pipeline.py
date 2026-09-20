@@ -8,8 +8,10 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+import httpx
 import psycopg
 
+import download
 import sql_runner
 from sinac_truncation.sqltext import schema_mapping
 
@@ -69,6 +71,19 @@ def db_init(*, recreate: bool) -> int:
     return 0
 
 
+def download_source(*, entry_id: str, record: bool, dest: Path, timeout: float) -> int:
+    """Download one source file, or verify the copy already on disk, against the manifest."""
+    try:
+        download.run(entry_id, record_digest=record, dest_dir=dest, timeout=timeout)
+    except download.DownloadError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    except httpx.HTTPError as error:
+        print(f"error: the download failed: {error}", file=sys.stderr)
+        return 2
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pipeline.py",
@@ -89,6 +104,42 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="DESTRUCTIVE: drop the cdm, staging and results schemas first, losing their data",
     )
+
+    download_parser = subcommands.add_parser(
+        "download",
+        help="download a source file listed in config/sources.yml and check its sha256",
+        description=(
+            "Downloads one file declared in config/sources.yml into data/raw/dgis/ and checks "
+            "its sha256 against the manifest. A file already on disk is verified, never "
+            "downloaded again and never overwritten (D-044)."
+        ),
+    )
+    download_parser.add_argument(
+        "--id",
+        dest="entry_id",
+        required=True,
+        help="id of the entry in the `downloads:` block of config/sources.yml",
+    )
+    download_parser.add_argument(
+        "--record",
+        action="store_true",
+        help=(
+            "write sha256, size_bytes and retrieved_at into config/sources.yml. Only for the "
+            "first download of a source: a recorded hash is never overwritten"
+        ),
+    )
+    download_parser.add_argument(
+        "--dest",
+        type=Path,
+        default=download.RAW_DIR,
+        help="directory the file is written to (default: data/raw/dgis)",
+    )
+    download_parser.add_argument(
+        "--timeout",
+        type=float,
+        default=download.DEFAULT_TIMEOUT,
+        help=f"read timeout in seconds (default: {download.DEFAULT_TIMEOUT:g})",
+    )
     return parser
 
 
@@ -96,6 +147,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "db-init":
         return db_init(recreate=bool(args.recreate))
+    if args.command == "download":
+        return download_source(
+            entry_id=str(args.entry_id),
+            record=bool(args.record),
+            dest=Path(args.dest),
+            timeout=float(args.timeout),
+        )
     raise AssertionError(f"unhandled command: {args.command}")  # pragma: no cover
 
 
