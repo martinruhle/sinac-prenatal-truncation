@@ -13,6 +13,10 @@ import sql_runner
 
 pytestmark = pytest.mark.db
 
+TABLES = "OMOPCDM_postgresql_5.4_ddl.sql"
+PRIMARY_KEYS = "OMOPCDM_postgresql_5.4_primary_keys.sql"
+INDICES = "OMOPCDM_postgresql_5.4_indices.sql"
+
 #: Tables this project will populate: the OMOP destinations in docs/roadmap.md ("Planned OMOP
 #: mapping decisions"), plus the vocabulary tables the mapping relies on (D-032, rule 8).
 TABLES_THE_PROJECT_POPULATES = (
@@ -28,6 +32,14 @@ TABLES_THE_PROJECT_POPULATES = (
     "concept",
     "source_to_concept_map",
 )
+
+
+def _ddl_file(ddl_files: Sequence[Path], name: str) -> Path:
+    """Pick a vendored file by name: positional indexing would hide a missing file."""
+    for path in ddl_files:
+        if path.name == name:
+            return path
+    raise AssertionError(f"{name} is not among the files db-init applies")
 
 
 def _statements(path: Path, prefix: str) -> int:
@@ -47,7 +59,7 @@ def _scalar(connection: sql_runner.Connection, query: str, *params: object) -> i
 def test_every_table_of_the_ddl_is_created(
     db_connection: sql_runner.Connection, omop_schema: str, ddl_files: Sequence[Path]
 ) -> None:
-    expected = _statements(ddl_files[0], "CREATE TABLE")
+    expected = _statements(_ddl_file(ddl_files, TABLES), "CREATE TABLE")
     assert sql_runner.count_tables(db_connection, omop_schema) == expected
 
 
@@ -68,7 +80,7 @@ def test_table_the_project_populates_exists(
 def test_primary_keys_are_applied(
     db_connection: sql_runner.Connection, omop_schema: str, ddl_files: Sequence[Path]
 ) -> None:
-    expected = _statements(ddl_files[1], "ALTER TABLE")
+    expected = _statements(_ddl_file(ddl_files, PRIMARY_KEYS), "ALTER TABLE")
     applied = _scalar(
         db_connection,
         "SELECT count(*) FROM pg_constraint c "
@@ -84,7 +96,9 @@ def test_indices_are_applied(
     db_connection: sql_runner.Connection, omop_schema: str, ddl_files: Sequence[Path]
 ) -> None:
     """Every index of the indices file, plus the one each primary key brings with it."""
-    expected = _statements(ddl_files[2], "CREATE INDEX") + _statements(ddl_files[1], "ALTER TABLE")
+    expected = _statements(_ddl_file(ddl_files, INDICES), "CREATE INDEX") + _statements(
+        _ddl_file(ddl_files, PRIMARY_KEYS), "ALTER TABLE"
+    )
     applied = _scalar(
         db_connection,
         "SELECT count(*) FROM pg_indexes WHERE schemaname = %s",
