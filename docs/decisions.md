@@ -97,3 +97,7 @@ the author's sign-off.
   Rejected: `ruamel.yaml` round-trip; `yaml.safe_dump` plus a fixed header. Why: the manifest is hand-written with comments and per-entry `notes` and is read as a diff; a text patch keeps that diff at three lines and adds no dependency.
 - **D-046 · 2026-09-20** The `terms` field points at the DGIS Datos Abiertos page, which publishes the Términos de Libre Uso in full, because the "Términos y Condiciones" link of the Nacimientos page (`http://www.dgis.salud.gob.mx/terminos`) returns 404 (checked 2026-09-20).
   Rejected: recording the 404 URL; leaving `terms` empty. Why: the field has to lead a reader to the terms actually in force, and an empty field would look like an oversight.
+- **D-047 · 2026-09-20** The source inventory is measured with a throwaway script and only `docs/source_inventory.md` is versioned.
+  Rejected: a `pipeline.py inventory` subcommand with pure helpers and tests. Why: the time budget of the task, and every cell of the document names the file it was measured from, so any of them can be re-measured.
+- **D-048 · 2026-09-20** The source inventory covers 2019-2023 only; the 2024 and 2025 files are neither downloaded nor measured.
+  Rejected: extending it to 2024-2025. Why: it prices the period proposal v2 committed to, while the 2020-2025 option would add two more catalogue comparisons and 2025 is PENDING as a definitive or a preliminary closure.
