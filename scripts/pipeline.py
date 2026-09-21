@@ -13,6 +13,7 @@ import psycopg
 
 import download
 import sql_runner
+from sinac_truncation.period import STUDY_YEARS, PeriodError, format_years, parse_years
 from sinac_truncation.sqltext import schema_mapping
 
 #: Repository root, reached from this file so no absolute path is written down (rule 12).
@@ -84,6 +85,41 @@ def download_source(*, entry_id: str, record: bool, dest: Path, timeout: float) 
     return 0
 
 
+def download_sources(*, entry_ids: Sequence[str], record: bool, dest: Path, timeout: float) -> int:
+    """Download or verify each source in turn, stopping at the first one that fails."""
+    for entry_id in entry_ids:
+        status = download_source(entry_id=entry_id, record=record, dest=dest, timeout=timeout)
+        if status != 0:
+            return status
+    return 0
+
+
+def years_option(text: str) -> tuple[int, ...]:
+    """``--years`` as argparse reads it, so a malformed value is a usage error."""
+    try:
+        return parse_years(text)
+    except PeriodError as error:
+        raise argparse.ArgumentTypeError(str(error)) from error
+
+
+def add_years_option(container: argparse._ActionsContainer, *, what: str) -> None:
+    """The ``--years`` option every step that reads records takes, defaulting to D-041.
+
+    ``_ActionsContainer`` is the base argparse gives both parsers and mutually exclusive groups,
+    so the option can be added to either.
+    """
+    container.add_argument(
+        "--years",
+        type=years_option,
+        default=STUDY_YEARS,
+        metavar="YEARS",
+        help=(
+            f"{what}, as 2023, 2022,2023 or 2020-2023 (default: the study period, "
+            f"{format_years(STUDY_YEARS)}, D-041; development runs on 2023, D-009)"
+        ),
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pipeline.py",
@@ -107,19 +143,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     download_parser = subcommands.add_parser(
         "download",
-        help="download a source file listed in config/sources.yml and check its sha256",
+        help="download source files listed in config/sources.yml and check their sha256",
         description=(
-            "Downloads one file declared in config/sources.yml into data/raw/dgis/ and checks "
-            "its sha256 against the manifest. A file already on disk is verified, never "
-            "downloaded again and never overwritten (D-044)."
+            "Downloads files declared in config/sources.yml into data/raw/dgis/ and checks "
+            "each sha256 against the manifest: by default the record files of the study period, "
+            "with --years the record files of other years, with --id any single entry such as "
+            "a descriptor or a catalogue. A file already on disk is verified, never downloaded "
+            "again and never overwritten (D-044)."
         ),
     )
-    download_parser.add_argument(
+    selection = download_parser.add_mutually_exclusive_group()
+    selection.add_argument(
         "--id",
         dest="entry_id",
-        required=True,
-        help="id of the entry in the `downloads:` block of config/sources.yml",
+        help="id of one entry in the `downloads:` block of config/sources.yml",
     )
+    add_years_option(selection, what="years whose record files are downloaded")
     download_parser.add_argument(
         "--record",
         action="store_true",
@@ -148,8 +187,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "db-init":
         return db_init(recreate=bool(args.recreate))
     if args.command == "download":
-        return download_source(
-            entry_id=str(args.entry_id),
+        entry_ids = (
+            [str(args.entry_id)]
+            if args.entry_id is not None
+            else [download.record_id(year) for year in args.years]
+        )
+        return download_sources(
+            entry_ids=entry_ids,
             record=bool(args.record),
             dest=Path(args.dest),
             timeout=float(args.timeout),

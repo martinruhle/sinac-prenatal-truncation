@@ -17,6 +17,7 @@ import yaml
 
 import download
 import pipeline
+from sinac_truncation.period import STUDY_YEARS
 
 PAYLOAD = b"PK\x03\x04synthetic zip payload\x00\xff" * 40
 DIGEST = hashlib.sha256(PAYLOAD).hexdigest()
@@ -242,6 +243,62 @@ def test_pipeline_passes_the_arguments_through(
     }
 
 
-def test_download_needs_an_id() -> None:
+def _recording_ids(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Replace the downloader with one that only records which ids it was asked for."""
+    seen: list[str] = []
+
+    def run(entry_id: str, **kwargs: object) -> None:
+        seen.append(entry_id)
+
+    monkeypatch.setattr(download, "run", run)
+    return seen
+
+
+def test_download_defaults_to_the_records_of_the_study_period(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen = _recording_ids(monkeypatch)
+    assert pipeline.main(["download"]) == 0
+    assert seen == [download.record_id(year) for year in STUDY_YEARS]
+    assert seen[-1] == "dgis_sinac_2023"
+
+
+def test_years_select_the_record_files_of_those_years(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen = _recording_ids(monkeypatch)
+    assert pipeline.main(["download", "--years", "2023,2019"]) == 0
+    assert seen == ["dgis_sinac_2019", "dgis_sinac_2023"]
+
+
+def test_an_id_overrides_the_default_years(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen = _recording_ids(monkeypatch)
+    assert pipeline.main(["download", "--id", "dgis_sinac_catalogos_2020_2023"]) == 0
+    assert seen == ["dgis_sinac_catalogos_2020_2023"]
+
+
+def test_id_and_years_cannot_be_given_together(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
-        pipeline.main(["download"])
+        pipeline.main(["download", "--id", "dgis_sinac_2023", "--years", "2023"])
+    assert "not allowed with argument" in capsys.readouterr().err
+
+
+def test_malformed_years_are_a_usage_error(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as raised:
+        pipeline.main(["download", "--years", "2023-2020"])
+    assert raised.value.code == 2
+    assert "runs backwards" in capsys.readouterr().err
+
+
+def test_several_years_stop_at_the_first_failure(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    seen: list[str] = []
+
+    def run(entry_id: str, **kwargs: object) -> None:
+        seen.append(entry_id)
+        if entry_id == "dgis_sinac_2021":
+            raise download.DownloadError("sha256 mismatch")
+
+    monkeypatch.setattr(download, "run", run)
+    assert pipeline.main(["download", "--years", "2020-2023"]) == 1
+    assert seen == ["dgis_sinac_2020", "dgis_sinac_2021"]
+    assert "error: sha256 mismatch" in capsys.readouterr().err

@@ -2,8 +2,8 @@
 
 This document separates three things: what the course delivers, what was left out of this
 semester, and what continues after it as part of the doctoral project. The question, the
-population and the method live in [`protocol.md`](protocol.md) (PENDING: written later in the
-semester). Every scope change stated here is recorded in [`decisions.md`](decisions.md), and
+population and the method live in [`protocol.md`](protocol.md) (so far the data source and the
+study period; the rest is PENDING). Every scope change stated here is recorded in [`decisions.md`](decisions.md), and
 the proposal it is stated against is translated in [`proposal_v2.md`](proposal_v2.md).
 
 ## 1. Core: the course deliverable
@@ -13,12 +13,12 @@ download; **the repository contains no data**, only the code that loads and tran
 
 | Component | Content |
 |---|---|
-| Data model | Postgres with a subset of the OMOP CDM v5.4 and a reproducible ETL from the DGIS open-data download (see [Data source](#2-data-source)). Study period: PENDING; development runs on 2023 (D-009) |
+| Data model | Postgres with a subset of the OMOP CDM v5.4 and a reproducible ETL from the DGIS open-data download (see [Data source](#2-data-source)). Study period: 2020–2023 (D-041); development runs on 2023 (D-009) |
 | Cohorts | Documented cohort definitions in SQL, with an attrition table per definition |
 | Exposures | (a) total number of visits; (b) approximate APNCU index; (c) care started in the first trimester; (d) total visits in landmark cohorts, with one or two landmark weeks instead of three (D-004) |
 | Association estimates | Crude and adjusted odds ratios for each measure, with a reduced covariate set (D-007) |
 | Simulation | The association that truncation produces on its own, under the null hypothesis (NOM-007-SSA2-2016 schedule), with 2–3 fixed adherence scenarios (D-010) |
-| Sensitivity | Preterm cut-off (37/34/32), multiple pregnancies, births before week 22, the years 2020–2021 if the chosen period covers them; gradient by state and by insurance. The full grid runs for measures (a) and (c) only (D-003) |
+| Sensitivity | Preterm cut-off (37/34/32), multiple pregnancies, births before week 22, the years 2020–2021 (2020–2023 against 2022–2023, D-049); gradient by state and by insurance. The full grid runs for measures (a) and (c) only (D-003) |
 | Engineering | `compose.yml`, pytest, CI on GitHub Actions, a single entry point (`scripts/pipeline.py`), and a data dictionary covering the variables actually used (D-011) |
 | Documentation | Reproducible README, limitations, AI-assistance statement, decision log |
 
@@ -48,16 +48,21 @@ The source changed after the proposal was submitted (D-001, D-002). What this im
 | The download date is recorded | Also the URL with its `?V=` parameter, size and sha256, in `config/sources.yml` | `?V=` is the version DGIS publishes; if it changes, the hash stops matching and the pipeline fails on purpose |
 | — | The files are served over **HTTP without TLS** | The sha256 detects later changes, it does **not** authenticate the first download. This is a limitation, stated in the README and in `protocol.md` |
 
-The proposal committed to 2019–2023. The period is now PENDING (D-041): it is decided after the
-source inventory, which measures what harmonizing the earlier catalogue period costs.
-Development runs on 2023 regardless of the period finally chosen (D-009).
+The proposal committed to 2019–2023. The period is now **2020–2023**, a scope change (D-041).
+The [source inventory](source_inventory.md) measured the cost of each option:
+
+- The four years 2020–2023 share one descriptor, one catalogue set and identical headers.
+- 2019 needs a harmonization of its own and has no descriptor published by DGIS.
+
+2019 stays as a conditional extension ([§4.5](#45-the-year-2019), D-050). Development runs on
+2023 (D-009). The argument is in [`protocol.md`](protocol.md#data-source).
 
 ## 3. Milestones of the semester
 
 | Milestone | Date | Committed content | Release |
 |---|---|---|---|
 | `v0.1-cohort` | Fri 9 Oct 2026 (session 18) | OMOP ETL of the vertical slice on 2023, base cohort in SQL with its attrition table, SQL tests in CI, README with the evidence map v1 and the source and scope changes written down | tag + release + clean-clone test |
-| `v0.2-progress` | Thu 29 Oct 2026 (tag), Fri 30 Oct (progress review, session 24) | Full period loaded, remaining mapping and covariate ETL, exposures a–d, crude and adjusted odds ratios, null simulation v1, one or two sensitivity axes (D-012) | tag + release + clean-clone test |
+| `v0.2-progress` | Thu 29 Oct 2026 (tag), Fri 30 Oct (progress review, session 24) | Full period (2020–2023) loaded, remaining mapping and covariate ETL, exposures a–d, crude and adjusted odds ratios, null simulation v1, one or two sensitivity axes (D-012) | tag + release + clean-clone test |
 | `v1.0` | Fri 20 Nov 2026 (session 30, submission) | Remaining sensitivity axes and gradients, analysis image, complete entry point, documentation closed, security review, DOI (D-025) | tag + release + clean-clone test + Zenodo |
 | presentation | Tue 24 Nov 2026 (session 31) | 12 minutes plus 5 for questions | — |
 
@@ -113,6 +118,16 @@ case is the weekly time budget.
 
 The analysis image (`Dockerfile`) is built after milestone `v0.1-cohort` within a two-hour
 timebox; whatever does not fit in that timebox is future work as well (D-015).
+
+### 4.5 The year 2019
+
+2019 is the only pre-pandemic year among the candidates, and the last year of the 2015–2019
+catalogue period. It is added this semester only if two conditions hold (D-050):
+
+- `v0.2-progress` has been tagged with all of its committed content.
+- The work fits in a one-week timebox (6 hours) before `v1.0` starts.
+
+Otherwise it is future work. What it costs is listed in [`protocol.md`](protocol.md#data-source).
 
 ## 5. After the semester: continuity with the doctoral project
 

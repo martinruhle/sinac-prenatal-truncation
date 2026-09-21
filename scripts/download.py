@@ -53,6 +53,11 @@ class DownloadError(RuntimeError):
     """The download or the verification failed for a reason the user has to act on."""
 
 
+def record_id(year: int) -> str:
+    """The manifest id of one year's record file, such as ``dgis_sinac_2023``."""
+    return f"dgis_sinac_{year}"
+
+
 @dataclass(frozen=True)
 class SourceEntry:
     """One ``downloads:`` entry of the manifest, as the downloader needs it."""

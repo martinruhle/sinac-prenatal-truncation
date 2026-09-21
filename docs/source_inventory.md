@@ -4,8 +4,9 @@ What each downloaded file actually is, which of the variables this project needs
 candidate year and under which published name, and how the code catalogues differ between the
 2015–2019 and the 2020–2023 catalogue periods.
 
-This document exists to price the study-period decision, which is still open (D-041) and is taken
-in task 1.2.3. It measures; it does not choose. Every cell below comes from a file listed in
+This document exists to price the study-period decision, which was taken on these numbers in
+D-041: 2020–2023, argued in [`protocol.md`](protocol.md#data-source). It measures; it does not
+choose. Every cell below comes from a file listed in
 [`../config/sources.yml`](../config/sources.yml), named in the cell or in the footnote under its
 table. Nothing here is inferred from a neighbouring year, and nothing that DGIS does not publish
 is filled in: what is missing is marked `PENDING`.
@@ -259,8 +260,8 @@ Stated as measurements. The decision is task 1.2.3 and belongs to the author.
 
 | What | Why | Where it is resolved |
 |---|---|---|
-| Meaning of every 2019 variable | DGIS publishes no descriptor for 2015–2019 | 1.2.4 data dictionary, from the three sources above with their caveats stated |
-| `DERHAB` + `DERHAB2` → `AFILIACION` | Two fields against one, and no published rule | 1.3.1 protocol, if the period includes 2019 |
-| Education crosswalk 2015–2019 ↔ 2020–2023 | Disjoint code systems; four categories have no counterpart | 1.3.1 protocol, if the period includes 2019 |
+| Meaning of every 2019 variable | DGIS publishes no descriptor for 2015–2019 | Only if 2019 is added (D-050): data dictionary, from the three sources above with their caveats stated |
+| `DERHAB` + `DERHAB2` → `AFILIACION` | Two fields against one, and no published rule | Only if 2019 is added (D-050): protocol |
+| Education crosswalk 2015–2019 ↔ 2020–2023 | Disjoint code systems; four categories have no counterpart | Only if 2019 is added (D-050): protocol |
 | ICD-10 catalogue for 2020–2023 | `DIAGNOSTICOS` is named by the descriptor and not published in the ZIP | Only if congenital anomalies enter the analysis |
 | Whether 2024 and 2025 are definitive or preliminary | Outside the scope of this inventory (D-048) | Only if the period is extended |
