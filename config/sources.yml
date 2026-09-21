@@ -8,10 +8,11 @@
 #            `pipeline.py download --id <id> --record`. They are never overwritten afterwards:
 #            if DGIS republishes a file, the hash stops matching and the command fails (D-044).
 #
-# Only the files the project actually uses are listed. The study period is still open (D-041), so
-# these are the files the source inventory measures in order to close it: the 2019-2023 records,
-# the two descriptors consulted for them (no descriptor is published for 2015-2019) and the
-# catalogues of both catalogue periods.
+# Only the files the project actually uses are listed: the files the source inventory measured to
+# decide the study period. That is the 2020-2023 records of the study period (D-041) and the 2019
+# records, kept because 2019 is a conditional extension (D-050). It also includes the two
+# descriptors consulted for them (no descriptor is published for 2015-2019) and the catalogues of
+# both catalogue periods.
 # The 2024 and 2025 files are deliberately not listed (D-048). URLs, versions and the announced
 # sizes are copied from the source page, not built.
 

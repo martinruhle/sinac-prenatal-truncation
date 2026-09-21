@@ -85,8 +85,8 @@ the author's sign-off.
   Rejected: an empty value. Why: a clean clone must start with one command, and no secret is stored in the repository.
 - **D-040 · 2026-09-17 · FOR APPROVAL** Counts below 5 are suppressed in published tables under `results/`, with a footnote citing OHDSI practice (`minCellCount = 5` in CohortDiagnostics).
   Rejected: no suppression. Why: the source microdata are public and carry no personal data, so this is precaution rather than de-identification.
-- **D-041 · 2026-09-17 · PENDING** Study period: decided in task 1.2.3 (issue #8), after the source inventory.
-  Rejected: deciding before measuring the harmonisation cost. Why: the cost of including 2019 is unknown until the descriptors and catalogues are compared.
+- **D-041 · 2026-09-21 · [SCOPE CHANGE]** Study period: 2020–2023, one catalogue period with identical headers (6,531,527 records); development stays on 2023 (D-009) and 2019 is a conditional extension (D-050). Argued in docs/protocol.md §Data source.
+  Rejected: 2019–2023 as proposal v2 committed; 2023 alone. Why: the question needs no pre-pandemic year, and 2019 needs 74 of 76 variables renamed, a lossy education crosswalk, a DERHAB+DERHAB2 rule and three re-used sentinels, with no DGIS descriptor (docs/source_inventory.md), none of it in an exposure or the outcome; 2023 alone saves no harmonisation and drops the year covariate and the COVID-19 axis.
 - **D-042 · 2026-09-19** The two conditional extras of proposal v2 (ML + SHAP demonstration, interactive dashboard) are not started this semester; they move to the future-work section of docs/roadmap.md.
   Rejected: keeping them as conditional work inside the semester. Why: 6 h/week budget; proposal v2 already framed them as conditional, so this is not a scope change.
 - **D-043 · 2026-09-19** The data model is OMOP CDM **v5.4** (open decision A1); the DDL is vendored unmodified from OHDSI/CommonDataModel, pinned to commit 40ff52f (`sql/ddl/ohdsi/SOURCE.md`).
@@ -101,3 +101,7 @@ the author's sign-off.
   Rejected: a `pipeline.py inventory` subcommand with pure helpers and tests. Why: the time budget of the task, and every cell of the document names the file it was measured from, so any of them can be re-measured.
 - **D-048 · 2026-09-20** The source inventory covers 2019-2023 only; the 2024 and 2025 files are neither downloaded nor measured.
   Rejected: extending it to 2024-2025. Why: it prices the period proposal v2 committed to, while the 2020-2025 option would add two more catalogue comparisons and 2025 is PENDING as a definitive or a preliminary closure.
+- **D-049 · 2026-09-21** Year of birth is a categorical covariate in the adjusted odds ratios and the COVID-19 sensitivity axis, run as 2020–2023 against 2022–2023 (`--years 2022,2023`) for measures (a) and (c).
+  Rejected: covariate only; sensitivity axis only; a linear year term. Why: the covariate absorbs differences in level between years while the axis shows whether the association itself moves with the disruption; the pandemic is a shock, not a trend.
+- **D-050 · 2026-09-21** Reversal criterion for D-041: 2019 is added only once `v0.2-progress` is tagged with all its committed content, within a one-week timebox (6 h) before work on v1.0 starts, or it moves to future work; the ETL reads each catalogue period through its own adapter and source vocabulary, so 2019 would change no cohort or analysis code.
+  Rejected: an open-ended extension. Why: after the progress review (session 24) the remaining weeks carry v1.0, and a new year reopens every result and attrition table.
