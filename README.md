@@ -8,9 +8,9 @@ window produces on its own.
 
 **No data in this repository.** Everything is rebuilt from the public SINAC download; `/data/`
 and `.env` are ignored by git. The question and the method live in
-[`docs/protocol.md`](docs/protocol.md) (data source and study period; the rest PENDING), the plan in
-[`docs/roadmap.md`](docs/roadmap.md), and every non-obvious decision in
-[`docs/decisions.md`](docs/decisions.md).
+[`docs/protocol.md`](docs/protocol.md) (the exposure measures, the analysis and the limitations
+are still PENDING there), the plan in [`docs/roadmap.md`](docs/roadmap.md), and every non-obvious
+decision in [`docs/decisions.md`](docs/decisions.md).
 
 ## Reproduce
 
@@ -134,7 +134,7 @@ pipeline fails on purpose. The manifest lists the files the
 
 ## Limitations
 
-PENDING: completed together with `docs/protocol.md`. Two limitations already apply:
+PENDING: completed together with `docs/protocol.md`. Three limitations already apply:
 
 - The DGIS files are served over **HTTP without TLS**. The recorded sha256 detects any later
   change to a file, but it does not authenticate the first download.
@@ -142,6 +142,10 @@ PENDING: completed together with `docs/protocol.md`. Two limitations already app
   effect of the COVID-19 pandemic cannot be told apart. The COVID-19 sensitivity axis therefore
   sets the years of acute disruption against the years of recovery, not against a pre-pandemic
   baseline ([`docs/protocol.md`](docs/protocol.md#what-the-period-does-not-allow)).
+- **SINAC publishes no mother identifier**, so the pregnancies of one woman cannot be linked and
+  the mother is one `PERSON` per certificate. The certificates of one multiple pregnancy cannot be
+  grouped either, which is why the base cohort keeps singletons only (D-051,
+  [`docs/protocol.md`](docs/protocol.md#design-and-unit-of-analysis)).
 
 ## AI assistance
 
