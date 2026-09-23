@@ -2,9 +2,10 @@
 
 This document separates three things: what the course delivers, what was left out of this
 semester, and what continues after it as part of the doctoral project. The question, the
-population and the method live in [`protocol.md`](protocol.md) (so far the data source and the
-study period; the rest is PENDING). Every scope change stated here is recorded in [`decisions.md`](decisions.md), and
-the proposal it is stated against is translated in [`proposal_v2.md`](proposal_v2.md).
+population and the method live in [`protocol.md`](protocol.md) (the exposure measures, the
+analysis and the limitations are still PENDING there). Every scope change stated here is recorded
+in [`decisions.md`](decisions.md), and the proposal it is stated against is translated in
+[`proposal_v2.md`](proposal_v2.md).
 
 ## 1. Core: the course deliverable
 
@@ -14,11 +15,11 @@ download; **the repository contains no data**, only the code that loads and tran
 | Component | Content |
 |---|---|
 | Data model | Postgres with a subset of the OMOP CDM v5.4 and a reproducible ETL from the DGIS open-data download (see [Data source](#2-data-source)). Study period: 2020–2023 (D-041); development runs on 2023 (D-009) |
-| Cohorts | Documented cohort definitions in SQL, with an attrition table per definition |
+| Cohorts | Documented cohort definitions in SQL, with an attrition table per definition. The unit of analysis, the base cohort and the order of the attrition steps are fixed in [`protocol.md`](protocol.md#base-cohort) (D-051 to D-058) |
 | Exposures | (a) total number of visits; (b) approximate APNCU index; (c) care started in the first trimester; (d) total visits in landmark cohorts, with one or two landmark weeks instead of three (D-004) |
 | Association estimates | Crude and adjusted odds ratios for each measure, with a reduced covariate set (D-007) |
 | Simulation | The association that truncation produces on its own, under the null hypothesis (NOM-007-SSA2-2016 schedule), with 2–3 fixed adherence scenarios (D-010) |
-| Sensitivity | Preterm cut-off (37/34/32), multiple pregnancies, births before week 22, the years 2020–2021 (2020–2023 against 2022–2023, D-049); gradient by state and by insurance. The full grid runs for measures (a) and (c) only (D-003) |
+| Sensitivity | Preterm cut-off (37/34/32), multiple pregnancies, the years 2020–2021 (2020–2023 against 2022–2023, D-049); gradient by state and by insurance. Births before week 22 are a base exclusion and no longer an axis (D-055). The full grid runs for measures (a) and (c) only (D-003) |
 | Engineering | `compose.yml`, pytest, CI on GitHub Actions, a single entry point (`scripts/pipeline.py`), and a data dictionary covering the variables actually used (D-011) |
 | Documentation | Reproducible README, limitations, AI-assistance statement, decision log |
 
@@ -29,7 +30,7 @@ ones that shape the schema.
 
 | SINAC item | OMOP destination | Note |
 |---|---|---|
-| Mother and newborn | `PERSON` (two records) | Linked through `FACT_RELATIONSHIP` |
+| Mother and newborn | `PERSON` (two records) | Linked through `FACT_RELATIONSHIP`. One mother `PERSON` per certificate, not per woman: SINAC publishes no mother identifier (D-051) |
 | Birth | `VISIT_OCCURRENCE` | Care unit in `CARE_SITE`, state in `LOCATION` |
 | Gestational weeks, birth weight | `MEASUREMENT` | Gestation on the mother, weight on the newborn |
 | Total visits, trimester of the first visit | `OBSERVATION` | This is a **declared count**, not one row per visit; it is not modelled as visits |
@@ -113,6 +114,7 @@ case is the weekly time budget.
 | Sensitivity to the month assigned within the first-visit trimester for APNCU; a single documented rule is used instead | D-005 |
 | Sensitivity using birth weight <2500 g as an alternative outcome | D-006 |
 | The full covariate set in the adjusted odds ratios | D-007 |
+| Inclusion of births before week 22 as an axis; the exclusion stays in the base cohort, with its count in the attrition table | D-055 |
 
 ### 4.4 Engineering left for later
 
@@ -128,6 +130,22 @@ catalogue period. It is added this semester only if two conditions hold (D-050):
 - The work fits in a one-week timebox (6 hours) before `v1.0` starts.
 
 Otherwise it is future work. What it costs is listed in [`protocol.md`](protocol.md#data-source).
+
+### 4.6 Prenatal care of mothers resident abroad
+
+Mothers who live abroad and give birth in Mexico are excluded from the cohort (D-057). What brings
+them back as future work is a signal measured while that criterion was being decided, on the 3,069
+certificates of 2020–2023 with `RESIDEEXTRANJERO` = 1:
+
+- 13.8 % of them record that no prenatal care was received, against 2.6 % of the other records.
+- 53.1 % record a first-trimester start, against 75.8 %.
+
+That contrast is the reason to look, and it is also why it cannot be read as an answer here. The
+certificate does not record where the visits happened, so the declared count mixes two health
+systems; the group has no state of residence, so it has no place in the gradient; and 3,069 records
+over four years are too few for the sensitivity grid. Cross-border prenatal care is a different
+question from truncation of the gestational window, and answering it needs at least the place of
+the visits, which SINAC does not publish.
 
 ## 5. After the semester: continuity with the doctoral project
 
