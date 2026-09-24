@@ -1,0 +1,159 @@
+# Every concept_id the ETL and the cohort SQL use, and the local source vocabularies whose codes
+# config/source_to_concept_map.csv maps. SQL never writes a concept_id (CLAUDE.md rule 8, D-023):
+# it reads them from here or from source_to_concept_map.
+#
+# Each concept was looked up in Athena (athena.ohdsi.org) on the date below, and every one was
+# Standard and Valid there. The fields are copied from Athena, not typed from memory:
+#   concept_id, concept_name, vocabulary_id, concept_code, domain_id, standard_concept
+# cdm_fields lists the CDM fields the concept is written to. The domain of a standard concept
+# decides its table ("Write the data record into the table(s) corresponding to the domain of the
+# Standard CONCEPT_ID", OMOP CDM data model conventions), so a concept written to
+# <table>.<table>_concept_id must belong to that table's domain; tests/test_concepts.py checks it.
+# Whether each concept exists, is valid and is standard in the vocabulary bundle actually loaded is
+# checked by `pipeline.py validate-concepts` (task 1.4.3), not here.
+#
+# The rules that use each concept, and the alternatives that were rejected, are in
+# docs/omop_mapping.md.
+
+athena_checked: 2026-09-24
+athena_versions: "LOINC 2.82"
+
+concepts:
+  female:
+    concept_id: 8532
+    concept_name: FEMALE
+    vocabulary_id: Gender
+    concept_code: "F"
+    domain_id: Gender
+    standard_concept: S
+    cdm_fields: [person.gender_concept_id]
+
+  registry:
+    concept_id: 32879
+    concept_name: Registry
+    vocabulary_id: Type Concept
+    concept_code: "OMOP4976952"
+    domain_id: Type Concept
+    standard_concept: S
+    cdm_fields:
+      - observation_period.period_type_concept_id
+      - measurement.measurement_type_concept_id
+      - observation.observation_type_concept_id
+
+  gestational_age_at_birth:
+    concept_id: 4260747
+    concept_name: Length of gestation at birth
+    vocabulary_id: SNOMED
+    concept_code: "412726003"
+    domain_id: Measurement
+    standard_concept: S
+    cdm_fields: [measurement.measurement_concept_id]
+    source_column: EDADGESTACIONAL
+
+  week:
+    concept_id: 8511
+    concept_name: week
+    vocabulary_id: UCUM
+    concept_code: "wk"
+    domain_id: Unit
+    standard_concept: S
+    cdm_fields: [measurement.unit_concept_id]
+
+  birth_plurality:
+    concept_id: 40760833
+    concept_name: Birth plurality of Pregnancy
+    vocabulary_id: LOINC
+    concept_code: "57722-1"
+    domain_id: Measurement
+    standard_concept: S
+    cdm_fields: [measurement.measurement_concept_id]
+    source_column: PRODUCTOEMBARAZO
+
+  at_least:
+    concept_id: 4171755
+    concept_name: ">="
+    vocabulary_id: SNOMED
+    concept_code: "276138003"
+    domain_id: Meas Value Operator
+    standard_concept: S
+    cdm_fields: [measurement.operator_concept_id]
+
+  prenatal_visits_count:
+    concept_id: 40771079
+    concept_name: "Prenatal visits for this pregnancy #"
+    vocabulary_id: LOINC
+    concept_code: "68493-6"
+    domain_id: Observation
+    standard_concept: S
+    cdm_fields: [observation.observation_concept_id]
+    source_column: TOTALCONSULTAS
+
+  first_prenatal_visit_trimester:
+    concept_id: 44817052
+    concept_name: "Mother's Trimester of first prenatal visit [CDC.CS]"
+    vocabulary_id: LOINC
+    concept_code: "75163-6"
+    domain_id: Observation
+    standard_concept: S
+    cdm_fields: [observation.observation_concept_id]
+    source_column: TRIMESTREPRIMERCONSULTA
+
+  cdm_version:
+    concept_id: 902983
+    concept_name: OMOP CDM Version 5.4.3
+    vocabulary_id: CDM
+    concept_code: "CDM v5.4.3"
+    domain_id: Metadata
+    standard_concept: S
+    cdm_fields: [cdm_source.cdm_version_concept_id]
+
+# One source vocabulary per source column and catalogue period. The prefix SINAC20 is the
+# 2020-2023 catalogue period (sinac_catalogos_2020_2023.zip and the 2020-2025 descriptor); a 2019
+# adapter would add SINAC15 vocabularies instead of changing these (D-050). A source value listed
+# in its column's vocabulary is a code and takes the row's target concept (0 when it is a flavor
+# of null or has no standard concept); any other value of that column is the value itself (D-067).
+# Each vocabulary is registered in VOCABULARY with vocabulary_concept_id = 0 (D-023).
+#   defined_in:       where DGIS publishes the codes (a catalogue, or the descriptor)
+#   cdm_field:        the CDM field the target concepts, or the values, go to
+#   target_domain_id: the domain every non-zero target must have; null when all targets are 0
+source_vocabularies:
+  SINAC20_EDADGEST:
+    source_column: EDADGESTACIONAL
+    defined_in: descriptor
+    cdm_field: measurement.value_as_number
+    target_domain_id: null
+  SINAC20_PRODEMB:
+    source_column: PRODUCTOEMBARAZO
+    defined_in: PRODUCTO_EMBARAZO
+    cdm_field: measurement.value_as_number
+    target_domain_id: null
+  SINAC20_TOTCONS:
+    source_column: TOTALCONSULTAS
+    defined_in: descriptor
+    cdm_field: observation.value_as_number
+    target_domain_id: null
+  SINAC20_TRIMCONS:
+    source_column: TRIMESTREPRIMERCONSULTA
+    defined_in: TRIMESTRE_PRIMER_CONSULTA
+    cdm_field: observation.value_as_concept_id
+    target_domain_id: Meas Value
+  SINAC20_RESEXT:
+    source_column: RESIDEEXTRANJERO
+    defined_in: SI_NO
+    cdm_field: location.country_concept_id
+    target_domain_id: Geography
+  SINAC20_ENTRES:
+    source_column: ENTIDADRESIDENCIA
+    defined_in: ENTIDADES
+    cdm_field: location.state
+    target_domain_id: null
+  SINAC20_EDAD:
+    source_column: EDAD
+    defined_in: descriptor
+    cdm_field: person.year_of_birth
+    target_domain_id: null
+  SINAC20_FECHANACMAD:
+    source_column: FECHANACIMIENTOMADRE
+    defined_in: descriptor
+    cdm_field: person.year_of_birth
+    target_domain_id: null
