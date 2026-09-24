@@ -13,6 +13,7 @@ import psycopg
 
 import download
 import sql_runner
+import stage
 from sinac_truncation.period import STUDY_YEARS, PeriodError, format_years, parse_years
 from sinac_truncation.sqltext import schema_mapping
 
@@ -91,6 +92,29 @@ def download_sources(*, entry_ids: Sequence[str], record: bool, dest: Path, time
         status = download_source(entry_id=entry_id, record=record, dest=dest, timeout=timeout)
         if status != 0:
             return status
+    return 0
+
+
+def stage_years(*, years: Sequence[int]) -> int:
+    """Stage each year's record file into the staging schema, stopping at the first failure."""
+    try:
+        conninfo = sql_runner.conninfo_from_env()
+    except sql_runner.MissingEnvironmentError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    try:
+        with psycopg.connect(conninfo) as conn:
+            for year in years:
+                stage.run(year, conn=conn, schema=STAGING_SCHEMA)
+    except stage.StageError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    except psycopg.OperationalError as error:
+        print(f"error: cannot reach the database: {error}", file=sys.stderr)
+        return 2
+
+    print(f"staged {format_years(years)}; counts in {STAGING_SCHEMA}.load_counts")
     return 0
 
 
@@ -179,6 +203,20 @@ def build_parser() -> argparse.ArgumentParser:
         default=download.DEFAULT_TIMEOUT,
         help=f"read timeout in seconds (default: {download.DEFAULT_TIMEOUT:g})",
     )
+
+    stage_parser = subcommands.add_parser(
+        "stage",
+        help="load the record files into the staging schema, every value as text",
+        description=(
+            "For each year: verifies the downloaded ZIP against config/sources.yml, extracts its "
+            "CSV into data/raw/dgis/extracted/, writes a Parquet copy into data/interim/ with "
+            "DuckDB and loads it into staging.sinac_<year> with COPY. Every source column stays "
+            "text (D-033). The rows counted in the CSV, the Parquet file and the table must "
+            "agree and are recorded in staging.load_counts. Each run rebuilds the year in one "
+            "transaction, so running it again gives the same result (D-069)."
+        ),
+    )
+    add_years_option(stage_parser, what="years whose record files are staged")
     return parser
 
 
@@ -198,6 +236,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             dest=Path(args.dest),
             timeout=float(args.timeout),
         )
+    if args.command == "stage":
+        return stage_years(years=args.years)
     raise AssertionError(f"unhandled command: {args.command}")  # pragma: no cover
 
 

@@ -21,6 +21,7 @@ cp .env.example .env
 docker compose up -d --wait
 uv run --env-file .env python scripts/pipeline.py db-init
 uv run --env-file .env python scripts/pipeline.py download --years 2023
+uv run --env-file .env python scripts/pipeline.py stage --years 2023
 uv run --env-file .env pytest
 uv run --env-file .env python scripts/pipeline.py --help
 ```
@@ -35,6 +36,13 @@ the one recorded there, so a download that does not match what this repository w
 fails instead of being used, and a file already on disk is verified, never fetched again.
 Development runs on 2023 (D-009). Without `--years`, `download` takes the whole study period,
 2020–2023 (D-041), and `--id` fetches any other entry, such as a catalogue.
+
+`stage` loads those files into the `staging` schema, one table per year, keeping every value as
+text (D-033). It extracts the CSV into `data/raw/dgis/extracted/` and writes a Parquet copy into
+`data/interim/`. It then counts the rows of the CSV, the Parquet copy and the table, and commits
+only when the three agree. The counts are kept in `staging.load_counts`, and running it again
+gives the same result (D-069). The staged columns are described in
+[`docs/data_dictionary.md`](docs/data_dictionary.md).
 
 The tests use synthetic fixtures and download nothing; the ones marked `db` need the compose
 database.
