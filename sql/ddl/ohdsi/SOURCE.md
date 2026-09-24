@@ -12,6 +12,7 @@ never edited here: a change to the data model is a change of the pinned commit, 
 | Retrieved | 2026-09-19 |
 | Licence | Apache License 2.0 (upstream `DESCRIPTION`; the repository has no `LICENSE` file at this commit) |
 | CDM version | 5.4 — see D-043 for why v5.5 was not adopted |
+| Release | The commit sits 5 commits before the tag `v5.4.3`, and none of them touches the DDL: `OMOPCDM_postgresql_5.4_ddl.sql` at `v5.4.3` has the same sha256 as the file here (checked 2026-09-24). `CDM_SOURCE` therefore records version 5.4.3 (`docs/omop_mapping.md`) |
 
 | File | Bytes | sha256 |
 |---|---|---|

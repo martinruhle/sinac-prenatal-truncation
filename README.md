@@ -93,6 +93,11 @@ indices to `cdm`. Foreign keys are **not** applied: referential rules are explic
 checks in the ETL, which keeps bulk loads fast and makes each rule countable (D-032). Re-running
 the command refuses to touch a schema that already has tables unless `--recreate` is passed.
 
+Where each SINAC variable lands in the model, and with which concept, is in
+[`docs/omop_mapping.md`](docs/omop_mapping.md). The concept ids live only in
+[`config/concept_sets.yml`](config/concept_sets.yml) and
+[`config/source_to_concept_map.csv`](config/source_to_concept_map.csv), never in SQL.
+
 **CDM v5.5 exists and is not used here.** It was released on 25 August 2026 and is additive:
 fields added to existing tables, three tables for vocabulary metadata, nothing removed or
 renamed. The OHDSI analytic tools this project leans on still target v5.4, and proposal v2 and

@@ -25,17 +25,22 @@ download; **the repository contains no data**, only the code that loads and tran
 
 ### Planned OMOP mapping decisions
 
-The detail lives in `docs/omop_mapping.md` and `docs/data_dictionary.md` (D-017); these are the
-ones that shape the schema.
+The detail lives in [`omop_mapping.md`](omop_mapping.md) and `docs/data_dictionary.md` (D-017);
+these are the ones that shape the schema. The vertical slice of v0.1 maps the mother, the
+observation period, gestational age, plurality, the two prenatal care items and residence
+(D-059 to D-068).
 
 | SINAC item | OMOP destination | Note |
 |---|---|---|
-| Mother and newborn | `PERSON` (two records) | Linked through `FACT_RELATIONSHIP`. One mother `PERSON` per certificate, not per woman: SINAC publishes no mother identifier (D-051) |
-| Birth | `VISIT_OCCURRENCE` | Care unit in `CARE_SITE`, state in `LOCATION` |
-| Gestational weeks, birth weight | `MEASUREMENT` | Gestation on the mother, weight on the newborn |
-| Total visits, trimester of the first visit | `OBSERVATION` | This is a **declared count**, not one row per visit; it is not modelled as visits |
+| Mother and newborn | `PERSON` (two records) | Linked through `FACT_RELATIONSHIP`. One mother `PERSON` per certificate, not per woman: SINAC publishes no mother identifier (D-051). The newborn arrives in v0.2 |
+| Observation period | `OBSERVATION_PERIOD` | One day, the delivery: SINAC observes the pregnancy only at its end, and a window built from gestational age would make observed time equal to the outcome (D-062) |
+| Birth | `VISIT_OCCURRENCE` | Not in the v0.1 vertical slice, since no criterion uses it. If a later analysis needs the care unit, it goes in `CARE_SITE`. Prenatal visits are never created as visits (D-066) |
+| Mother's residence | `LOCATION` | Country from `RESIDEEXTRANJERO`, state from `ENTIDADRESIDENCIA` (D-068) |
+| Gestational weeks, birth weight | `MEASUREMENT` | Gestation on the mother, weight on the newborn (D-064) |
+| Plurality | `MEASUREMENT` | Criteria 4 and 5 of the base cohort (D-068) |
+| Total visits, trimester of the first visit | `OBSERVATION` | This is a **declared count**, not one row per visit; it is not modelled as visits (D-065, D-066) |
 | Insurance | `PAYER_PLAN_PERIOD` | |
-| Variables with no standard concept | `concept_id = 0` + `*_source_value` | OMOP convention; they are listed in the dictionary |
+| Variables with no standard concept | `concept_id = 0` + `*_source_value` | OMOP convention; the codes are listed in `omop_mapping.md` and in `config/source_to_concept_map.csv` (D-067) |
 
 ## 2. Data source
 
@@ -146,6 +151,28 @@ systems; the group has no state of residence, so it has no place in the gradient
 over four years are too few for the sensitivity grid. Cross-border prenatal care is a different
 question from truncation of the gestational window, and answering it needs at least the place of
 the visits, which SINAC does not publish.
+
+### 4.7 Indigenous mothers
+
+SINAC records whether the mother considers herself indigenous (`SECONSIDERAINDIGENA`) and whether
+she speaks an indigenous language (`HABLALENGUAINDIGENA`). Neither enters this semester: no
+exposure measure and no criterion uses them, and OMOP has no field for them. The race and
+ethnicity fields of `PERSON` encode US OMB categories, so the two variables would enter as
+observations with concepts of their own (D-061). What brings them back as future work was
+measured over the 6,531,527 records of 2020–2023, while that mapping was being decided:
+
+- 529,692 records (8.1 %) answer that the mother considers herself indigenous, and 398,244
+  (6.1 %) that she speaks an indigenous language. The two questions carry no answer ("NO
+  ESPECIFICADO", "SE IGNORA" or "NO APLICA") in 1.1 % and 1.2 % of records.
+- Among mothers who consider themselves indigenous, 6.0 % record no prenatal care against 2.3 %
+  of the rest, and 57.9 % a first-trimester start against 77.4 %.
+- Among mothers who speak an indigenous language, the figures are 7.2 % against 2.3 %, and
+  54.1 % against 77.3 %.
+
+This is a local question about a large group, and the contrast is the reason to look. It is not
+an answer: whether truncation of the gestational window changes the association differently for
+indigenous mothers needs the same measures and the null simulation run within the group, and the
+self-identification of the certificate has to be described first in the data dictionary.
 
 ## 5. After the semester: continuity with the doctoral project
 
