@@ -2,8 +2,8 @@
 
 How the SINAC records of 2020–2023 land in the OMOP CDM v5.4 for the vertical slice (D-009): the
 tables that the base cohort of [`protocol.md`](protocol.md#base-cohort) and the v0.1 milestone
-need, and nothing else yet. Source variables are described in `docs/data_dictionary.md` (task
-1.2.4); this document says where each one goes (D-017).
+need, and nothing else yet. Source variables are described in
+[`data_dictionary.md`](data_dictionary.md); this document says where each one goes (D-017).
 
 Every populated field has one row, with its source, its rule and who decided it:
 
