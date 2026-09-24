@@ -141,7 +141,7 @@ about a third of them, and not at random (D-051). In the sensitivity analysis th
 multiples, each certificate is one unit, so a multiple pregnancy weighs as many units as it has
 live-born children.
 
-What this implies for the OMOP mapping (the detail belongs to `omop_mapping.md`):
+What this implies for the OMOP mapping (the detail is in [`omop_mapping.md`](omop_mapping.md)):
 
 - One `PERSON` for the mother and one for the newborn per certificate, linked through
   `FACT_RELATIONSHIP`.
@@ -231,37 +231,44 @@ Especificado" as the only value the descriptor declares to be a sentinel.
 ## Attrition
 
 Attrition is sequential: a record that fails two criteria is counted only in the first step it
-fails, so the order changes the count of every step, and not the final size. The order is
-**coverage, then validity, then design**.
+fails, so the order changes the count of every step, and not the final size. The order is **data
+model, then coverage, then validity, then design**.
 
 | # | Step | Kind | Rule | Removed | Remaining |
 |---|---|---|---|---|---|
 | 0 | Records in the files of the study period | — | — | — | 6,531,527 |
-| 1 | Born in the study period | coverage | criterion 1 | 0 | 6,531,527 |
-| 2 | Mother resident in Mexico | coverage | criterion 2 | 3,700 | 6,527,827 |
-| 3 | Gestational age specified | validity | criterion 3 | 4,809 | 6,523,018 |
-| 4 | Multiplicity specified | validity | criterion 4 | 10,117 | 6,512,901 |
-| 5 | Singleton | design | criterion 5 | 110,358 | 6,402,543 |
-| 6 | 22 completed weeks or more | design | criterion 6 | 701 | **6,401,842** |
+| 1 | Mother's year of birth known | data model | loaded as a mother `PERSON` ([`omop_mapping.md`](omop_mapping.md#person-the-mother)) | 670 | 6,530,857 |
+| 2 | Born in the study period | coverage | criterion 1 | 0 | 6,530,857 |
+| 3 | Mother resident in Mexico | coverage | criterion 2 | 3,698 | 6,527,159 |
+| 4 | Gestational age specified | validity | criterion 3 | 4,806 | 6,522,353 |
+| 5 | Multiplicity specified | validity | criterion 4 | 10,115 | 6,512,238 |
+| 6 | Singleton | design | criterion 5 | 110,305 | 6,401,933 |
+| 7 | 22 completed weeks or more | design | criterion 6 | 701 | **6,401,232** |
 
 The two count columns are orientation for the decisions taken here, measured once over the four
-record files of 2020–2023 with a throwaway query (the practice of D-047). The table of record is
-the one the cohort SQL produces, per year and per definition (rule 5 of
-[`../CLAUDE.md`](../CLAUDE.md)).
+record files of 2020–2023 with a throwaway query (the practice of D-047). On 2023 alone, step 1
+removes nothing. The table of record is the one the cohort SQL produces, per year and per
+definition (rule 5 of [`../CLAUDE.md`](../CLAUDE.md)). Step 0 counts the staged records and step 1
+the ones the ETL could not load, so the table starts from the files and not from the CDM.
 
-Why this order (D-056):
+Why this order (D-056, D-060):
 
+- **The data model** comes first because a record that OMOP cannot hold never reaches the cohort
+  SQL. `year_of_birth` is required, and 670 records carry neither the mother's date of birth nor
+  her age: 579 in 2020, 68 in 2021, 23 in 2022, none in 2023. It is not a criterion of the study,
+  it is the same in every definition, and no value for those records could be written without
+  inventing it.
 - **Coverage** answers whether the record belongs to the population this study takes from the
-  registry (steps 1 and 2). **Validity** answers whether the value the study needs is there and
-  usable (steps 3 and 4). **Design** answers whether the record belongs in the main question
-  (steps 5 and 6).
-- The coverage and validity steps are identical in every definition of the cohort, so the
-  attrition table of a sensitivity definition differs from this one only in its tail, and the
-  reader sees exactly what the axis changed.
+  registry (steps 2 and 3). **Validity** answers whether the value the study needs is there and
+  usable (steps 4 and 5). **Design** answers whether the record belongs in the main question
+  (steps 6 and 7).
+- The data-model, coverage and validity steps are identical in every definition of the cohort,
+  so the attrition table of a sensitivity definition differs from this one only in its tail, and
+  the reader sees exactly what the axis changed.
 - A numeric criterion has to come after the step that removes the sentinel which would pass it:
-  99 ≥ 22 is true, so step 6 cannot precede step 3.
-- The effect of the order, measured: with step 5 placed first, step 3 removes 4,643 records
-  instead of 4,809, because the multiples with no gestational age are counted earlier.
+  99 ≥ 22 is true, so step 7 cannot precede step 4.
+- The effect of the order, measured: with the singleton step placed first, step 4 removes 4,641
+  records instead of 4,806, because the multiples with no gestational age are counted earlier.
 
 ## Sensitivity of the definition
 
@@ -273,7 +280,7 @@ exclusion of the base cohort and an axis on that same side (D-054).
 | Multiple pregnancies | Excluded (criterion 5) | Included, each certificate one unit |
 | Preterm cut-off | Under 37 weeks | Under 34, under 32 |
 | Period (COVID-19) | 2020–2023 | 2022–2023 (D-049) |
-| Births before 22 weeks | Excluded (criterion 6) | **No axis** (D-055): the step removes 701 records of 6,401,842 |
+| Births before 22 weeks | Excluded (criterion 6) | **No axis** (D-055): the step removes 701 records of 6,401,232 |
 
 The full grid runs for measures (a) and (c) only (D-003). How each alternative definition is
 estimated and reported, the landmark weeks of measure (d) (D-004) and the gradients by state and
@@ -305,8 +312,21 @@ PENDING. The limitations that the decisions above already establish are stated w
 one mother `PERSON` per certificate and no link between the pregnancies of one woman (§Design and
 unit of analysis), births certified after DGIS closed a year's file and duplicate certificates
 that cannot be confirmed (§Base cohort), the selection the two validity steps introduce
-(§Outcome), and what the period does not allow (§Data source). The ones the proposal already
-anticipated are in [`proposal_v2.md`](proposal_v2.md#anticipated-limitations).
+(§Outcome), the 670 records the data model cannot hold (§Attrition), and what the period does not
+allow (§Data source). Two more come from the data model
+([`omop_mapping.md`](omop_mapping.md)):
+
+- **OMOP cannot carry the ethnicity SINAC records.** The race and ethnicity fields of `PERSON`
+  encode US OMB categories. SINAC records whether the mother considers herself indigenous and
+  whether she speaks an indigenous language, so both fields are 0 and the two variables stay out
+  of `PERSON` (D-061). The question they open is future work
+  ([`roadmap.md`](roadmap.md#47-indigenous-mothers)).
+- **The observation period is the delivery day.** SINAC observes nothing of the pregnancy but its
+  end and a declaration made then, so OMOP tools see no prenatal window. That is the premise of
+  the study, written into the data model rather than hidden by it (D-062).
+
+The ones the proposal already anticipated are in
+[`proposal_v2.md`](proposal_v2.md#anticipated-limitations).
 
 ## Changes from proposal v2
 
