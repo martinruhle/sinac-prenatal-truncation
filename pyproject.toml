@@ -38,7 +38,15 @@ select = ["E", "W", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.isort]
 # scripts/ is on the path as top-level modules, not as an installed package.
-known-first-party = ["sinac_truncation", "download", "pipeline", "sql_runner", "stage"]
+known-first-party = [
+    "sinac_truncation",
+    "download",
+    "load_vocab",
+    "pipeline",
+    "sql_runner",
+    "stage",
+    "validate_concepts",
+]
 
 [tool.mypy]
 strict = true
