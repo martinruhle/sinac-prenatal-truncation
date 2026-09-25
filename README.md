@@ -24,6 +24,7 @@ uv run --env-file .env python scripts/pipeline.py download --years 2023
 uv run --env-file .env python scripts/pipeline.py stage --years 2023
 uv run --env-file .env python scripts/pipeline.py vocab
 uv run --env-file .env python scripts/pipeline.py validate-concepts
+uv run --env-file .env python scripts/pipeline.py cdm --years 2023
 uv run --env-file .env pytest
 uv run --env-file .env python scripts/pipeline.py --help
 ```
@@ -55,6 +56,15 @@ reads the ZIP directly, without extracting it, and loads seven tables in one tra
 D-072). `validate-concepts` then checks every concept id of the configuration against the loaded
 vocabulary: it must exist, be valid and be standard where it has to be, and its domain must fit
 the field it is written to. CI runs neither step; their tests load a synthetic package.
+
+`cdm` populates the OMOP tables of the vertical slice from `staging`, as
+[`docs/omop_mapping.md`](docs/omop_mapping.md) maps them: PERSON (the mother), a one-day
+OBSERVATION_PERIOD, MEASUREMENT, OBSERVATION, LOCATION, CDM_SOURCE and the map of local codes.
+The SQL is in [`sql/etl/`](sql/etl/) and reads every concept id from the configuration, loaded
+into `results.concept_sets`. Every value is cast there, and each rule's count goes to
+`results.etl_counts`, together with the post-load checks. The run is one transaction that commits
+only when every check counts 0, and running it again gives the same tables (D-073). It registers
+the local vocabularies in VOCABULARY, which `vocab` empties, so run `cdm` again after `vocab`.
 
 The tests use synthetic fixtures and download nothing; the ones marked `db` need the compose
 database.

@@ -67,6 +67,9 @@ class SourceEntry:
     version: str
     sha256: str | None
     size_bytes: int | None
+    #: The source page and the retrieval timestamp, which CDM_SOURCE reports (task 1.4.4).
+    page: str | None = None
+    retrieved_at: str | None = None
 
     @property
     def filename(self) -> str:
@@ -123,6 +126,8 @@ def load_entry(path: Path, entry_id: str) -> SourceEntry:
 
     size = entry.get("size_bytes")
     sha256 = entry.get("sha256")
+    page = entry.get("page")
+    retrieved_at = entry.get("retrieved_at")
     try:
         return SourceEntry(
             id=entry_id,
@@ -130,6 +135,8 @@ def load_entry(path: Path, entry_id: str) -> SourceEntry:
             version=version,
             sha256=None if sha256 is None else normalise_digest(str(sha256)),
             size_bytes=None if size is None else int(size),
+            page=None if page is None else str(page),
+            retrieved_at=None if retrieved_at is None else str(retrieved_at),
         )
     except (IntegrityError, ValueError) as error:
         raise DownloadError(f"source {entry_id!r}: {error}") from error
