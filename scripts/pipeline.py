@@ -12,6 +12,7 @@ import httpx
 import psycopg
 
 import download
+import etl
 import load_vocab
 import sql_runner
 import stage
@@ -163,6 +164,27 @@ def check_concepts() -> int:
     return 1 if problems else 0
 
 
+def build_cdm(*, years: Sequence[int]) -> int:
+    """Populate the OMOP tables of the vertical slice from the staged years."""
+    try:
+        conninfo = sql_runner.conninfo_from_env()
+    except sql_runner.MissingEnvironmentError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    schemas = etl.Schemas(cdm=CDM_SCHEMA, staging=STAGING_SCHEMA, results=RESULTS_SCHEMA)
+    try:
+        with psycopg.connect(conninfo) as conn:
+            etl.run(conn, years, schemas=schemas, reference=etl.git_reference())
+    except etl.EtlError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    except psycopg.OperationalError as error:
+        print(f"error: cannot reach the database: {error}", file=sys.stderr)
+        return 2
+    return 0
+
+
 def years_option(text: str) -> tuple[int, ...]:
     """``--years`` as argparse reads it, so a malformed value is a usage error."""
     try:
@@ -290,6 +312,25 @@ def build_parser() -> argparse.ArgumentParser:
             "listing each failure, and 2 when no vocabulary is loaded."
         ),
     )
+
+    cdm_parser = subcommands.add_parser(
+        "cdm",
+        help="populate the OMOP tables of the vertical slice from staging",
+        description=(
+            "Empties and refills PERSON, OBSERVATION_PERIOD, MEASUREMENT, OBSERVATION, LOCATION, "
+            "CDM_SOURCE and SOURCE_TO_CONCEPT_MAP from staging.sinac_<year>, as "
+            "docs/omop_mapping.md maps them, with the SQL of sql/etl/. The concept ids come from "
+            "config/concept_sets.yml and config/source_to_concept_map.csv, loaded into "
+            "results.concept_sets and the map. Every value is cast here, and each rule's count "
+            "goes to results.etl_counts. A record with no valid delivery date stops the run. The "
+            "load is one transaction that commits only when every post-load check (anti-joins, "
+            "one-day observation periods, no VISIT_OCCURRENCE, PERSON against staging) counts 0, "
+            "so a failed run keeps the previous load. The CDM then holds exactly the years given "
+            "(D-073). Needs `db-init`, `vocab` and `stage` first; run it again after `vocab`, "
+            "which empties VOCABULARY."
+        ),
+    )
+    add_years_option(cdm_parser, what="years whose staged records are loaded")
     return parser
 
 
@@ -315,6 +356,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return load_vocabulary()
     if args.command == "validate-concepts":
         return check_concepts()
+    if args.command == "cdm":
+        return build_cdm(years=args.years)
     raise AssertionError(f"unhandled command: {args.command}")  # pragma: no cover
 
 
