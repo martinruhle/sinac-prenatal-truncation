@@ -37,15 +37,18 @@ line-length = 100
 select = ["E", "W", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.isort]
-# scripts/ is on the path as top-level modules, not as an installed package.
+# scripts/ is on the path as top-level modules, not as an installed package, and so is the
+# synthetic source of tests/.
 known-first-party = [
     "sinac_truncation",
+    "cohorts",
     "download",
     "etl",
     "load_vocab",
     "pipeline",
     "sql_runner",
     "stage",
+    "synthetic",
     "validate_concepts",
 ]
 
