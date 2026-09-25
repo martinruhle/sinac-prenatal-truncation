@@ -25,6 +25,7 @@ uv run --env-file .env python scripts/pipeline.py stage --years 2023
 uv run --env-file .env python scripts/pipeline.py vocab
 uv run --env-file .env python scripts/pipeline.py validate-concepts
 uv run --env-file .env python scripts/pipeline.py cdm --years 2023
+uv run --env-file .env python scripts/pipeline.py cohorts --years 2023
 uv run --env-file .env pytest
 uv run --env-file .env python scripts/pipeline.py --help
 ```
@@ -65,6 +66,14 @@ into `results.concept_sets`. Every value is cast there, and each rule's count go
 `results.etl_counts`, together with the post-load checks. The run is one transaction that commits
 only when every check counts 0, and running it again gives the same tables (D-073). It registers
 the local vocabularies in VOCABULARY, which `vocab` empties, so run `cdm` again after `vocab`.
+
+`cohorts` builds the base cohort of [`docs/protocol.md`](docs/protocol.md#base-cohort) from the
+CDM, with the SQL of [`sql/cohorts/`](sql/cohorts/), on the record files of the years given in
+`--years`, which `cdm` must have loaded. It writes one row per mother and pregnancy into
+`results.cohort` and the attrition table into `results.attrition`: one row per step, per
+definition and per year, a step that removes nobody included. The run is one transaction that
+commits only when the attrition is consistent: the counts never grow, each step excludes what it
+removes, and the last step equals the cohort. Running it again gives the same tables.
 
 The tests use synthetic fixtures and download nothing; the ones marked `db` need the compose
 database.
