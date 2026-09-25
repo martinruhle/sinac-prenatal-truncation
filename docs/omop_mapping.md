@@ -281,7 +281,10 @@ One row describing the load. Every field below is required by the DDL unless mar
 
 Looked up in Athena on 2026-09-24 (LOINC 2.82): every one was Standard and Valid, with the
 domain shown. They are checked again against the bundle actually loaded, by
-`pipeline.py validate-concepts` (task 1.4.3).
+`pipeline.py validate-concepts` (task 1.4.3). Against the bundle `v5.0 29-AUG-26`
+([`../config/sources.yml`](../config/sources.yml)) all 15 concept ids pass, the map targets below
+and concept 0 included: each exists and is valid, each but concept 0 is standard with the
+vocabulary and domain recorded here, and the concepts of this table also keep their code.
 
 | Key | concept_id | Vocabulary | Code | Name | Domain | Written to |
 |---|---|---|---|---|---|---|

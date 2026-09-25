@@ -12,8 +12,10 @@ import httpx
 import psycopg
 
 import download
+import load_vocab
 import sql_runner
 import stage
+import validate_concepts
 from sinac_truncation.period import STUDY_YEARS, PeriodError, format_years, parse_years
 from sinac_truncation.sqltext import schema_mapping
 
@@ -118,6 +120,49 @@ def stage_years(*, years: Sequence[int]) -> int:
     return 0
 
 
+def load_vocabulary() -> int:
+    """Load the Athena package that config/sources.yml declares into the cdm schema."""
+    try:
+        conninfo = sql_runner.conninfo_from_env()
+    except sql_runner.MissingEnvironmentError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    try:
+        with psycopg.connect(conninfo) as conn:
+            load_vocab.run(conn, schema=CDM_SCHEMA)
+    except load_vocab.VocabError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    except psycopg.OperationalError as error:
+        print(f"error: cannot reach the database: {error}", file=sys.stderr)
+        return 2
+    return 0
+
+
+def check_concepts() -> int:
+    """Check every concept_id of the configuration against the loaded vocabulary."""
+    try:
+        conninfo = sql_runner.conninfo_from_env()
+    except sql_runner.MissingEnvironmentError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    try:
+        with psycopg.connect(conninfo) as conn:
+            problems = validate_concepts.run(conn, schema=CDM_SCHEMA)
+    except validate_concepts.NotLoadedError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    except load_vocab.VocabError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    except psycopg.OperationalError as error:
+        print(f"error: cannot reach the database: {error}", file=sys.stderr)
+        return 2
+    return 1 if problems else 0
+
+
 def years_option(text: str) -> tuple[int, ...]:
     """``--years`` as argparse reads it, so a malformed value is a usage error."""
     try:
@@ -217,6 +262,34 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     add_years_option(stage_parser, what="years whose record files are staged")
+
+    subcommands.add_parser(
+        "vocab",
+        help="load the Athena vocabulary package into cdm (never run in CI)",
+        description=(
+            "Loads VOCABULARY, DOMAIN, CONCEPT_CLASS, RELATIONSHIP, CONCEPT, "
+            "CONCEPT_RELATIONSHIP and CONCEPT_ANCESTOR into cdm from the Athena package that the "
+            "`vocabulary:` block of config/sources.yml declares, straight from its ZIP (D-071). "
+            "CONCEPT_SYNONYM and DRUG_STRENGTH are not loaded. The package's sha256, size, "
+            "members, headers and vocabulary version are checked before any table is touched; "
+            "the seven tables are then emptied and loaded in one transaction that commits only "
+            "when the rows recorded in the manifest, in the file and in the table agree (D-072). "
+            "Needs `db-init` first. The package is downloaded by hand from Athena."
+        ),
+    )
+
+    subcommands.add_parser(
+        "validate-concepts",
+        help="check every concept_id of the configuration against the loaded vocabulary",
+        description=(
+            "Checks each concept_id of config/concept_sets.yml and each target of "
+            "config/source_to_concept_map.csv against cdm.concept: it exists, is valid, is "
+            "standard where required (every concept but 0), and has the domain, vocabulary and "
+            "code the configuration records for it. It also checks that the loaded vocabulary "
+            "version is the one config/sources.yml declares. Exits 1 when a concept fails, "
+            "listing each failure, and 2 when no vocabulary is loaded."
+        ),
+    )
     return parser
 
 
@@ -238,6 +311,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "stage":
         return stage_years(years=args.years)
+    if args.command == "vocab":
+        return load_vocabulary()
+    if args.command == "validate-concepts":
+        return check_concepts()
     raise AssertionError(f"unhandled command: {args.command}")  # pragma: no cover
 
 

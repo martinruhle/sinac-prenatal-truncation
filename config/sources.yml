@@ -7,6 +7,10 @@
 #            is first downloaded, and are then written by
 #            `pipeline.py download --id <id> --record`. They are never overwritten afterwards:
 #            if DGIS republishes a file, the hash stops matching and the command fails (D-044).
+# vocabulary: the OMOP standardized vocabularies, one package that Athena builds for a logged-in
+#            account and that is downloaded by hand into data/raw/athena/<package date>/; it is
+#            never committed. `pipeline.py vocab` checks the package against every field below
+#            except `database_bytes` before it loads anything (D-072).
 #
 # Only the files the project actually uses are listed: the files the source inventory measured to
 # decide the study period. That is the 2020-2023 records of the study period (D-041) and the 2019
@@ -177,3 +181,39 @@ downloads:
     retrieved_at: "2026-09-20T13:39:12Z"
     size_bytes: 24408182
     sha256: "9c7dcd52dd8fdb2cfb9c7de3711e0ccc323cfa9cff86712eaeeb3e883141cb4e"
+
+vocabulary:
+  publisher: OHDSI Athena
+  page: https://athena.ohdsi.org
+  # The date Athena built the package: the timestamps of its members and the name of its folder.
+  package_date: "2026-09-19"
+  file: "data/raw/athena/2026-09-19/vocabulary_download_v5_{51c2e41a-7702-459e-b232-47705bcc7982}_1789859761509.zip"
+  size_bytes: 200610395
+  sha256: "a24a97ba824b37786a01c5bbbc0c0bba27c50da4252669a708909df8c5250ab4"
+  # The `vocabulary_version` of the VOCABULARY row whose `vocabulary_id` is 'None'.
+  vocabulary_version: "v5.0 29-AUG-26"
+  format: >-
+    Inspected before the first load: every file is tab-delimited with a header row naming the CDM
+    v5.4 columns in order, LF line endings, UTF-8 without BOM, and dates as YYYYMMDD. Nothing is
+    quoted: 193 concept_name values hold 375 literal double quotes between them, so the files are
+    loaded with quoting turned off, as they are (D-071).
+  # Data rows per loaded table, header excluded: 22,382,064 in all, 931,977,406 bytes uncompressed.
+  rows:
+    vocabulary: 43
+    domain: 50
+    concept_class: 433
+    relationship: 724
+    concept: 1605256
+    concept_relationship: 10818530
+    concept_ancestor: 9957028
+  # CONCEPT_SYNONYM and DRUG_STRENGTH (header only in this package) are left out by task 1.4.3;
+  # the other three have no table in the vendored CDM v5.4 DDL.
+  not_loaded:
+    - CONCEPT_SYNONYM.csv
+    - DRUG_STRENGTH.csv
+    - CONCEPT_METADATA.csv
+    - CONCEPT_RELATIONSHIP_METADATA.csv
+    - PACK_CONTENT.csv
+  # Observation, not checked: pg_total_relation_size of the seven tables with the vendored indices,
+  # after `vocab` on postgres:16.15 (2026-09-24). Two loads measured the same bytes.
+  database_bytes: 2116608000

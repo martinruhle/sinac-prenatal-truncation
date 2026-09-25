@@ -1,8 +1,8 @@
-"""Tests for the structural checks of the concept configuration.
+"""Tests for the checks of the concept configuration, on its own and against a loaded vocabulary.
 
 The synthetic configurations below use made-up names and ids above 2,000,000,000, the OMOP range
-for local concepts (D-023), so no test depends on a vocabulary bundle. The last tests run the same
-checks over the two configuration files of the repository.
+for local concepts (D-023), so no test depends on a vocabulary bundle; the loaded rows are built
+here too. Some tests run the same checks over the two configuration files of the repository.
 """
 
 import copy
@@ -15,8 +15,11 @@ import yaml
 
 from sinac_truncation.concepts import (
     STCM_COLUMNS,
+    LoadedConcept,
     check_concept_sets,
     check_source_to_concept_map,
+    concept_problems,
+    expected_concepts,
 )
 
 CONFIG = Path(__file__).resolve().parents[1] / "config"
@@ -224,3 +227,90 @@ def test_the_repository_concept_configuration_is_consistent() -> None:
         rows = list(reader)
         header = reader.fieldnames or []
     assert check_source_to_concept_map(header, rows, config["source_vocabularies"]) == []
+
+
+# --- Against the loaded vocabulary ---------------------------------------------------------------
+
+
+def _loaded(concept_id: int, domain: str, **changes: str | None) -> LoadedConcept:
+    fields: dict[str, Any] = {
+        "concept_id": concept_id,
+        "concept_name": "Synthetic concept",
+        "domain_id": domain,
+        "vocabulary_id": "SYNTH",
+        "concept_code": "S-1",
+        "standard_concept": "S",
+        "invalid_reason": None,
+    }
+    fields.update(changes)
+    return LoadedConcept(**fields)
+
+
+NO_MATCH = LoadedConcept(
+    0, "No matching concept", "Metadata", "None", "No matching concept", None, None
+)
+
+
+def test_each_use_of_a_concept_says_what_it_requires() -> None:
+    expected = expected_concepts(VALID, ROWS)
+    assert [(use.concept_id, use.standard, use.domain_id) for use in expected] == [
+        (2_000_000_001, True, "Measurement"),
+        (2_000_000_001, True, "Observation"),
+        (2_000_000_001, True, "Type Concept"),
+        (0, False, None),
+        (2_000_000_002, True, "Meas Value"),
+        (0, False, None),
+    ]
+    assert expected[0].used_by == "concept_sets.yml weeks_at_birth"
+    assert expected[3].used_by == "source_to_concept_map.csv row 2 (SYNTH_WEEKS '99')"
+    assert {use.vocabulary_id for use in expected if use.concept_id == 0} == {"None"}
+    assert expected[4].concept_code is None
+
+
+def test_a_concept_that_is_what_the_configuration_recorded_passes() -> None:
+    [use, *_] = expected_concepts(VALID, ROWS)
+    assert concept_problems(use, _loaded(2_000_000_001, "Measurement")) == []
+
+
+def test_concept_zero_passes_without_being_standard() -> None:
+    zero = [use for use in expected_concepts(VALID, ROWS) if use.concept_id == 0]
+    assert zero
+    assert all(concept_problems(use, NO_MATCH) == [] for use in zero)
+
+
+def test_a_map_target_is_checked_against_its_source_vocabulary_domain() -> None:
+    [target] = [use for use in expected_concepts(VALID, ROWS) if use.concept_id == 2_000_000_002]
+    assert concept_problems(target, _loaded(2_000_000_002, "Meas Value")) == []
+    [problem] = concept_problems(target, _loaded(2_000_000_002, "Observation"))
+    assert problem == "domain 'Observation', expected 'Meas Value'"
+
+
+@pytest.mark.parametrize(
+    ("loaded", "expected"),
+    [
+        (None, "not in the loaded vocabulary"),
+        (_loaded(2_000_000_001, "Measurement", invalid_reason="D"), "not valid"),
+        (_loaded(2_000_000_001, "Measurement", standard_concept=None), "not standard"),
+        (_loaded(2_000_000_001, "Measurement", standard_concept="C"), "not standard"),
+        (_loaded(2_000_000_001, "Observation"), "domain 'Observation'"),
+        (_loaded(2_000_000_001, "Measurement", vocabulary_id="LOINC"), "vocabulary 'LOINC'"),
+        (_loaded(2_000_000_001, "Measurement", concept_code="S-2"), "code 'S-2'"),
+    ],
+)
+def test_each_difference_from_the_loaded_row_is_reported(
+    loaded: LoadedConcept | None, expected: str
+) -> None:
+    [use, *_] = expected_concepts(VALID, ROWS)
+    [problem] = concept_problems(use, loaded)
+    assert problem.startswith(expected), problem
+
+
+def test_every_concept_of_the_repository_has_a_requirement() -> None:
+    config = yaml.safe_load((CONFIG / "concept_sets.yml").read_text(encoding="utf-8"))
+    with (CONFIG / "source_to_concept_map.csv").open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    expected = expected_concepts(config, rows)
+    assert {use.concept_id for use in expected} >= {
+        entry["concept_id"] for entry in config["concepts"].values()
+    }
+    assert all(use.domain_id is not None for use in expected if use.concept_id != 0)

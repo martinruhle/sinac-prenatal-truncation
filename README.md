@@ -22,6 +22,8 @@ docker compose up -d --wait
 uv run --env-file .env python scripts/pipeline.py db-init
 uv run --env-file .env python scripts/pipeline.py download --years 2023
 uv run --env-file .env python scripts/pipeline.py stage --years 2023
+uv run --env-file .env python scripts/pipeline.py vocab
+uv run --env-file .env python scripts/pipeline.py validate-concepts
 uv run --env-file .env pytest
 uv run --env-file .env python scripts/pipeline.py --help
 ```
@@ -43,6 +45,16 @@ text (D-033). It extracts the CSV into `data/raw/dgis/extracted/` and writes a P
 only when the three agree. The counts are kept in `staging.load_counts`, and running it again
 gives the same result (D-069). The staged columns are described in
 [`docs/data_dictionary.md`](docs/data_dictionary.md).
+
+`vocab` loads the OMOP standardized vocabularies into `cdm`. The pipeline does not download them:
+[Athena](https://athena.ohdsi.org) builds the package for a logged-in account, so it is
+downloaded by hand into `data/raw/athena/<package date>/` and never committed. The `vocabulary:`
+block of [`config/sources.yml`](config/sources.yml) declares that package, with its sha256, its
+vocabulary version and the rows of each table, and `vocab` refuses a package that differs. It
+reads the ZIP directly, without extracting it, and loads seven tables in one transaction (D-071,
+D-072). `validate-concepts` then checks every concept id of the configuration against the loaded
+vocabulary: it must exist, be valid and be standard where it has to be, and its domain must fit
+the field it is written to. CI runs neither step; their tests load a synthetic package.
 
 The tests use synthetic fixtures and download nothing; the ones marked `db` need the compose
 database.

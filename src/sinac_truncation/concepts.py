@@ -1,27 +1,37 @@
-"""Structural checks of the concept configuration.
+"""Checks of the concept configuration, on its own and against the loaded vocabulary.
 
 Every concept_id the ETL and the cohort SQL use lives in ``config/concept_sets.yml`` or in
 ``config/source_to_concept_map.csv``, never in SQL (CLAUDE.md rule 8, D-023). There is no I/O
 here (CLAUDE.md rule 6): the caller parses the two files and passes what it read.
 
-These checks need no vocabulary tables, so they run in CI. They verify that every concept carries
-the vocabulary, code and domain it was looked up with, that its domain is one the CDM allows in
-the fields it is written to, and that every row of the map has the columns of the CDM table and a
-declared source vocabulary. Whether a concept exists, is valid and is standard in the bundle that
-was actually loaded is checked against the database by ``pipeline.py validate-concepts``
-(task 1.4.3).
+The structural checks need no vocabulary tables, so they run in CI. They verify that every concept
+carries the vocabulary, code and domain it was looked up with, that its domain is one the CDM
+allows in the fields it is written to, and that every row of the map has the columns of the CDM
+table and a declared source vocabulary.
+
+Whether a concept exists, is valid and is standard in the bundle that was actually loaded is
+checked by ``pipeline.py validate-concepts``: :func:`expected_concepts` says what the vocabulary
+must hold for each use of a concept, and :func:`concept_problems` compares that with the row the
+script read from ``CONCEPT``.
 """
 
 import re
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from datetime import date
+
+from sinac_truncation.vocabulary import NO_MATCHING_VOCABULARY
 
 __all__ = [
     "FIELD_DOMAINS",
     "OWN_TABLE_DOMAINS",
     "STCM_COLUMNS",
+    "ExpectedConcept",
+    "LoadedConcept",
     "check_concept_sets",
     "check_source_to_concept_map",
+    "concept_problems",
+    "expected_concepts",
 ]
 
 #: The columns of SOURCE_TO_CONCEPT_MAP, in the order of the vendored OMOP CDM v5.4 DDL.
@@ -67,9 +77,6 @@ _VOCABULARY_ID_LENGTH = 20
 #: SOURCE_TO_CONCEPT_MAP.source_code is varchar(50), source_code_description varchar(255).
 _SOURCE_CODE_LENGTH = 50
 _DESCRIPTION_LENGTH = 255
-
-#: The vocabulary_id of concept 0, "No matching concept".
-_NO_MATCHING_VOCABULARY = "None"
 
 
 def _required_domain(field: str) -> str | None:
@@ -183,7 +190,7 @@ def _check_map_row(
         problems.append(f"{where}: target_concept_id {target!r} is not a concept_id")
     else:
         unmatched = int(target) == 0
-        if unmatched != (row["target_vocabulary_id"] == _NO_MATCHING_VOCABULARY):
+        if unmatched != (row["target_vocabulary_id"] == NO_MATCHING_VOCABULARY):
             problems.append(
                 f"{where}: target_vocabulary_id must be 'None' exactly when target_concept_id is 0"
             )
@@ -232,4 +239,117 @@ def check_source_to_concept_map(
     for vocabulary_id in source_vocabularies:
         if vocabulary_id not in mapped:
             problems.append(f"source vocabulary {vocabulary_id!r} is declared and has no rows")
+    return problems
+
+
+@dataclass(frozen=True)
+class ExpectedConcept:
+    """One use of a concept_id in the configuration, and what the loaded vocabulary must say."""
+
+    concept_id: int
+    #: Where the configuration uses it, as the report prints it.
+    used_by: str
+    #: Whether it must be a standard concept. Concept 0 is not one, and need not be.
+    standard: bool
+    #: ``None`` when any domain is accepted.
+    domain_id: str | None
+    vocabulary_id: str
+    #: ``None`` when the configuration does not record the code.
+    concept_code: str | None
+
+
+@dataclass(frozen=True)
+class LoadedConcept:
+    """The fields of one ``CONCEPT`` row that the validation reads."""
+
+    concept_id: int
+    concept_name: str
+    domain_id: str
+    vocabulary_id: str
+    concept_code: str
+    standard_concept: str | None
+    invalid_reason: str | None
+
+
+def _from_concept_sets(config: Mapping[str, object]) -> list[ExpectedConcept]:
+    concepts = config.get("concepts")
+    if not isinstance(concepts, Mapping):
+        return []
+    expected: list[ExpectedConcept] = []
+    for key, entry in concepts.items():
+        if not isinstance(entry, Mapping):
+            continue
+        expected.append(
+            ExpectedConcept(
+                concept_id=int(entry["concept_id"]),
+                used_by=f"concept_sets.yml {key}",
+                standard=True,
+                domain_id=str(entry["domain_id"]),
+                vocabulary_id=str(entry["vocabulary_id"]),
+                concept_code=str(entry["concept_code"]),
+            )
+        )
+    return expected
+
+
+def _from_map(
+    rows: Sequence[Mapping[str, str]], source_vocabularies: Mapping[str, object]
+) -> list[ExpectedConcept]:
+    expected: list[ExpectedConcept] = []
+    for number, row in enumerate(rows, start=2):
+        target = int(row["target_concept_id"])
+        vocabulary_id = row["source_vocabulary_id"]
+        used_by = f"source_to_concept_map.csv row {number} ({vocabulary_id} {row['source_code']!r})"
+        declared = source_vocabularies.get(vocabulary_id)
+        domain = declared.get("target_domain_id") if isinstance(declared, Mapping) else None
+        expected.append(
+            ExpectedConcept(
+                concept_id=target,
+                used_by=used_by,
+                standard=target != 0,
+                domain_id=None if target == 0 or domain is None else str(domain),
+                vocabulary_id=row["target_vocabulary_id"],
+                concept_code=None,
+            )
+        )
+    return expected
+
+
+def expected_concepts(
+    config: Mapping[str, object], map_rows: Sequence[Mapping[str, str]]
+) -> list[ExpectedConcept]:
+    """Every use of a concept_id in ``concept_sets.yml`` and in the map, with what it requires.
+
+    The two files must already pass :func:`check_concept_sets` and
+    :func:`check_source_to_concept_map`; this reads them as those checks leave them.
+
+    A concept of ``concept_sets.yml`` must be standard, with the domain, vocabulary and code it was
+    looked up with (docs/omop_mapping.md). A target of the map must be standard, in the vocabulary
+    the row names and in the ``target_domain_id`` of its source vocabulary; target 0 must only be
+    concept 0 itself.
+    """
+    vocabularies = config.get("source_vocabularies")
+    declared = vocabularies if isinstance(vocabularies, Mapping) else {}
+    return _from_concept_sets(config) + _from_map(map_rows, declared)
+
+
+def concept_problems(expected: ExpectedConcept, loaded: LoadedConcept | None) -> list[str]:
+    """What the loaded ``CONCEPT`` row says against what the configuration expects of it.
+
+    Returns:
+        One message per difference; an empty list when the concept passes.
+    """
+    if loaded is None:
+        return ["not in the loaded vocabulary"]
+    problems: list[str] = []
+    if loaded.invalid_reason is not None:
+        problems.append(f"not valid (invalid_reason {loaded.invalid_reason!r})")
+    if expected.standard and loaded.standard_concept != "S":
+        problems.append(f"not standard (standard_concept {loaded.standard_concept!r})")
+    if expected.domain_id is not None and loaded.domain_id != expected.domain_id:
+        problems.append(f"domain {loaded.domain_id!r}, expected {expected.domain_id!r}")
+    if loaded.vocabulary_id != expected.vocabulary_id:
+        problems.append(f"vocabulary {loaded.vocabulary_id!r}, expected {expected.vocabulary_id!r}")
+    if expected.concept_code is not None and loaded.concept_code != expected.concept_code:
+        problems.append(f"code {loaded.concept_code!r}, expected {expected.concept_code!r}")
     return problems
