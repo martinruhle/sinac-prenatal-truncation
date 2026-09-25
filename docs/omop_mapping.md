@@ -58,6 +58,11 @@ All four land in the CDM, so the cohort SQL never reads `staging` (D-068).
      the same period. In `SI_NO`, 0 is "NO ESPECIFICADO" and 8 is "NO APLICA". In
      `TRIMESTRE_PRIMER_CONSULTA`, 0 is "NO RECIBIÓ", an answer given in 167,885 records, and 8 is
      "NO ESPECIFICADO".
+   - A value that is neither a code nor castable also keeps its row, as NULL (a number) or 0 (a
+     concept), with the raw value in the source field. Examples are weeks that are not digits, or
+     a plurality or trimester its catalogue does not publish. A delivery date that is not a valid
+     date stops the load instead, because every date hangs on it. The ETL counts each rule per
+     year in `results.etl_counts`, zero included; in 2023 only the codes above occur (D-075).
    - No custom concepts (ids above 2,000,000,000): OMOP makes them "always non-standard", usable
      only "in the `_source_concept_id` fields", so they would not change `value_as_concept_id`.
      They would only add CONCEPT rows that OHDSI tools cannot see.
@@ -358,6 +363,9 @@ records) are answers, not missing values: they map to "No prenatal care" and to 
   - every event date equals the person's observation period;
   - the records not loaded for lack of a year of birth are counted, so attrition step 1 can be
     reported (D-060).
+
+  Implemented in [`../sql/etl/`](../sql/etl/) (`pipeline.py cdm`). The counts and the checks are
+  rows of `results.etl_counts`, and a run commits only when every check is 0 (D-073).
 - **Data quality checks.** A plausibility check on `year_of_birth`, such as the one of the OHDSI
   Data Quality Dashboard, will flag the one mother born in year 1. That record is known and left
   as it is.
