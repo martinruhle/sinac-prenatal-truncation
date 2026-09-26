@@ -248,9 +248,10 @@ model, then coverage, then validity, then design**.
 The two count columns are orientation for the decisions taken here, measured once over the four
 record files of 2020–2023 with a throwaway query (the practice of D-047). On 2023 alone, step 1
 removes nothing. The table of record is the one the cohort SQL produces, per year and per
-definition (rule 5 of [`../CLAUDE.md`](../CLAUDE.md)). Step 0 counts the staged records and step 1
-the ones the ETL could not load, so the table starts from the files and not from the CDM. Both
-are rows of `results.etl_counts`, per year: `staging` `rows` and `person`
+definition (rule 5 of [`../CLAUDE.md`](../CLAUDE.md)): [`../sql/cohorts/`](../sql/cohorts/) writes
+it into `results.attrition` with `pipeline.py cohorts` (D-078). Step 0 counts the staged records
+and step 1 the ones the ETL could not load, so the table starts from the files and not from the
+CDM. Both are rows of `results.etl_counts`, per year: `staging` `rows` and `person`
 `not_loaded:no_year_of_birth` (D-073).
 
 Why this order (D-056, D-060):

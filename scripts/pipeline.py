@@ -11,6 +11,7 @@ from pathlib import Path
 import httpx
 import psycopg
 
+import cohorts
 import download
 import etl
 import load_vocab
@@ -185,6 +186,27 @@ def build_cdm(*, years: Sequence[int]) -> int:
     return 0
 
 
+def build_cohorts(*, years: Sequence[int]) -> int:
+    """Build the cohorts of sql/cohorts/ and their attrition on the record files of the years."""
+    try:
+        conninfo = sql_runner.conninfo_from_env()
+    except sql_runner.MissingEnvironmentError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    schemas = etl.Schemas(cdm=CDM_SCHEMA, staging=STAGING_SCHEMA, results=RESULTS_SCHEMA)
+    try:
+        with psycopg.connect(conninfo) as conn:
+            cohorts.run(conn, years, schemas=schemas)
+    except cohorts.CohortError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    except psycopg.OperationalError as error:
+        print(f"error: cannot reach the database: {error}", file=sys.stderr)
+        return 2
+    return 0
+
+
 def years_option(text: str) -> tuple[int, ...]:
     """``--years`` as argparse reads it, so a malformed value is a usage error."""
     try:
@@ -331,6 +353,22 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     add_years_option(cdm_parser, what="years whose staged records are loaded")
+
+    cohorts_parser = subcommands.add_parser(
+        "cohorts",
+        help="build the cohorts of sql/cohorts/ and their attrition from the CDM",
+        description=(
+            "Builds every cohort defined in sql/cohorts/ (the base cohort of docs/protocol.md) "
+            "on the record files of the years given, and its attrition: one row per step, per "
+            "definition and per year, into results.cohort and results.attrition. Steps 0 and 1 "
+            "come from results.etl_counts, the rest from the CDM; criterion 1 keeps the births "
+            "of those years (D-073). The years must be loaded by `cdm` first. Each run replaces "
+            "the rows of its definitions in one transaction that commits only when the attrition "
+            "is consistent (counts never grow, each step excludes what it removes, the last step "
+            "equals the cohort), so a failed run keeps the previous cohort."
+        ),
+    )
+    add_years_option(cohorts_parser, what="years whose record files the cohorts are built on")
     return parser
 
 
@@ -358,6 +396,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return check_concepts()
     if args.command == "cdm":
         return build_cdm(years=args.years)
+    if args.command == "cohorts":
+        return build_cohorts(years=args.years)
     raise AssertionError(f"unhandled command: {args.command}")  # pragma: no cover
 
 
