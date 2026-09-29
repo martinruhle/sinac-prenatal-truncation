@@ -249,7 +249,9 @@ The two count columns are orientation for the decisions taken here, measured onc
 record files of 2020–2023 with a throwaway query (the practice of D-047). On 2023 alone, step 1
 removes nothing. The table of record is the one the cohort SQL produces, per year and per
 definition (rule 5 of [`../CLAUDE.md`](../CLAUDE.md)): [`../sql/cohorts/`](../sql/cohorts/) writes
-it into `results.attrition` with `pipeline.py cohorts` (D-078). Step 0 counts the staged records
+it into `results.attrition` with `pipeline.py cohorts` (D-078), and `pipeline.py publish` writes the
+base cohort's to [`../results/attrition_base.csv`](../results/attrition_base.csv), with a manifest
+that names the commit and the source files (D-080). Step 0 counts the staged records
 and step 1 the ones the ETL could not load, so the table starts from the files and not from the
 CDM. Both are rows of `results.etl_counts`, per year: `staging` `rows` and `person`
 `not_loaded:no_year_of_birth` (D-073).

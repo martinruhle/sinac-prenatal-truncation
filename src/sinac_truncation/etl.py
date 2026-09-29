@@ -37,6 +37,7 @@ __all__ = [
     "format_counts",
     "person_id",
     "release_date",
+    "repository_url",
     "source_description",
     "vocabulary_ids",
     "vocabulary_rows",
@@ -245,18 +246,24 @@ def release_date(files: Sequence[RecordFile]) -> date:
     return max(date.fromisoformat(record.retrieved_at[:10]) for record in files)
 
 
-def etl_reference(remote_url: str, commit: str, *, dirty: bool) -> str:
-    """``CDM_SOURCE.cdm_etl_reference``: the repository and the commit the ETL ran from.
+def repository_url(remote_url: str) -> str:
+    """The URL of a git remote without the credentials it may carry and without ``.git``.
 
-    Credentials a remote URL may carry (``https://user:token@host/...``) are dropped, and so is a
-    trailing ``.git``, so the reference is a URL that can be opened.
+    ``https://user:token@host/o/r.git`` becomes ``https://host/o/r``, a URL that can be opened.
     """
     parts = urlsplit(remote_url.strip())
     host = parts.hostname or ""
     netloc = host if parts.port is None else f"{host}:{parts.port}"
     url = urlunsplit((parts.scheme, netloc, parts.path, "", "")) if parts.scheme else remote_url
-    url = url.removesuffix(".git")
-    reference = f"{url} at commit {commit.strip()}"
+    return url.strip().removesuffix(".git")
+
+
+def etl_reference(remote_url: str, commit: str, *, dirty: bool) -> str:
+    """``CDM_SOURCE.cdm_etl_reference``: the repository and the commit the ETL ran from.
+
+    The repository is written as :func:`repository_url` gives it.
+    """
+    reference = f"{repository_url(remote_url)} at commit {commit.strip()}"
     return f"{reference}, with uncommitted changes" if dirty else reference
 
 

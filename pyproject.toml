@@ -46,6 +46,7 @@ known-first-party = [
     "etl",
     "load_vocab",
     "pipeline",
+    "publish",
     "sql_runner",
     "stage",
     "synthetic",
