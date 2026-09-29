@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-09-29T15:31:42Z",
+  "code": {
+    "repository": "https://github.com/martinruhle/sinac-prenatal-truncation",
+    "commit": "46587aac1b86dfe80a1b3b0da7d0a2118d5fc766"
+  },
+  "period": [
+    2023
+  ],
+  "sources": [
+    {
+      "id": "dgis_sinac_2023",
+      "version": "2024.05.14",
+      "sha256": "6440cc1bc2b4ec0637cdde9c04c43b38b4597faa42efa203a0d6db612afb264e"
+    }
+  ],
+  "vocabulary": {
+    "version": "v5.0 29-AUG-26",
+    "sha256": "a24a97ba824b37786a01c5bbbc0c0bba27c50da4252669a708909df8c5250ab4"
+  },
+  "files": [
+    {
+      "name": "attrition_base.csv",
+      "sha256": "74c1782ac6846da71174f14ba92c582b3bb692ceda16dbd8a4b4d5e010c203b8"
+    }
+  ]
+}

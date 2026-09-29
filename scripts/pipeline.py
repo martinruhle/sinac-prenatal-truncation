@@ -15,6 +15,7 @@ import cohorts
 import download
 import etl
 import load_vocab
+import publish
 import sql_runner
 import stage
 import validate_concepts
@@ -207,6 +208,28 @@ def build_cohorts(*, years: Sequence[int]) -> int:
     return 0
 
 
+def publish_results(*, years: Sequence[int]) -> int:
+    """Rebuild the cohorts at this commit and write the attrition and its manifest to results/."""
+    try:
+        conninfo = sql_runner.conninfo_from_env()
+    except sql_runner.MissingEnvironmentError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    schemas = etl.Schemas(cdm=CDM_SCHEMA, staging=STAGING_SCHEMA, results=RESULTS_SCHEMA)
+    try:
+        code = publish.current_code()
+        with psycopg.connect(conninfo) as conn:
+            publish.run(conn, years, schemas=schemas, code=code)
+    except publish.PublishError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    except psycopg.OperationalError as error:
+        print(f"error: cannot reach the database: {error}", file=sys.stderr)
+        return 2
+    return 0
+
+
 def years_option(text: str) -> tuple[int, ...]:
     """``--years`` as argparse reads it, so a malformed value is a usage error."""
     try:
@@ -369,6 +392,23 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     add_years_option(cohorts_parser, what="years whose record files the cohorts are built on")
+
+    publish_parser = subcommands.add_parser(
+        "publish",
+        help="rebuild the cohorts and write their attrition and a manifest to results/",
+        description=(
+            "Publishes what one commit produces, end to end (D-080). Refuses to start when a "
+            "file outside results/ differs from the commit, or when the CDM was not loaded by "
+            "`cdm` from this commit with nothing uncommitted and with the vocabulary "
+            "config/sources.yml declares. It then rebuilds the cohorts as `cohorts` does, writes "
+            "the attrition of the base cohort to results/attrition_base.csv, reads it back "
+            "against the run, and writes results/manifest.json: the commit, the period, the "
+            "sha256 of each record file and of the vocabulary package, and the sha256 of the "
+            "CSV. Counts are published exactly, with no small-cell suppression (D-040). Run it at "
+            "a milestone, after `cdm`, and commit results/ on its own (D-014)."
+        ),
+    )
+    add_years_option(publish_parser, what="years whose record files are published")
     return parser
 
 
@@ -398,6 +438,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return build_cdm(years=args.years)
     if args.command == "cohorts":
         return build_cohorts(years=args.years)
+    if args.command == "publish":
+        return publish_results(years=args.years)
     raise AssertionError(f"unhandled command: {args.command}")  # pragma: no cover
 
 

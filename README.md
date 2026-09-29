@@ -75,6 +75,14 @@ definition and per year, a step that removes nobody included. The run is one tra
 commits only when the attrition is consistent: the counts never grow, each step excludes what it
 removes, and the last step equals the cohort. Running it again gives the same tables.
 
+`publish` writes the results a milestone versions under [`results/`](results/) (D-014): the
+attrition of the base cohort, `results/attrition_base.csv`, and `results/manifest.json`, which
+names the commit, the period, the sha256 of each record file and of the vocabulary package, and
+the sha256 of the CSV. It publishes what one commit produces end to end, so it refuses a working
+tree with changes outside `results/` and a CDM that `cdm` did not load from that commit, then
+rebuilds the cohorts and reads the CSV back against the run (D-080). The counts are exact, with no
+small-cell suppression, because the source records are public (D-040).
+
 The tests use synthetic fixtures and download nothing; the ones marked `db` need the compose
 database.
 

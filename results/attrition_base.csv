@@ -1,0 +1,9 @@
+cohort_definition_id,source_year,step,kind,description,remaining,excluded
+1,2023,0,,Records in the files of the study period,1521280,
+1,2023,1,data model,Mother's year of birth known,1521280,0
+1,2023,2,coverage,Born in the study period,1521280,0
+1,2023,3,coverage,Mother resident in Mexico,1520461,819
+1,2023,4,validity,Gestational age specified,1519969,492
+1,2023,5,validity,Multiplicity specified,1518799,1170
+1,2023,6,design,Singleton,1491037,27762
+1,2023,7,design,22 completed weeks or more,1490896,141
