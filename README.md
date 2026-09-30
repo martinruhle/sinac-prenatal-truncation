@@ -20,12 +20,7 @@ uv run pre-commit install
 cp .env.example .env
 docker compose up -d --wait
 uv run --env-file .env python scripts/pipeline.py db-init
-uv run --env-file .env python scripts/pipeline.py download --years 2023
-uv run --env-file .env python scripts/pipeline.py stage --years 2023
-uv run --env-file .env python scripts/pipeline.py vocab
-uv run --env-file .env python scripts/pipeline.py validate-concepts
-uv run --env-file .env python scripts/pipeline.py cdm --years 2023
-uv run --env-file .env python scripts/pipeline.py cohorts --years 2023
+uv run --env-file .env python scripts/pipeline.py all --years 2023
 uv run --env-file .env pytest
 uv run --env-file .env python scripts/pipeline.py --help
 ```
@@ -33,6 +28,13 @@ uv run --env-file .env python scripts/pipeline.py --help
 `uv sync` installs the locked dependencies, `pre-commit install` is needed once per clone, and
 `.env` is created from `.env.example` and never committed. The database needs Docker running and
 `db-init` puts the OMOP schema in it.
+
+One file is downloaded by hand before `all`: the Athena vocabulary package (see `vocab` below).
+`all` then runs `download`, `stage`, `vocab`, `validate-concepts`, `cdm` and `cohorts` in that
+order on the years given, and stops at the first step that fails (D-082). Each step is also a
+subcommand of its own, described below. `publish` is not a step of `all`: it runs at a milestone
+only. Every milestone is rebuilt this way from a clean clone before it is tagged
+([`docs/reproducibility.md`](docs/reproducibility.md)).
 
 `download` fetches the record files of the years given in `--years` from
 [`config/sources.yml`](config/sources.yml) into `data/raw/dgis/`. It checks each sha256 against
@@ -57,6 +59,14 @@ reads the ZIP directly, without extracting it, and loads seven tables in one tra
 D-072). `validate-concepts` then checks every concept id of the configuration against the loaded
 vocabulary: it must exist, be valid and be standard where it has to be, and its domain must fit
 the field it is written to. CI runs neither step; their tests load a synthetic package.
+
+Athena builds each package on request, so a package downloaded later is a different file. To
+rebuild with one, the package has to hold the vocabularies that
+[`config/concept_sets.yml`](config/concept_sets.yml) takes concepts from: SNOMED, LOINC and UCUM,
+plus OMOP's own Gender, Type Concept and CDM. Put the ZIP under `data/raw/athena/<package date>/`
+and write its date, path, size, sha256, vocabulary version and rows per table into the `vocabulary:`
+block. When one of them differs, `vocab` refuses the package and states the value the package
+has: the sha256 and size, the version and, table by table, the rows.
 
 `cdm` populates the OMOP tables of the vertical slice from `staging`, as
 [`docs/omop_mapping.md`](docs/omop_mapping.md) maps them: PERSON (the mother), a one-day
@@ -88,40 +98,54 @@ database.
 
 ## Requirements → evidence
 
-PENDING: the `Status` column is filled at milestone `v0.1-cohort`, when a third party must be
-able to locate the evidence for each requirement without running anything.
+Where the evidence for each minimum requirement of the course lives, and its status at milestone
+`v0.1-cohort`. **Met** means the evidence is in place for this milestone; **Partial** says what is
+still missing and when it lands.
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Real commit history | PRs merged into `main` | |
-| README lets a third party reproduce the work | README §Reproduce | |
-| Containerized environment | `compose.yml` (+ `Dockerfile` from v1.0) | |
-| At least one documented cohort definition in SQL on OMOP | `sql/cohorts/01_base.sql`, `docs/protocol.md` §Base cohort | |
-| Automated tests with pytest and CI | `tests/`, `.github/workflows/ci.yml`, CI badge | |
-| Data dictionary | `docs/data_dictionary.md` | |
-| Honest limitations section | README §Limitations, `docs/protocol.md` §Limitations | |
-| AI assistance statement | `docs/ai_use.md`, `CLAUDE.md` | |
-| No credentials, no identifiable data | `.gitignore`, `.dockerignore`, `results/` policy, security review notes | |
+| Real commit history | [Pull requests merged into `main`](https://github.com/martinruhle/sinac-prenatal-truncation/pulls?q=is%3Apr+is%3Amerged), each with its checks and its AI assistance section | **Met**: #1, then #18–#31, one per issue |
+| README lets a third party reproduce the work | README §Reproduce, [`docs/reproducibility.md`](docs/reproducibility.md) | **Met**: rebuilt from a clean clone on 2023, with the same attrition sha256; the Athena package is the one file downloaded by hand |
+| Containerized environment | [`compose.yml`](compose.yml) (+ `Dockerfile` from v1.0) | **Met** with `compose.yml`: Postgres 16.15 with a healthcheck, the same file CI starts. The analysis image comes with v1.0 (D-015) |
+| At least one documented cohort definition in SQL on OMOP | [`sql/cohorts/01_base.sql`](sql/cohorts/01_base.sql), [`docs/protocol.md`](docs/protocol.md#base-cohort) §Base cohort, [`results/attrition_base.csv`](results/attrition_base.csv) | **Met**: the base cohort on 2023, 1,490,896 singleton births, with its attrition table |
+| Automated tests with pytest and CI | [`tests/`](tests/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml), CI badge | **Met**: 340 tests on synthetic fixtures, the `db` ones against the compose database. CI runs ruff, the format check, mypy and pytest with an 80 % coverage floor (D-030) |
+| Data dictionary | [`docs/data_dictionary.md`](docs/data_dictionary.md) | **Met** for v0.1: the 22 of 64 published columns the project uses (D-011). It grows with the variables of v0.2 |
+| Honest limitations section | README §Limitations, [`docs/protocol.md`](docs/protocol.md#limitations) §Limitations | **Partial**: the limitations of the source, the design and the data model are written. Those of the exposure measures and the analysis come with them, in v0.2 and v1.0 |
+| AI assistance statement | [`docs/ai_use.md`](docs/ai_use.md), [`CLAUDE.md`](CLAUDE.md) | **Met**: one entry per pull request, taken from its AI assistance section |
+| No credentials, no identifiable data | [`.gitignore`](.gitignore), [`.dockerignore`](.dockerignore), `results/` policy (D-014, D-040), security review notes (v1.0) | **Met** for v0.1: `/data/` and `.env` are ignored, CI generates its database password per run (D-039), `results/` holds aggregate counts only, and the history was checked at the tag ([release notes](https://github.com/martinruhle/sinac-prenatal-truncation/releases/tag/v0.1-cohort)). The security review is part of v1.0 |
 
 ## Changes from the proposal
 
-PENDING: completed at milestone `v0.1-cohort`. Two changes are already settled and written up
-in [`docs/roadmap.md`](docs/roadmap.md), with their reasons in
-[`docs/decisions.md`](docs/decisions.md):
+The changes are stated against proposal v2, which is translated in
+[`docs/proposal_v2.md`](docs/proposal_v2.md). They are written up in
+[`docs/roadmap.md`](docs/roadmap.md), and their reasons are in
+[`docs/decisions.md`](docs/decisions.md), where they are tagged `[SOURCE CHANGE]` or
+`[SCOPE CHANGE]`.
 
 - **Data source.** The SSA/DGIS open-data files replace the INSP standardized series (D-001,
-  D-002). The record and variable counts stated in the proposal do not describe these files and
-  have to be measured on them.
+  D-002). The 31,486,699 records and 91 variables in the proposal describe that series. The four
+  files of the study period hold 6,531,527 records, with 64 columns each
+  ([`docs/source_inventory.md`](docs/source_inventory.md)).
 - **Study period.** 2020–2023 replaces 2019–2023 (D-041). The source inventory measured the cost:
   2019 needs a harmonization of its own and has no DGIS descriptor, while the four later years
   are one catalogue period. 2019 is added only under the criterion of D-050.
-- **Scope.** The full sensitivity grid runs for two of the four exposure measures, one or two
-  landmark weeks are used instead of three, two sensitivity axes are dropped and the adjusted
-  odds ratios use a reduced covariate set (D-003 to D-007). The two conditional extras of the
-  proposal are not started this semester and stay as future work (D-042).
+- **Scope.** The adjusted odds ratios use a reduced covariate set, and the sensitivity analysis
+  is smaller (D-003 to D-007):
+  - the full sensitivity grid runs for two of the four exposure measures;
+  - one or two landmark weeks are used instead of three;
+  - two sensitivity axes are dropped.
 
-The proposal these changes are stated against is translated in
-[`docs/proposal_v2.md`](docs/proposal_v2.md).
+  A third axis, births before week 22, is dropped too. The exclusion stays in the base cohort,
+  with its count in the attrition table: 701 records in 2020–2023 (D-055). The two conditional
+  extras of the proposal are not started this semester and stay as future work (D-042).
+- **What the proposal left unstated.** The protocol fixes three things the proposal did not
+  state:
+  - the unit of analysis: the live-birth certificate, with singletons only (D-051);
+  - the source of the preterm cut-off: NOM-007-SSA2-2016 (D-053);
+  - residence in Mexico as an eligibility criterion (D-057).
+
+  The table in [`docs/protocol.md`](docs/protocol.md#changes-from-proposal-v2) sets each one
+  against the proposal.
 
 ## Data model
 
@@ -186,7 +210,7 @@ pipeline fails on purpose. The manifest lists the files the
 
 ## Limitations
 
-PENDING: completed together with `docs/protocol.md`. Three limitations already apply:
+PENDING: completed together with `docs/protocol.md`. Four limitations already apply:
 
 - The DGIS files are served over **HTTP without TLS**. The recorded sha256 detects any later
   change to a file, but it does not authenticate the first download.
@@ -198,9 +222,14 @@ PENDING: completed together with `docs/protocol.md`. Three limitations already a
   the mother is one `PERSON` per certificate. The certificates of one multiple pregnancy cannot be
   grouped either, which is why the base cohort keeps singletons only (D-051,
   [`docs/protocol.md`](docs/protocol.md#design-and-unit-of-analysis)).
+- **The vocabulary package cannot be downloaded again as it is.** Athena builds each package on
+  request, so a rebuild months later uses another package, and its sha256 in
+  `results/manifest.json` differs. `validate-concepts` checks that every configured concept is
+  still valid and standard in it, but the published counts were verified with the package of
+  record only (see `vocab` in §Reproduce).
 
 ## AI assistance
 
-PENDING: `docs/ai_use.md` is assembled at milestone `v0.1-cohort` from the "AI assistance"
-section of each merged pull request. The development rules given to AI assistants in this
-repository are versioned in [`CLAUDE.md`](CLAUDE.md).
+The project was developed with Claude Code. [`docs/ai_use.md`](docs/ai_use.md) states how the
+assistant was used and, pull request by pull request, what it did and what the author decided or
+checked. The development rules given to the assistant are versioned in [`CLAUDE.md`](CLAUDE.md).
