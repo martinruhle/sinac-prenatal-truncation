@@ -5,7 +5,7 @@ uv run --env-file .env python scripts/pipeline.py --help
 
 import argparse
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import httpx
@@ -208,6 +208,38 @@ def build_cohorts(*, years: Sequence[int]) -> int:
     return 0
 
 
+def run_all(*, years: Sequence[int]) -> int:
+    """Rebuild the cohorts from the raw files: every step in order, stopping at the first failure.
+
+    `db-init` is not a step, because it refuses a schema that already holds tables; neither is
+    `publish`, which runs at a milestone only (D-082).
+    """
+    steps: tuple[tuple[str, Callable[[], int]], ...] = (
+        (
+            "download",
+            lambda: download_sources(
+                entry_ids=[download.record_id(year) for year in years],
+                record=False,
+                dest=download.RAW_DIR,
+                timeout=download.DEFAULT_TIMEOUT,
+            ),
+        ),
+        ("stage", lambda: stage_years(years=years)),
+        ("vocab", lambda: load_vocabulary()),
+        ("validate-concepts", lambda: check_concepts()),
+        ("cdm", lambda: build_cdm(years=years)),
+        ("cohorts", lambda: build_cohorts(years=years)),
+    )
+    for name, step in steps:
+        print(f"== {name}")
+        status = step()
+        if status != 0:
+            print(f"error: `all` stopped at `{name}`", file=sys.stderr)
+            return status
+    print(f"all steps done for {format_years(years)}")
+    return 0
+
+
 def publish_results(*, years: Sequence[int]) -> int:
     """Rebuild the cohorts at this commit and write the attrition and its manifest to results/."""
     try:
@@ -393,6 +425,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_years_option(cohorts_parser, what="years whose record files the cohorts are built on")
 
+    all_parser = subcommands.add_parser(
+        "all",
+        help="run download, stage, vocab, validate-concepts, cdm and cohorts in order",
+        description=(
+            "Rebuilds the cohorts from the raw files: runs download, stage, vocab, "
+            "validate-concepts, cdm and cohorts on the years given, in that order, and stops at "
+            "the first step that fails, returning its exit code. Needs `db-init` once before and "
+            "the Athena package on disk (see `vocab`). It does not publish: `publish` runs at a "
+            "milestone only (D-014, D-082)."
+        ),
+    )
+    add_years_option(all_parser, what="years whose record files the steps run on")
+
     publish_parser = subcommands.add_parser(
         "publish",
         help="rebuild the cohorts and write their attrition and a manifest to results/",
@@ -438,6 +483,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return build_cdm(years=args.years)
     if args.command == "cohorts":
         return build_cohorts(years=args.years)
+    if args.command == "all":
+        return run_all(years=args.years)
     if args.command == "publish":
         return publish_results(years=args.years)
     raise AssertionError(f"unhandled command: {args.command}")  # pragma: no cover
