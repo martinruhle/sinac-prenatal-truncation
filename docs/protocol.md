@@ -285,7 +285,7 @@ exclusion of the base cohort and an axis on that same side (D-054).
 | Multiple pregnancies | Excluded (criterion 5) | Included, each certificate one unit |
 | Preterm cut-off | Under 37 weeks | Under 34, under 32 |
 | Period (COVID-19) | 2020–2023 | 2022–2023 (D-049) |
-| Births before 22 weeks | Excluded (criterion 6) | **No axis** (D-055): the step removes 701 records of 6,401,232 |
+| Births before 22 weeks | Excluded (criterion 6) | **No axis** (D-055): the step removes 701 of the 6,401,933 records that reach the step |
 
 The full grid runs for measures (a) and (c) only (D-003). How each alternative definition is
 estimated and reported, the landmark weeks of measure (d) (D-004) and the gradients by state and
