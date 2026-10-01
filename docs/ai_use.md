@@ -182,6 +182,19 @@ author's voice.
 - What I decided or checked myself: adding `all` now instead of at v1.0; approving D-013 and
   D-057 before the tag; closing #2; that #22 and #23 were done mostly with Opus 5.
 
+#### [#33](https://github.com/martinruhle/sinac-prenatal-truncation/pull/33) · Align the D-055 count between decisions.md and protocol.md (no planning ID)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: traced the three counts through git history, recomputed the attrition chain, checked which years the CDM holds, edited the two lines, opened #32 and this PR.
+- What I decided or checked myself: not filled in before the merge. The correction was started
+  from a task the assistant suggested while closing the milestone.
+
+#### [#35](https://github.com/martinruhle/sinac-prenatal-truncation/pull/35) · Align the D-056 count between decisions.md and protocol.md (no planning ID)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: traced 10,117 to the v0 table of #24 through git history, checked which years the CDM holds, compared the raw and sequential multiplicity counts on 2023, edited the one number, opened #34 and this PR.
+- What I decided or checked myself: not filled in before the merge.
+
 [^model]: The merge commits of #22 and #23 carry a `Co-Authored-By: Claude Sonnet 5` trailer,
     which names the model active when the commit was written. According to the author, most of
     the work of both pull requests was done with Claude Opus 5, as their sections state.

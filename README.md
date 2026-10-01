@@ -104,7 +104,7 @@ still missing and when it lands.
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Real commit history | [Pull requests merged into `main`](https://github.com/martinruhle/sinac-prenatal-truncation/pulls?q=is%3Apr+is%3Amerged), each with its checks and its AI assistance section | **Met**: #1, then #18–#31, one per issue |
+| Real commit history | [Pull requests merged into `main`](https://github.com/martinruhle/sinac-prenatal-truncation/pulls?q=is%3Apr+is%3Amerged), each with its checks and its AI assistance section | **Met**: #1, then #18–#31, #33 and #35, one per issue |
 | README lets a third party reproduce the work | README §Reproduce, [`docs/reproducibility.md`](docs/reproducibility.md) | **Met**: rebuilt from a clean clone on 2023, with the same attrition sha256; the Athena package is the one file downloaded by hand |
 | Containerized environment | [`compose.yml`](compose.yml) (+ `Dockerfile` from v1.0) | **Met** with `compose.yml`: Postgres 16.15 with a healthcheck, the same file CI starts. The analysis image comes with v1.0 (D-015) |
 | At least one documented cohort definition in SQL on OMOP | [`sql/cohorts/01_base.sql`](sql/cohorts/01_base.sql), [`docs/protocol.md`](docs/protocol.md#base-cohort) §Base cohort, [`results/attrition_base.csv`](results/attrition_base.csv) | **Met**: the base cohort on 2023, 1,490,896 singleton births, with its attrition table |
