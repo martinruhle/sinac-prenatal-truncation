@@ -36,6 +36,20 @@ subcommand of its own, described below. `publish` is not a step of `all`: it run
 only. Every milestone is rebuilt this way from a clean clone before it is tagged
 ([`docs/reproducibility.md`](docs/reproducibility.md)).
 
+The commands above rebuild 2023, the year development runs on (D-009). The whole study period is
+`all --years 2020-2023`, which is also what `all` runs without `--years` (D-041). It was measured
+on 2 October 2026 on a laptop with an Intel Core i5-1240P, 16 GB of RAM and an NVMe SSD, under
+Windows 11 Pro with Docker Engine 28.4.0 limited to 6 CPUs and 12.5 GB, keeping the Postgres
+defaults of [`compose.yml`](compose.yml):
+
+- **Wall time: 24 min 15 s.** `all` took 21 min 2 s with the four record files already on disk:
+  `stage` 2 min 31 s, `vocab` 4 min 56 s, `cdm` 12 min 43 s and `cohorts` 47 s. Downloading the
+  four files took another 3 min 13 s on that connection.
+- **Disk: 17.0 GB at the peak.** `data/` holds 2.35 GB: the four ZIPs (0.27 GB), their extracted
+  CSVs (1.67 GB), the Parquet copies (0.21 GB) and the Athena package (0.20 GB). The Postgres
+  volume holds 11.2 GB once the run ends, 10.1 GB of database and 1.1 GB of write-ahead log. It
+  peaked at 14.6 GB during `cdm`, in samples taken every 30 s.
+
 `download` fetches the record files of the years given in `--years` from
 [`config/sources.yml`](config/sources.yml) into `data/raw/dgis/`. It checks each sha256 against
 the one recorded there, so a download that does not match what this repository was built on
