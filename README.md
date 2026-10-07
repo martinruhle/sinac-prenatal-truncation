@@ -8,9 +8,9 @@ window produces on its own.
 
 **No data in this repository.** Everything is rebuilt from the public SINAC download; `/data/`
 and `.env` are ignored by git. The question and the method live in
-[`docs/protocol.md`](docs/protocol.md) (the exposure measures, the analysis and the limitations
-are still PENDING there), the plan in [`docs/roadmap.md`](docs/roadmap.md), and every non-obvious
-decision in [`docs/decisions.md`](docs/decisions.md).
+[`docs/protocol.md`](docs/protocol.md) (the limitations are still PENDING there), the plan in
+[`docs/roadmap.md`](docs/roadmap.md), and every non-obvious decision in
+[`docs/decisions.md`](docs/decisions.md).
 
 ## Reproduce
 
