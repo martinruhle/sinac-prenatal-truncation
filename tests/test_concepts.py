@@ -51,13 +51,13 @@ VALID: dict[str, Any] = {
         "SYNTH_WEEKS": {
             "source_column": "WEEKS",
             "defined_in": "descriptor",
-            "cdm_field": "measurement.value_as_number",
+            "cdm_fields": ["measurement.value_as_number"],
             "target_domain_id": None,
         },
         "SYNTH_ANSWER": {
             "source_column": "ANSWER",
             "defined_in": "CATALOGUE",
-            "cdm_field": "observation.value_as_concept_id",
+            "cdm_fields": ["observation.value_as_concept_id"],
             "target_domain_id": "Meas Value",
         },
     },
@@ -162,7 +162,13 @@ def test_a_source_vocabulary_id_fits_the_cdm_column() -> None:
         (("source_vocabularies", "SYNTH_WEEKS"), [], "is not a mapping"),
         (("source_vocabularies", "SYNTH_WEEKS", "source_column"), "", "source_column is missing"),
         (("source_vocabularies", "SYNTH_WEEKS", "defined_in"), None, "defined_in is missing"),
-        (("source_vocabularies", "SYNTH_WEEKS", "cdm_field"), "value", "not a table.field"),
+        (("source_vocabularies", "SYNTH_WEEKS", "cdm_fields"), ["value"], "not a table.field"),
+        (("source_vocabularies", "SYNTH_WEEKS", "cdm_fields"), [], "must list at least one"),
+        (
+            ("source_vocabularies", "SYNTH_WEEKS", "cdm_fields"),
+            "measurement.value_as_number",
+            "must list at least one",
+        ),
         (("source_vocabularies", "SYNTH_ANSWER", "target_domain_id"), 7, "must be text"),
     ],
 )

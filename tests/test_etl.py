@@ -38,11 +38,14 @@ from sinac_truncation.etl import (
     year_problems,
 )
 from synthetic import (
+    AGE,
     AT_LEAST,
     CDM_VERSION,
     CONCEPTS,
+    EDUCATION,
     FEMALE,
     FIRST,
+    JUNIOR_HIGH,
     MAP,
     MEXICO,
     NO_CARE,
@@ -51,6 +54,7 @@ from synthetic import (
     RECORDS_2022,
     RECORDS_2023,
     REGISTRY,
+    SENIOR_HIGH,
     SHA256,
     SOURCE_VOCABULARIES,
     TRIMESTER,
@@ -58,6 +62,7 @@ from synthetic import (
     VISITS,
     WEEK,
     WEEKS,
+    YEAR,
     Source,
     fetch,
     map_csv,
@@ -251,7 +256,7 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
     ]
 
     d = datetime.date
-    weeks, plural = "EDADGESTACIONAL", "PRODUCTOEMBARAZO"
+    weeks, plural, age = "EDADGESTACIONAL", "PRODUCTOEMBARAZO", "EDAD"
     assert fetch(
         source.connection,
         f"SELECT measurement_id, person_id, measurement_concept_id, measurement_date, "
@@ -261,21 +266,28 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
     ) == [
         (1, pid(1), WEEKS, d(2023, 3, 15), REGISTRY, None, 39, WEEK, weeks, 0, "39"),
         (2, pid(1), PLURALITY, d(2023, 3, 15), REGISTRY, None, 1, None, plural, 0, "1"),
-        (3, pid(2), WEEKS, d(2023, 3, 15), REGISTRY, None, 39, WEEK, weeks, 0, "39"),
-        (4, pid(2), PLURALITY, d(2023, 3, 15), REGISTRY, None, 1, None, plural, 0, "1"),
-        (5, pid(3), WEEKS, d(2023, 6, 20), REGISTRY, None, 12, WEEK, weeks, 0, "12"),
-        (6, pid(3), PLURALITY, d(2023, 6, 20), REGISTRY, AT_LEAST, 3, None, plural, 0, "3"),
-        (7, pid(4), WEEKS, d(2023, 1, 1), REGISTRY, None, None, WEEK, weeks, 0, "99"),
-        (8, pid(4), PLURALITY, d(2023, 1, 1), REGISTRY, None, None, None, plural, 0, "0"),
-        (9, pid(5), WEEKS, d(2023, 12, 31), REGISTRY, None, None, WEEK, weeks, 0, None),
-        (10, pid(5), PLURALITY, d(2023, 12, 31), REGISTRY, None, 1, None, plural, 0, "1"),
-        (11, pid(7), WEEKS, d(2023, 5, 5), REGISTRY, None, None, WEEK, weeks, 0, "ab"),
-        (12, pid(7), PLURALITY, d(2023, 5, 5), REGISTRY, None, None, None, plural, 0, "7"),
-        (13, pid(8), WEEKS, d(2023, 2, 28), REGISTRY, None, 34, WEEK, weeks, 0, "34"),
-        (14, pid(8), PLURALITY, d(2023, 2, 28), REGISTRY, None, 2, None, plural, 0, "2"),
+        (3, pid(1), AGE, d(2023, 3, 15), REGISTRY, None, 27, YEAR, age, 0, "27"),
+        (4, pid(2), WEEKS, d(2023, 3, 15), REGISTRY, None, 39, WEEK, weeks, 0, "39"),
+        (5, pid(2), PLURALITY, d(2023, 3, 15), REGISTRY, None, 1, None, plural, 0, "1"),
+        (6, pid(2), AGE, d(2023, 3, 15), REGISTRY, None, 27, YEAR, age, 0, "27"),
+        (7, pid(3), WEEKS, d(2023, 6, 20), REGISTRY, None, 12, WEEK, weeks, 0, "12"),
+        (8, pid(3), PLURALITY, d(2023, 6, 20), REGISTRY, AT_LEAST, 3, None, plural, 0, "3"),
+        (9, pid(3), AGE, d(2023, 6, 20), REGISTRY, None, None, YEAR, age, 0, "888"),
+        (10, pid(4), WEEKS, d(2023, 1, 1), REGISTRY, None, None, WEEK, weeks, 0, "99"),
+        (11, pid(4), PLURALITY, d(2023, 1, 1), REGISTRY, None, None, None, plural, 0, "0"),
+        (12, pid(4), AGE, d(2023, 1, 1), REGISTRY, None, 30, YEAR, age, 0, "30"),
+        (13, pid(5), WEEKS, d(2023, 12, 31), REGISTRY, None, None, WEEK, weeks, 0, None),
+        (14, pid(5), PLURALITY, d(2023, 12, 31), REGISTRY, None, 1, None, plural, 0, "1"),
+        (15, pid(5), AGE, d(2023, 12, 31), REGISTRY, None, 33, YEAR, age, 0, "33"),
+        (16, pid(7), WEEKS, d(2023, 5, 5), REGISTRY, None, None, WEEK, weeks, 0, "ab"),
+        (17, pid(7), PLURALITY, d(2023, 5, 5), REGISTRY, None, None, None, plural, 0, "7"),
+        (18, pid(7), AGE, d(2023, 5, 5), REGISTRY, None, 25, YEAR, age, 0, "25"),
+        (19, pid(8), WEEKS, d(2023, 2, 28), REGISTRY, None, 34, WEEK, weeks, 0, "34"),
+        (20, pid(8), PLURALITY, d(2023, 2, 28), REGISTRY, None, 2, None, plural, 0, "2"),
+        (21, pid(8), AGE, d(2023, 2, 28), REGISTRY, None, None, YEAR, age, 0, " 26"),
     ]
 
-    visits, trim = "TOTALCONSULTAS", "TRIMESTREPRIMERCONSULTA"
+    visits, trim, edu = "TOTALCONSULTAS", "TRIMESTREPRIMERCONSULTA", "ESCOLARIDAD"
     assert fetch(
         source.connection,
         f"SELECT observation_id, person_id, observation_concept_id, observation_date, "
@@ -285,18 +297,25 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
     ) == [
         (1, pid(1), VISITS, d(2023, 3, 15), REGISTRY, 8, None, visits, 0, "8"),
         (2, pid(1), TRIMESTER, d(2023, 3, 15), REGISTRY, None, FIRST, trim, 0, "1"),
-        (3, pid(2), VISITS, d(2023, 3, 15), REGISTRY, 8, None, visits, 0, "8"),
-        (4, pid(2), TRIMESTER, d(2023, 3, 15), REGISTRY, None, FIRST, trim, 0, "1"),
-        (5, pid(3), VISITS, d(2023, 6, 20), REGISTRY, 45, None, visits, 0, "45"),
-        (6, pid(3), TRIMESTER, d(2023, 6, 20), REGISTRY, None, NO_CARE, trim, 0, "0"),
-        (7, pid(4), VISITS, d(2023, 1, 1), REGISTRY, None, None, visits, 0, "99"),
-        (8, pid(4), TRIMESTER, d(2023, 1, 1), REGISTRY, None, 0, trim, 0, "8"),
-        (9, pid(5), VISITS, d(2023, 12, 31), REGISTRY, None, None, visits, 0, None),
-        (10, pid(5), TRIMESTER, d(2023, 12, 31), REGISTRY, None, None, trim, 0, None),
-        (11, pid(7), VISITS, d(2023, 5, 5), REGISTRY, None, None, visits, 0, " 7"),
-        (12, pid(7), TRIMESTER, d(2023, 5, 5), REGISTRY, None, 0, trim, 0, "5"),
-        (13, pid(8), VISITS, d(2023, 2, 28), REGISTRY, 0, None, visits, 0, "0"),
-        (14, pid(8), TRIMESTER, d(2023, 2, 28), REGISTRY, None, FIRST, trim, 0, "1"),
+        (3, pid(1), EDUCATION, d(2023, 3, 15), REGISTRY, None, JUNIOR_HIGH, edu, 0, "51"),
+        (4, pid(2), VISITS, d(2023, 3, 15), REGISTRY, 8, None, visits, 0, "8"),
+        (5, pid(2), TRIMESTER, d(2023, 3, 15), REGISTRY, None, FIRST, trim, 0, "1"),
+        (6, pid(2), EDUCATION, d(2023, 3, 15), REGISTRY, None, JUNIOR_HIGH, edu, 0, "51"),
+        (7, pid(3), VISITS, d(2023, 6, 20), REGISTRY, 45, None, visits, 0, "45"),
+        (8, pid(3), TRIMESTER, d(2023, 6, 20), REGISTRY, None, NO_CARE, trim, 0, "0"),
+        (9, pid(3), EDUCATION, d(2023, 6, 20), REGISTRY, None, SENIOR_HIGH, edu, 0, "132"),
+        (10, pid(4), VISITS, d(2023, 1, 1), REGISTRY, None, None, visits, 0, "99"),
+        (11, pid(4), TRIMESTER, d(2023, 1, 1), REGISTRY, None, 0, trim, 0, "8"),
+        (12, pid(4), EDUCATION, d(2023, 1, 1), REGISTRY, None, 0, edu, 0, "0"),
+        (13, pid(5), VISITS, d(2023, 12, 31), REGISTRY, None, None, visits, 0, None),
+        (14, pid(5), TRIMESTER, d(2023, 12, 31), REGISTRY, None, None, trim, 0, None),
+        (15, pid(5), EDUCATION, d(2023, 12, 31), REGISTRY, None, None, edu, 0, None),
+        (16, pid(7), VISITS, d(2023, 5, 5), REGISTRY, None, None, visits, 0, " 7"),
+        (17, pid(7), TRIMESTER, d(2023, 5, 5), REGISTRY, None, 0, trim, 0, "5"),
+        (18, pid(7), EDUCATION, d(2023, 5, 5), REGISTRY, None, 0, edu, 0, "7"),
+        (19, pid(8), VISITS, d(2023, 2, 28), REGISTRY, 0, None, visits, 0, "0"),
+        (20, pid(8), TRIMESTER, d(2023, 2, 28), REGISTRY, None, FIRST, trim, 0, "1"),
+        (21, pid(8), EDUCATION, d(2023, 2, 28), REGISTRY, None, 0, edu, 0, "88"),
     ]
 
     vocabularies = fetch(
@@ -311,6 +330,7 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
         ("SINAC20_EDAD", *descriptor, 0),
         ("SINAC20_EDADGEST", *descriptor, 0),
         ("SINAC20_ENTRES", *catalogues, 0),
+        ("SINAC20_ESCOL", *catalogues, 0),
         ("SINAC20_FECHANACMAD", *descriptor, 0),
         ("SINAC20_PRODEMB", *catalogues, 0),
         ("SINAC20_RESEXT", *catalogues, 0),
@@ -354,7 +374,7 @@ def test_the_observation_period_is_the_delivery_day(source: Source) -> None:
         f"SELECT person_id, measurement_date FROM {source.schemas.cdm}.measurement "
         f"UNION ALL SELECT person_id, observation_date FROM {source.schemas.cdm}.observation",
     )
-    assert len(events) == 4 * len(deliveries)
+    assert len(events) == 6 * len(deliveries)
     assert all(day == deliveries[person] for person, day in events)
 
 
@@ -365,7 +385,7 @@ EXPECTED_2023_COUNTS: dict[tuple[str, str], int] = {
     ("person", "year_of_birth:mother_date"): 4,
     ("person", "year_of_birth:age"): 3,
     ("observation_period", "rows"): 7,
-    ("measurement", "rows"): 14,
+    ("measurement", "rows"): 21,
     ("measurement", "gestational_age_at_birth:value"): 4,
     ("measurement", "gestational_age_at_birth:code_to_null"): 1,
     ("measurement", "gestational_age_at_birth:not_integer"): 1,
@@ -375,7 +395,11 @@ EXPECTED_2023_COUNTS: dict[tuple[str, str], int] = {
     ("measurement", "birth_plurality:not_in_catalogue"): 1,
     ("measurement", "birth_plurality:blank"): 0,
     ("measurement", "birth_plurality:at_least"): 1,
-    ("observation", "rows"): 14,
+    ("measurement", "mother_age_at_delivery:value"): 5,
+    ("measurement", "mother_age_at_delivery:code_to_null"): 1,
+    ("measurement", "mother_age_at_delivery:not_integer"): 1,
+    ("measurement", "mother_age_at_delivery:blank"): 0,
+    ("observation", "rows"): 21,
     ("observation", "prenatal_visits_count:value"): 4,
     ("observation", "prenatal_visits_count:code_to_null"): 1,
     ("observation", "prenatal_visits_count:not_integer"): 1,
@@ -384,6 +408,10 @@ EXPECTED_2023_COUNTS: dict[tuple[str, str], int] = {
     ("observation", "first_prenatal_visit_trimester:code_to_0"): 1,
     ("observation", "first_prenatal_visit_trimester:not_in_catalogue"): 1,
     ("observation", "first_prenatal_visit_trimester:blank"): 1,
+    ("observation", "mother_education:code_to_concept"): 3,
+    ("observation", "mother_education:code_to_0"): 2,
+    ("observation", "mother_education:not_in_catalogue"): 1,
+    ("observation", "mother_education:blank"): 1,
     ("location", "country_concept_id:code_to_concept"): 4,
     ("location", "country_concept_id:code_to_0"): 2,
     ("location", "country_concept_id:not_in_catalogue"): 1,
@@ -407,8 +435,8 @@ CHECKS = (
     "orphan_person:observation",
     "orphan_location:person",
     "person_without_one_observation_period",
-    "person_without_two_measurements",
-    "person_without_two_observations",
+    "person_without_three_measurements",
+    "person_without_three_observations",
     "observation_period_not_the_delivery_day",
     "event_outside_observation_period:measurement",
     "event_outside_observation_period:observation",

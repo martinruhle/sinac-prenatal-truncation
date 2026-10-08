@@ -1,9 +1,11 @@
-# OMOP mapping v0: the vertical slice
+# OMOP mapping v1: the vertical slice and the covariates
 
-How the SINAC records of 2020–2023 land in the OMOP CDM v5.4 for the vertical slice (D-009): the
-tables that the base cohort of [`protocol.md`](protocol.md#base-cohort) and the v0.1 milestone
-need, and nothing else yet. Source variables are described in
-[`data_dictionary.md`](data_dictionary.md); this document says where each one goes (D-017).
+How the SINAC records of 2020–2023 land in the OMOP CDM v5.4. Version 0 mapped the vertical slice
+(D-009): the tables that the base cohort of [`protocol.md`](protocol.md#base-cohort) and the v0.1
+milestone need. Version 1 adds the covariates of the adjusted odds ratios
+([`protocol.md`](protocol.md#covariates), D-094): the mother's age and education. Source
+variables are described in [`data_dictionary.md`](data_dictionary.md); this document says where
+each one goes (D-017).
 
 Every populated field has one row, with its source, its rule and who decided it:
 
@@ -18,18 +20,20 @@ and domain, and that each domain is one the CDM allows in the field it is writte
 
 ## Scope
 
-| In v0 | Not in v0 | Why not yet |
+| Mapped | Not mapped yet | Why not yet |
 |---|---|---|
-| `PERSON` (the mother) | `PERSON` (the newborn), `FACT_RELATIONSHIP`, birth weight | No criterion of the base cohort uses the newborn; they arrive with the covariates in v0.2 |
+| `PERSON` (the mother) | `PERSON` (the newborn), `FACT_RELATIONSHIP`, birth weight | No criterion and no covariate uses the newborn; they arrive in v0.2 with task 1.4.6 (D-085) |
 | `OBSERVATION_PERIOD` | `VISIT_OCCURRENCE`, `CARE_SITE` | No criterion uses the delivery visit, and no visit is ever created for prenatal care (D-066) |
-| `MEASUREMENT`: gestational age, plurality | `PAYER_PLAN_PERIOD` | Insurance enters the gradient by insurance (v1.0), not the adjusted models (D-094) |
-| `OBSERVATION`: total visits, trimester of the first visit | `ATENCIONPRENATAL` | No rule of the protocol uses it: the common set of records rests on the trimester and the visit count (D-086). Candidate concept if it is ever mapped, checked in Athena: 44817093, LOINC 75204-8 "Prenatal care indicator [CDC.CS]", Observation |
+| `MEASUREMENT`: gestational age, plurality, mother's age (v1) | `AFILIACION` (insurance) | Only the gradient by insurance uses it (D-094, D-099), so it is mapped in v1.0 with the gradient (D-102) |
+| `OBSERVATION`: total visits, trimester of the first visit, mother's education (v1) | `ATENCIONPRENATAL` | No rule of the protocol uses it: the common set of records rests on the trimester and the visit count (D-086). Candidate concept if it is ever mapped, checked in Athena: 44817093, LOINC 75204-8 "Prenatal care indicator [CDC.CS]", Observation |
 | `LOCATION`: residence | | |
 | `CDM_SOURCE`, and `VOCABULARY` and `SOURCE_TO_CONCEPT_MAP` rows for the local codes | | |
 
 The base cohort needs four source fields: `FECHANACIMIENTO` (criterion 1), `RESIDEEXTRANJERO`
 (criterion 2), `EDADGESTACIONAL` (criteria 3 and 6) and `PRODUCTOEMBARAZO` (criteria 4 and 5).
-All four land in the CDM, so the cohort SQL never reads `staging` (D-068).
+The adjusted models add four covariates (D-094): the mother's age (`EDAD`) and education
+(`ESCOLARIDAD`), the state of residence (`ENTIDADRESIDENCIA`, already in `LOCATION`) and the year
+of the delivery date. All of them land in the CDM, so the cohort SQL never reads `staging` (D-068).
 
 ## Rules shared by every table
 
@@ -37,8 +41,8 @@ All four land in the CDM, so the cohort SQL never reads `staging` (D-068).
    concept that "best represents the provenance of the record"; the source is a registry of
    certificates, not an EHR or a claim. *Project, D-065.*
 2. **Dates.** Every event is dated `FECHANACIMIENTO`, the delivery date: gestational age is
-   measured at delivery, and the visit count, the trimester and the plurality are recorded on the
-   certificate at delivery. `FECHANACIMIENTO` is a full date (`dd/mm/yyyy`) in all 6,531,527
+   measured at delivery, and the visit count, the trimester, the plurality and the mother's age
+   and education are recorded on the certificate at delivery. `FECHANACIMIENTO` is a full date (`dd/mm/yyyy`) in all 6,531,527
    records of 2020–2023, so no date is imputed: a record without a valid one would fail
    criterion 1. `*_datetime` fields stay NULL: they are optional, the hour is not used, and 68
    records carry `99:99`. *Project, D-063.*
@@ -123,6 +127,9 @@ files with a throwaway query, as in D-047):
 | (2) Age only | 190 | The date is unusable in 860 records, which cases (2) and (3) share: 767 carry the sentinel `09/09/9999`, 91 carry `99/99/9999`, which the descriptor does not declare and which does not parse, and 2 carry a date on or after the delivery. Where both fields exist, year of delivery − `EDAD` equals the year of the date in 50.5 % of records and is one year late in 49.4 %, so the error is at most one year |
 | (3) Neither (`EDAD` = 999, "Se Ignora") | 670 (0.010 %) | 579 in 2020, 68 in 2021, 23 in 2022, none in 2023. 610 of them would otherwise reach the base cohort. They leave at attrition step 1 of [`protocol.md`](protocol.md#attrition) |
 
+The mother's age covariate is not computed from these fields. It is the age the certificate
+declares, held as a `MEASUREMENT` row ([below](#measurement), D-100).
+
 `SECONSIDERAINDIGENA` and `HABLALENGUAINDIGENA` stay out of `PERSON`. The OMOP race and ethnicity
 fields encode US OMB categories, which are not the construct SINAC records (D-061); the question
 the two variables open is future work ([`roadmap.md`](roadmap.md#47-indigenous-mothers)).
@@ -161,7 +168,7 @@ follows from that:
 
 ### MEASUREMENT
 
-Two rows per `PERSON`, in this order: gestational age, then plurality.
+Three rows per `PERSON`, in this order: gestational age, plurality, then the mother's age.
 
 **Gestational age at delivery**, on the mother (roadmap):
 
@@ -204,9 +211,33 @@ Criterion 4, "multiplicity specified", is `value_as_number IS NOT NULL`, and cri
 scale). It is an item of the US standard certificate of live birth, and CDISC "Birth Plurality"
 maps to it.
 
+**Mother's age at delivery** (`EDAD`), the maternal age covariate of the adjusted models (D-094):
+
+| Field | DDL | Source | Rule | Decided by |
+|---|---|---|---|---|
+| `measurement_concept_id` | required | `EDAD` | `mother_age_at_delivery` (36203531) | Project, D-100 |
+| `measurement_date`, `measurement_type_concept_id`, `measurement_source_*` | | | As for gestational age | — |
+| `value_as_number` | optional | `EDAD` | Completed years as an integer; NULL for the codes 888 and 999 of `SINAC20_EDAD` | Project, D-067 |
+| `unit_concept_id` | optional | — | `year` (9448) | Descriptor: "Edad de la madre en años cumplidos" |
+| `value_source_value` | optional | `EDAD` | Verbatim | Project, D-067 |
+
+Why the declared age, and not one computed from `PERSON`:
+
+- **The protocol adjusts for the age declared on the certificate** (D-094), and LOINC 85724-3
+  "Age of Mother --at delivery" names that item. Its domain is Measurement, so it goes here
+  (rule 5).
+- **The year of birth alone moves records between groups.** Over the base cohort of 2020–2023
+  (orientation, D-047), the year of delivery minus `year_of_birth` puts 632,810 records (9.9 %) in
+  another five-year group than `EDAD`.
+- **The full date of birth nearly agrees.** The exact age from `FECHANACIMIENTOMADRE` equals
+  `EDAD` in 99.41 % of the base cohort and changes the group of 9,948 records (0.16 %). Some of the
+  differences are of five years or more, typing errors in one of the two fields that the data
+  cannot settle. OMOP tools that compute age from `PERSON` keep doing so; the study reads `EDAD`.
+
 ### OBSERVATION
 
-Two rows per `PERSON`, in this order: total visits, then the trimester of the first visit.
+Three rows per `PERSON`, in this order: total visits, the trimester of the first visit, then the
+mother's education.
 
 **Total prenatal visits** (`TOTALCONSULTAS`), a **declared count**:
 
@@ -247,6 +278,38 @@ keep the count from being read as visits:
 "Prenatal care indicator" (LOINC 75204-8), not of the trimester question. It is used anyway,
 because concept 0 would merge the 167,885 mothers who received no care with the codes that mean
 "not specified" (D-065).
+
+**Mother's education** (`ESCOLARIDAD`), the education covariate of the adjusted models (D-094):
+
+| Field | DDL | Source | Rule | Decided by |
+|---|---|---|---|---|
+| `observation_concept_id` | required | `ESCOLARIDAD` | `mother_education` (40760823) | Project, D-101 |
+| `observation_date`, `observation_type_concept_id`, `observation_source_*` | | | As for total visits | — |
+| `value_as_concept_id` | optional | `ESCOLARIDAD` | The target of the code in `SINAC20_ESCOL`: the level the code belongs to (below); 0, 88 and 99 → 0 | Project, D-067, D-101 |
+| `value_source_value` | optional | `ESCOLARIDAD` | Verbatim | Project, D-067 |
+
+Each code of the `ESCOLARIDAD` catalogue maps to the level of D-094, by the general level
+attended, complete or not; a technical program counts at the general level it requires:
+
+| Level (D-094) | Codes | Target |
+|---|---|---|
+| None | 1 NINGUNA | 4074913, SNOMED 224294005 "No formal education" |
+| Primary | 31, 32 | 44800023, SNOMED 342271000000107 "Educated to primary school level" |
+| Secondary | 51, 52, 111, 112 | 43020414, SNOMED 603435002 "Educated to junior high school level" |
+| Upper secondary | 71, 72, 131, 132 | 43020395, SNOMED 603434003 "Educated to senior high school level" |
+| Higher | 81, 82, 101, 102 | 4076230, SNOMED 224299000 "Received higher education" |
+
+- **The levels are the concepts.** The cohort SQL groups by `value_as_concept_id` with no further
+  configuration, and a change to the grouping, which D-094 leaves `FOR APPROVAL`, is a change of
+  rows in [`../config/source_to_concept_map.csv`](../config/source_to_concept_map.csv), not of
+  SQL.
+- **What the concepts drop stays in the source value.** Complete or incomplete, a technical
+  program, and postgraduate against undergraduate studies are all in `value_source_value`.
+- **Junior and senior high name the Mexican cycles.** *Secundaria* is the lower secondary cycle
+  that follows primary school, and *bachillerato* or *preparatoria* the upper secondary cycle.
+  "Educated to secondary school level" (4074914) would merge both.
+- LOINC 57712-2 is the item of the US standard certificate of live birth, the same panel as the
+  visit count (D-065).
 
 ### LOCATION (residence)
 
@@ -291,6 +354,11 @@ domain shown. They are checked again against the bundle actually loaded, by
 and concept 0 included: each exists and is valid, each but concept 0 is standard with the
 vocabulary and domain recorded here, and the concepts of this table also keep their code.
 
+The concepts added for the covariates (v1: `mother_age_at_delivery`, `year`, `mother_education`
+and the five targets of `ESCOLARIDAD`) were copied on 2026-10-08 from `CONCEPT` of that same
+bundle (LOINC 2.82, SNOMED CT International 2026-02-01, UCUM 1.8.2). With them,
+`validate-concepts` passes all 23 concept ids.
+
 | Key | concept_id | Vocabulary | Code | Name | Domain | Written to |
 |---|---|---|---|---|---|---|
 | `female` | 8532 | Gender | F | FEMALE | Gender | `person.gender_concept_id` |
@@ -299,8 +367,11 @@ vocabulary and domain recorded here, and the concepts of this table also keep th
 | `week` | 8511 | UCUM | wk | week | Unit | `measurement.unit_concept_id` |
 | `birth_plurality` | 40760833 | LOINC | 57722-1 | Birth plurality of Pregnancy | Measurement | `measurement.measurement_concept_id` |
 | `at_least` | 4171755 | SNOMED | 276138003 | >= | Meas Value Operator | `measurement.operator_concept_id` |
+| `mother_age_at_delivery` | 36203531 | LOINC | 85724-3 | Age of Mother --at delivery | Measurement | `measurement.measurement_concept_id` |
+| `year` | 9448 | UCUM | a | year | Unit | `measurement.unit_concept_id` |
 | `prenatal_visits_count` | 40771079 | LOINC | 68493-6 | Prenatal visits for this pregnancy # | Observation | `observation.observation_concept_id` |
 | `first_prenatal_visit_trimester` | 44817052 | LOINC | 75163-6 | Mother's Trimester of first prenatal visit [CDC.CS] | Observation | `observation.observation_concept_id` |
+| `mother_education` | 40760823 | LOINC | 57712-2 | Highest level of education Mother | Observation | `observation.observation_concept_id` |
 | `cdm_version` | 902983 | CDM | CDM v5.4.3 | OMOP CDM Version 5.4.3 | Metadata | `cdm_source.cdm_version_concept_id` |
 
 Targets of `source_to_concept_map`:
@@ -312,6 +383,11 @@ Targets of `source_to_concept_map`:
 | 45885074 | LOINC | LA21198-9 | 3rd trimester | Meas Value | `TRIMESTREPRIMERCONSULTA` 3 |
 | 45880561 | LOINC | LA21278-9 | No prenatal care | Meas Value | `TRIMESTREPRIMERCONSULTA` 0 |
 | 4075636 | SNOMED | 223687006 | Mexico | Geography | `RESIDEEXTRANJERO` 2 |
+| 4074913 | SNOMED | 224294005 | No formal education | Observation | `ESCOLARIDAD` 1 |
+| 44800023 | SNOMED | 342271000000107 | Educated to primary school level | Observation | `ESCOLARIDAD` 31, 32 |
+| 43020414 | SNOMED | 603435002 | Educated to junior high school level | Observation | `ESCOLARIDAD` 51, 52, 111, 112 |
+| 43020395 | SNOMED | 603434003 | Educated to senior high school level | Observation | `ESCOLARIDAD` 71, 72, 131, 132 |
+| 4076230 | SNOMED | 224299000 | Received higher education | Observation | `ESCOLARIDAD` 81, 82, 101, 102 |
 
 Rejected alternatives:
 
@@ -323,6 +399,11 @@ Rejected alternatives:
 | Trimester, code 0 | Concept 0 | It would merge "NO RECIBIÓ" with the flavors of null (D-065) |
 | Plurality | 1469676, LOINC 107310-5 "Birth plurality Pregnancy" | Its answers are only "Singleton pregnancy" and "Multiple pregnancy", which would lose twins against three or more |
 | Race | "American Indian or Alaska Native" for `SECONSIDERAINDIGENA` = 1 | A US census category applied to a Mexican self-identification; it would give a race to 8.1 % and 0 to everyone else (D-061) |
+| Mother's age | The age computed from `PERSON` at the delivery date | The protocol adjusts for the declared age (D-094). From the year of birth alone the five-year group changes in 9.9 % of the base cohort, from the full date of birth in 0.16 % (D-100) |
+| Mother's age | 3007191, LOINC 21612-7 "Age - Reported"; 4028487, SNOMED 13506008 "Maternal age" (both Observation) | Valid, but neither says at which moment the age is taken. LOINC 85724-3 names the mother's age at delivery, which is what the certificate records |
+| Education, answers | The LOINC answers of the US certificate, such as LA12455-4 "8th grade or less" and LA12456-2 "9th - 12th grade, no diploma" | They follow US grades, and *secundaria* falls across two of them (D-101) |
+| Education, answers | Concept 0 for every code, with the levels in SQL | A valid answer would look like a missing one, the distinction D-065 kept for the trimester, and the grouping would need configuration of its own (D-101) |
+| Insurance | `PAYER_PLAN_PERIOD` in v0.2 | No analysis of v0.2 uses insurance; it is mapped with the gradient of v1.0 (D-102) |
 
 ## Codes without a standard concept
 
@@ -343,12 +424,19 @@ value in the source field. Record counts are orientation, over 2020–2023.
 | `ENTIDADRESIDENCIA` | 00 | NO ESPECIFICADO | 4,349 | `state` NULL |
 | `ENTIDADRESIDENCIA` | 88 | NO APLICA | 3,069 | `state` NULL |
 | `ENTIDADRESIDENCIA` | 99 | SE IGNORA | 2,783 | `state` NULL |
-| `EDAD` | 888 | No Especificado | 0 | not used for `year_of_birth` |
-| `EDAD` | 999 | Se Ignora | 670 | not used for `year_of_birth` |
+| `EDAD` | 888 | No Especificado | 0 | `value_as_number` NULL; not used for `year_of_birth` |
+| `EDAD` | 999 | Se Ignora | 670 | not used for `year_of_birth`. None of the 670 has a usable date of birth either, so none is loaded (D-060) and no age row is written |
+| `ESCOLARIDAD` | 0 | NO ESPECIFICADO | 29,338 | `value_as_concept_id` 0 |
+| `ESCOLARIDAD` | 88 | NO APLICA | 64 | `value_as_concept_id` 0 |
+| `ESCOLARIDAD` | 99 | SE IGNORA | 17,734 | `value_as_concept_id` 0 |
 | `FECHANACIMIENTOMADRE` | 09/09/9999 | fecha no especificada | 767 | not used for `year_of_birth` |
 
 `TRIMESTREPRIMERCONSULTA` 0, "NO RECIBIÓ" (167,885 records), and `TOTALCONSULTAS` 0 (195,252
 records) are answers, not missing values: they map to "No prenatal care" and to the number 0.
+
+`ESCOLARIDAD` 88, "NO APLICA", is a flavor of null like the other two (D-067): the descriptor
+says the system sets it when the question does not apply, and education applies to every mother.
+`ESCOLARIDAD` has no blank cell in 2020–2023, and `EDAD` neither.
 
 ## What the next tasks take from here
 
@@ -366,6 +454,19 @@ records) are answers, not missing values: they map to "No prenatal care" and to 
 
   Implemented in [`../sql/etl/`](../sql/etl/) (`pipeline.py cdm`). The counts and the checks are
   rows of `results.etl_counts`, and a run commits only when every check is 0 (D-073).
+- **1.4.5, covariates (v1).** The ETL writes the age and education rows and counts each of their
+  rules per year (`mother_age_at_delivery:*`, `mother_education:*`). Its checks now require three
+  rows each of `MEASUREMENT` and `OBSERVATION` per `PERSON`.
+- **1.4.6, the newborn.** The newborn `PERSON` will have rows of its own, such as birth weight, so
+  the per-person checks above have to count the mothers apart from the newborns.
+- **1.6.4, odds ratios.** The step "covariates known" (D-095) reads the CDM: `value_as_number` of
+  `mother_age_at_delivery` is not NULL, `value_as_concept_id` of `mother_education` is not 0, and
+  `LOCATION.state` is not NULL. The seven age groups are cut from `value_as_number`, with bounds
+  that go to configuration, not SQL (D-094, `FOR APPROVAL`). The education levels are the
+  concepts.
+- **v1.0, insurance.** `AFILIACION` is mapped with the gradient by insurance (D-102). Its
+  destination is still open. `PAYER_PLAN_PERIOD` needs start and end dates, which could only be the
+  delivery day under D-062 and D-063, and the payer vocabulary of the CDM (SOPT) is a US typology.
 - **Data quality checks.** A plausibility check on `year_of_birth`, such as the one of the OHDSI
   Data Quality Dashboard, will flag the one mother born in year 1. That record is known and left
   as it is.

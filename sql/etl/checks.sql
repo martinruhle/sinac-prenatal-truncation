@@ -7,8 +7,8 @@
 --                                      does not hold
 --   orphan_person:<table>              rows whose person_id is not a PERSON
 --   orphan_location:person             PERSON rows whose location_id is not a LOCATION
---   person_without_one_*               PERSON rows without exactly one observation period, or
---                                      without the two rows each of MEASUREMENT and OBSERVATION
+--   person_without_*                   PERSON rows without exactly one observation period, or
+--                                      without the three rows each of MEASUREMENT and OBSERVATION
 --   observation_period_not_the_delivery_day
 --                                      periods longer than one day, or on another day than the
 --                                      delivery of their record (D-062)
@@ -169,12 +169,12 @@ FROM (
         (SELECT count(*) FROM per_person WHERE periods <> 1)
     ),
     (
-        'person_without_two_measurements',
-        (SELECT count(*) FROM per_person WHERE measurements <> 2)
+        'person_without_three_measurements',
+        (SELECT count(*) FROM per_person WHERE measurements <> 3)
     ),
     (
-        'person_without_two_observations',
-        (SELECT count(*) FROM per_person WHERE observations <> 2)
+        'person_without_three_observations',
+        (SELECT count(*) FROM per_person WHERE observations <> 3)
     ),
     (
         'observation_period_not_the_delivery_day',
