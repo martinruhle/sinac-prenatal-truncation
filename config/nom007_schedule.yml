@@ -1,0 +1,61 @@
+# The prenatal visit calendar of NOM-007-SSA2-2016. The null simulation generates its visits on it
+# (docs/protocol.md §Null simulation), and its minimum of five visits and its eight visits set the
+# categories of measures (a) and (d) (§Exposure measures).
+#
+# Copied from section 5.2.1.15 of the text the DOF published on 7 April 2016, and checked against
+# the HTML of the DOF page on the date below. `published` keeps each line of the calendar as the
+# norm writes it, in Spanish (CLAUDE.md rule 9). The weeks are split into numbers only as the norm
+# writes them: a range has a first and a last week, a single week has both equal, and the "13.6"
+# of the second visit is 13 weeks and 6 days, written as `last_week` 13 plus `last_week_days` 6.
+# How the simulation reads a range is a rule of the protocol (D-097), not of the norm, so it is
+# not written here.
+
+source:
+  document: >-
+    NORMA Oficial Mexicana NOM-007-SSA2-2016, Para la atención de la mujer durante el embarazo,
+    parto y puerperio, y de la persona recién nacida
+  published: 2016-04-07
+  url: https://dof.gob.mx/nota_detalle.php?codigo=5432289&fecha=07/04/2016
+  section: "5.2.1.15"
+  checked: 2026-10-07
+  text: >-
+    Promover que la embarazada de bajo riesgo reciba como mínimo cinco consultas prenatales,
+    iniciando preferentemente en las primeras 8 semanas de gestación y/o prueba positiva de
+    embarazo atendiendo al siguiente calendario:
+
+minimum_visits: 5
+
+visits:
+  - visit: 1
+    published: "1 ª consulta: entre las 6 - 8 semanas;"
+    first_week: 6
+    last_week: 8
+  - visit: 2
+    published: "2 ª consulta: entre 10 - 13.6 semanas;"
+    first_week: 10
+    last_week: 13
+    last_week_days: 6
+  - visit: 3
+    published: "3 ª consulta: entre 16 - 18 semanas;"
+    first_week: 16
+    last_week: 18
+  - visit: 4
+    published: "4 ª consulta: 22 semanas;"
+    first_week: 22
+    last_week: 22
+  - visit: 5
+    published: "5 ª consulta: 28 semanas;"
+    first_week: 28
+    last_week: 28
+  - visit: 6
+    published: "6 ª consulta: 32 semanas;"
+    first_week: 32
+    last_week: 32
+  - visit: 7
+    published: "7 ª consulta: 36 semanas; y"
+    first_week: 36
+    last_week: 36
+  - visit: 8
+    published: "8 ª consulta: entre 38 - 41semanas."
+    first_week: 38
+    last_week: 41

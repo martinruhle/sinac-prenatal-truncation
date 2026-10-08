@@ -2,8 +2,8 @@
 
 This document separates three things: what the course delivers, what was left out of this
 semester, and what continues after it as part of the doctoral project. The question, the
-population and the method live in [`protocol.md`](protocol.md) (the exposure measures, the
-analysis and the limitations are still PENDING there). Every scope change stated here is recorded
+population and the method live in [`protocol.md`](protocol.md) (the limitations are still PENDING
+there). Every scope change stated here is recorded
 in [`decisions.md`](decisions.md), and the proposal it is stated against is translated in
 [`proposal_v2.md`](proposal_v2.md).
 
@@ -16,10 +16,10 @@ download; **the repository contains no data**, only the code that loads and tran
 |---|---|
 | Data model | Postgres with a subset of the OMOP CDM v5.4 and a reproducible ETL from the DGIS open-data download (see [Data source](#2-data-source)). Study period: 2020–2023 (D-041); development runs on 2023 (D-009) |
 | Cohorts | Documented cohort definitions in SQL, with an attrition table per definition. The unit of analysis, the base cohort and the order of the attrition steps are fixed in [`protocol.md`](protocol.md#base-cohort) (D-051 to D-058) |
-| Exposures | (a) total number of visits; (b) approximate APNCU index; (c) care started in the first trimester; (d) total visits in landmark cohorts, with one or two landmark weeks instead of three (D-004) |
-| Association estimates | Crude and adjusted odds ratios for each measure, with a reduced covariate set (D-007) |
-| Simulation | The association that truncation produces on its own, under the null hypothesis (NOM-007-SSA2-2016 schedule), with 2–3 fixed adherence scenarios (D-010) |
-| Sensitivity | Preterm cut-off (37/34/32), multiple pregnancies, the years 2020–2021 (2020–2023 against 2022–2023, D-049); gradient by state and by insurance. Births before week 22 are a base exclusion and no longer an axis (D-055). The full grid runs for measures (a) and (c) only (D-003) |
+| Exposures | (a) total number of visits, in four levels and per count; (b) approximate APNCU index, with Kotelchuck's program and the ACOG schedule; (c) care started in the first trimester; (d) total visits in landmark cohorts at weeks 28, 32 and 34. All four on one set of records (D-086 to D-092) |
+| Association estimates | Crude and adjusted odds ratios for each measure, from a binomial model on an aggregated table, adjusted for maternal age, education, state and year (D-007, D-093 to D-095) |
+| Simulation | The association that truncation produces on its own, under the null hypothesis (NOM-007-SSA2-2016 calendar, [`../config/nom007_schedule.yml`](../config/nom007_schedule.yml)), with two fixed adherence scenarios (D-010, D-096, D-097) |
+| Sensitivity | Preterm cut-off (37/34/32), multiple pregnancies, the years 2020–2021 (2020–2023 against 2022–2023, D-049); gradient by state and by insurance (D-099). Births before week 22 are a base exclusion and no longer an axis (D-055). The full grid runs for measures (a) and (c) only (D-003) |
 | Engineering | `compose.yml`, pytest, CI on GitHub Actions, a single entry point (`scripts/pipeline.py`), and a data dictionary covering the variables actually used (D-011) |
 | Documentation | Reproducible README, limitations, AI-assistance statement, decision log |
 
@@ -39,7 +39,7 @@ observation period, gestational age, plurality, the two prenatal care items and 
 | Gestational weeks, birth weight | `MEASUREMENT` | Gestation on the mother, weight on the newborn (D-064) |
 | Plurality | `MEASUREMENT` | Criteria 4 and 5 of the base cohort (D-068) |
 | Total visits, trimester of the first visit | `OBSERVATION` | This is a **declared count**, not one row per visit; it is not modelled as visits (D-065, D-066) |
-| Insurance | `PAYER_PLAN_PERIOD` | |
+| Insurance | `PAYER_PLAN_PERIOD` | For the gradient by insurance (v1.0); it is not an adjustment covariate (D-094) |
 | Variables with no standard concept | `concept_id = 0` + `*_source_value` | OMOP convention; the codes are listed in `omop_mapping.md` and in `config/source_to_concept_map.csv` (D-067) |
 
 ## 2. Data source
@@ -69,7 +69,7 @@ The [source inventory](source_inventory.md) measured the cost of each option:
 |---|---|---|---|
 | `v0.1-cohort` | Fri 9 Oct 2026 (session 18) | OMOP ETL of the vertical slice on 2023, base cohort in SQL with its attrition table, SQL tests in CI, README with the evidence map v1 and the source and scope changes written down | tag + release + clean-clone test |
 | `v0.2-progress` | Thu 29 Oct 2026 (tag), Fri 30 Oct (progress review, session 24) | Full period (2020–2023) loaded, remaining mapping and covariate ETL, exposures a–d, crude and adjusted odds ratios, null simulation v1, one or two sensitivity axes (D-012) | tag + release + clean-clone test |
-| `v1.0` | Fri 20 Nov 2026 (session 30, submission) | Remaining sensitivity axes and gradients, analysis image, complete entry point, documentation closed, security review, DOI (D-025) | tag + release + clean-clone test + Zenodo |
+| `v1.0` | Fri 20 Nov 2026 (session 30, submission) | Remaining sensitivity axes and gradients, APNCU on the NOM-007 calendar (D-091), analysis image, complete entry point, documentation closed, security review, DOI (D-025) | tag + release + clean-clone test + Zenodo |
 | presentation | Tue 24 Nov 2026 (session 31) | 12 minutes plus 5 for questions | — |
 
 The `v0.2-progress` tag is cut on the Thursday, the day before the progress review: the review
@@ -115,11 +115,20 @@ case is the weekly time budget.
 | Left out | Decision |
 |---|---|
 | The full sensitivity grid for measures (b) APNCU and (d) landmark cohorts; they appear in the main analysis only | D-003 |
-| The third landmark week: one or two are used instead of three | D-004 |
-| Sensitivity to the month assigned within the first-visit trimester for APNCU; a single documented rule is used instead | D-005 |
+| Sensitivity to the month assigned within the first-visit trimester for APNCU; a single documented rule, the middle month, is used instead | D-005, D-092 |
 | Sensitivity using birth weight <2500 g as an alternative outcome | D-006 |
-| The full covariate set in the adjusted odds ratios | D-007 |
+| Insurance as an adjustment covariate; it enters as the gradient by insurance instead | D-007, D-094 |
 | Inclusion of births before week 22 as an axis; the exclusion stays in the base cohort, with its count in the attrition table | D-055 |
+
+Two notes for the re-planning at `v0.2-progress`, where D-084 decides whether a cut comes back:
+
+- **The third landmark week is no longer cut.** D-004 cut it, and D-090 restored it once its cost
+  was known: a landmark is the same filter with another week, about half an hour of work.
+- **The month rule is the cheapest cut to restore.** The protocol has `compute_apncu()` take the
+  rule as a parameter, so running the other two rules costs about half an hour. The rule is not a
+  detail.
+  Measured once as orientation, the share of preterm births rated Adequate Plus is 19.7 % with the
+  first month of each trimester, 25.8 % with the middle month and 36.9 % with the last month.
 
 ### 4.4 Engineering left for later
 

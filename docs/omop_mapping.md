@@ -22,8 +22,8 @@ and domain, and that each domain is one the CDM allows in the field it is writte
 |---|---|---|
 | `PERSON` (the mother) | `PERSON` (the newborn), `FACT_RELATIONSHIP`, birth weight | No criterion of the base cohort uses the newborn; they arrive with the covariates in v0.2 |
 | `OBSERVATION_PERIOD` | `VISIT_OCCURRENCE`, `CARE_SITE` | No criterion uses the delivery visit, and no visit is ever created for prenatal care (D-066) |
-| `MEASUREMENT`: gestational age, plurality | `PAYER_PLAN_PERIOD` | Insurance is a covariate of v0.2 |
-| `OBSERVATION`: total visits, trimester of the first visit | `ATENCIONPRENATAL` | The rule for missing prenatal care data is PENDING in [`protocol.md`](protocol.md#exposure-measures). Candidate concept, checked in Athena: 44817093, LOINC 75204-8 "Prenatal care indicator [CDC.CS]", Observation |
+| `MEASUREMENT`: gestational age, plurality | `PAYER_PLAN_PERIOD` | Insurance enters the gradient by insurance (v1.0), not the adjusted models (D-094) |
+| `OBSERVATION`: total visits, trimester of the first visit | `ATENCIONPRENATAL` | No rule of the protocol uses it: the common set of records rests on the trimester and the visit count (D-086). Candidate concept if it is ever mapped, checked in Athena: 44817093, LOINC 75204-8 "Prenatal care indicator [CDC.CS]", Observation |
 | `LOCATION`: residence | | |
 | `CDM_SOURCE`, and `VOCABULARY` and `SOURCE_TO_CONCEPT_MAP` rows for the local codes | | |
 
