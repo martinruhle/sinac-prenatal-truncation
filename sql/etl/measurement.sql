@@ -1,7 +1,8 @@
--- MEASUREMENT: three rows per PERSON, in this order: gestational age at delivery, plurality,
--- then the mother's declared age (docs/omop_mapping.md §MEASUREMENT, D-064, D-068, D-100). All
--- are dated on the delivery (D-063), and a missing value keeps its row, with the raw value in
--- value_source_value (D-067, D-075).
+-- MEASUREMENT: three rows per mother PERSON, in this order: gestational age at delivery,
+-- plurality, then the mother's declared age (docs/omop_mapping.md §MEASUREMENT, D-064, D-068,
+-- D-100); and one row per newborn PERSON, its birth weight (D-105). All are dated on the delivery
+-- (D-063), and a missing value keeps its row, with the raw value in value_source_value (D-067,
+-- D-075). Birth weight is never a predictor and no criterion reads it (CLAUDE.md rule 3).
 WITH concepts AS (
     SELECT
         max(concept_id) FILTER (WHERE concept_key = 'registry') AS registry,
@@ -10,7 +11,9 @@ WITH concepts AS (
         max(concept_id) FILTER (WHERE concept_key = 'birth_plurality') AS plurality,
         max(concept_id) FILTER (WHERE concept_key = 'at_least') AS at_least,
         max(concept_id) FILTER (WHERE concept_key = 'mother_age_at_delivery') AS age,
-        max(concept_id) FILTER (WHERE concept_key = 'year') AS year
+        max(concept_id) FILTER (WHERE concept_key = 'year') AS year,
+        max(concept_id) FILTER (WHERE concept_key = 'birth_weight') AS weight,
+        max(concept_id) FILTER (WHERE concept_key = 'gram') AS gram
     FROM @results_schema.concept_sets
 ),
 
@@ -53,6 +56,20 @@ events AS (
         c.year,
         'EDAD',
         r.edad
+    FROM pg_temp.records AS r
+    CROSS JOIN concepts AS c
+    WHERE r.loaded
+    UNION ALL
+    SELECT
+        r.newborn_person_id,
+        1 AS position,
+        c.weight,
+        r.delivery_date,
+        NULL::integer,
+        r.weight,
+        c.gram,
+        'PESO',
+        r.peso
     FROM pg_temp.records AS r
     CROSS JOIN concepts AS c
     WHERE r.loaded

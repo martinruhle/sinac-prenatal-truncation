@@ -73,9 +73,9 @@ of null are quoted as published, from the descriptor text or from the catalogue 
 | 24 | `AFILIACION` | Health-service affiliation (*derechohabiencia*) | 2-digit code, zero-padded | — | `AFILIACION_CERTIFICADOS` | `00` "NO ESPECIFICADO", `88` "NO APLICA", `99` "SE IGNORA" | Insurance gradient (v1.0); not an adjustment covariate (D-094, D-099); not in the CDM until v1.0 (D-102) |
 | 25 | `ESCOLARIDAD` | Mother's education | code of 1 to 3 digits, not padded | — | `ESCOLARIDAD` | `0` "NO ESPECIFICADO", `88` "NO APLICA", `99` "SE IGNORA" | Education covariate in five levels (D-094), as an `OBSERVATION` row whose concept is the level (D-101) |
 | 30 | `FECHANACIMIENTO` | Date of birth of the live-born child | `dd/mm/yyyy` | — | — | none declared | Base cohort criterion 1; the date of every CDM event (D-052, D-063) |
-| 32 | `SEXO` | Sex of the live-born child | 1-digit code | — | `SEXO` | `0` "NO ESPECIFICADO", `9` "SE IGNORA" | The newborn `PERSON` (v0.2) |
+| 32 | `SEXO` | Sex of the live-born child | 1-digit code; `1` "HOMBRE", `2` "MUJER" | — | `SEXO` | `0` "NO ESPECIFICADO", `9` "SE IGNORA" | `gender_concept_id` of the newborn `PERSON`, with `0` and `9` as concept 0 (D-103); no criterion or model |
 | 33 | `EDADGESTACIONAL` | Weeks of gestation of the live-born child | 2-digit integer, 14 to 45 | weeks | — | `99` "No Especificado" | The outcome; base cohort criteria 3 and 6; landmark cohorts and APNCU expected visits (D-090, D-091); `MEASUREMENT` (D-053, D-064). Never a predictor (CLAUDE.md rule 3) |
-| 35 | `PESO` | Weight of the live-born child | integer of 3 or 4 digits, 350 to 5,450 | grams | — | `9999` "No Especificado" | Inventory item; never a predictor (CLAUDE.md rule 3) |
+| 35 | `PESO` | Weight of the live-born child | integer of 3 or 4 digits, 350 to 5,450 | grams | — | `9999` "No Especificado" | Birth weight, a `MEASUREMENT` of the newborn (D-105); never a criterion or a predictor (CLAUDE.md rule 3) |
 | 43 | `PRODUCTOEMBARAZO` | Type of pregnancy by the products delivered: single, twins, three or more | 1-digit code | — | `PRODUCTO_EMBARAZO` | `0` "NO ESPECIFICADO" | Base cohort criteria 4 and 5; `MEASUREMENT` (D-068) |
 | 44 | `ORDENPRODUCTO` | Order of the product in the delivery | 1-digit integer; blank in 1,494,848 records | — | — | none declared; blank | Multiplicity (D-051) |
 | 45 | `TOTALPRODUCTOS` | Total products delivered in the event | 1-digit integer; blank in 1,493,576 records | — | — | none declared; blank | Multiplicity (D-051) |
@@ -93,9 +93,11 @@ of null are quoted as published, from the descriptor text or from the catalogue 
     21,098 records of `CLUESCERTIFICA` in 2023 anyway. It is read with the meaning declared for
     `CLUES` only once the ETL needs this column.
 
-## What the 2023 file shows
+## What the files show
 
 These are measurements, not rules. They are inputs for the tasks that decide what to do with them.
+The first three cover the 2023 file; the last two cover the four files of 2020–2023, measured once
+with a throwaway query (D-047) when the newborn was mapped.
 
 - **`PESO` = 9999 in 80,048 of 1,521,280 records (5.3 %).** That is far more than the sentinels
   of the variables the cohort uses: `EDADGESTACIONAL` = 99 occurs in 492 and
@@ -109,6 +111,15 @@ These are measurements, not rules. They are inputs for the tasks that decide wha
   uncatalogued `88` of D-057. `EDAD` has no `888` or `999`. `LUGARNACIMIENTO` has no `13`
   "INSABI" or `99`. Rules for these codes are still needed, because other years carry them
   ([`omop_mapping.md`](omop_mapping.md#codes-without-a-standard-concept)).
+- **Birth weight, 2020–2023.** `PESO` = 9999 in 354,847 of 6,531,527 records (5.4 %), and it is
+  not missing at random. Among singletons it occurs in 11.1 % of the births at 22 to 36 weeks
+  (50,477 of 453,015) and in 4.8 % of those at 37 weeks or more (288,066 of 5,952,435), and in
+  617 of the 702 births below 22 weeks. No value is blank or other than digits. 328 weights are
+  below 500 g, the lowest 270 g, and one is above 6,000 g: 7,650 g in 2022. All are loaded as
+  recorded (D-105).
+- **Newborn sex, 2020–2023.** `SEXO` is `1` in 3,324,680 records and `2` in 3,202,236; `0` in
+  3,957 and `9` in 654 (0.07 % together). `9` almost disappears after 2020: 630 records in 2020,
+  15 in 2021, 9 in 2022 and none in 2023.
 
 ## Staged but not in scope
 

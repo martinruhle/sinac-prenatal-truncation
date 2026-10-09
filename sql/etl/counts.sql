@@ -5,7 +5,9 @@
 --     - `person not_loaded:no_year_of_birth` counts the records without a year of birth for the
 --       mother (D-060): step 1;
 --     - every other rule counts the loaded records it applied to (records.sql lists the rules);
---     - the `rows` of the four tables keyed by person_id are counted in the tables themselves.
+--     - the `rows` of the five tables keyed by person_id are counted in the tables themselves,
+--       mothers and newborns alike, and `person rows:mother` and `rows:newborn` split PERSON
+--       (D-103). A FACT_RELATIONSHIP row counts in the year of its first PERSON.
 --   - With NULL for the year, the tables built for the whole load: LOCATION, the local
 --     vocabularies, SOURCE_TO_CONCEPT_MAP and CDM_SOURCE.
 WITH per_year AS (
@@ -59,13 +61,28 @@ WITH per_year AS (
         count(*) FILTER (WHERE loaded AND state_rule = 'value') AS state_value,
         count(*) FILTER (WHERE loaded AND state_rule = 'code_to_null') AS state_code,
         count(*) FILTER (WHERE loaded AND state_rule = 'not_two_digits') AS state_not_two_digits,
-        count(*) FILTER (WHERE loaded AND state_rule = 'blank') AS state_blank
+        count(*) FILTER (WHERE loaded AND state_rule = 'blank') AS state_blank,
+        count(*) FILTER (WHERE loaded AND sex_rule = 'code_to_concept') AS sex_concept,
+        count(*) FILTER (WHERE loaded AND sex_rule = 'code_to_0') AS sex_0,
+        count(*) FILTER (WHERE loaded AND sex_rule = 'not_in_catalogue') AS sex_not_in_catalogue,
+        count(*) FILTER (WHERE loaded AND sex_rule = 'blank') AS sex_blank,
+        count(*) FILTER (WHERE loaded AND weight_rule = 'value') AS weight_value,
+        count(*) FILTER (WHERE loaded AND weight_rule = 'code_to_null') AS weight_code,
+        count(*) FILTER (WHERE loaded AND weight_rule = 'not_integer') AS weight_not_integer,
+        count(*) FILTER (WHERE loaded AND weight_rule = 'blank') AS weight_blank
     FROM pg_temp.records
     GROUP BY source_year
 ),
 
+-- The two PERSONs a record can give, with the year of its file.
+ids AS (
+    SELECT source_year, person_id, 'mother' AS role FROM pg_temp.records
+    UNION ALL
+    SELECT source_year, newborn_person_id, 'newborn' FROM pg_temp.records
+),
+
 table_rows AS (
-    SELECT r.source_year, t.cdm_table, count(*) AS row_count
+    SELECT i.source_year, t.cdm_table, count(*) AS row_count
     FROM (
         SELECT 'person' AS cdm_table, person_id FROM @cdm_schema.person
         UNION ALL
@@ -74,14 +91,27 @@ table_rows AS (
         SELECT 'measurement', person_id FROM @cdm_schema.measurement
         UNION ALL
         SELECT 'observation', person_id FROM @cdm_schema.observation
+        UNION ALL
+        SELECT 'fact_relationship', fact_id_1 FROM @cdm_schema.fact_relationship
     ) AS t
-    INNER JOIN pg_temp.records AS r ON t.person_id = r.person_id
-    GROUP BY r.source_year, t.cdm_table
+    INNER JOIN ids AS i ON t.person_id = i.person_id
+    GROUP BY i.source_year, t.cdm_table
+),
+
+person_roles AS (
+    SELECT
+        i.source_year,
+        count(*) FILTER (WHERE i.role = 'mother') AS mothers,
+        count(*) FILTER (WHERE i.role = 'newborn') AS newborns
+    FROM @cdm_schema.person AS p
+    INNER JOIN ids AS i ON p.person_id = i.person_id
+    GROUP BY i.source_year
 )
 
 INSERT INTO @results_schema.etl_counts (source_year, cdm_table, rule, row_count)
 SELECT p.source_year, v.cdm_table, v.rule, v.row_count
 FROM per_year AS p
+LEFT JOIN person_roles AS pr ON p.source_year = pr.source_year
 CROSS JOIN LATERAL (
     VALUES
     ('staging', 'rows', p.staged),
@@ -124,13 +154,24 @@ CROSS JOIN LATERAL (
     ('location', 'state:value', p.state_value),
     ('location', 'state:code_to_null', p.state_code),
     ('location', 'state:not_two_digits', p.state_not_two_digits),
-    ('location', 'state:blank', p.state_blank)
+    ('location', 'state:blank', p.state_blank),
+    ('person', 'gender:code_to_concept', p.sex_concept),
+    ('person', 'gender:code_to_0', p.sex_0),
+    ('person', 'gender:not_in_catalogue', p.sex_not_in_catalogue),
+    ('person', 'gender:blank', p.sex_blank),
+    ('person', 'rows:mother', coalesce(pr.mothers, 0)),
+    ('person', 'rows:newborn', coalesce(pr.newborns, 0)),
+    ('measurement', 'birth_weight:value', p.weight_value),
+    ('measurement', 'birth_weight:code_to_null', p.weight_code),
+    ('measurement', 'birth_weight:not_integer', p.weight_not_integer),
+    ('measurement', 'birth_weight:blank', p.weight_blank)
 ) AS v (cdm_table, rule, row_count)
 UNION ALL
 SELECT p.source_year, t.cdm_table, 'rows', coalesce(tr.row_count, 0)
 FROM per_year AS p
 CROSS JOIN (
-    VALUES ('person'), ('observation_period'), ('measurement'), ('observation')
+    VALUES
+    ('person'), ('observation_period'), ('measurement'), ('observation'), ('fact_relationship')
 ) AS t (cdm_table)
 LEFT JOIN table_rows AS tr
     ON p.source_year = tr.source_year AND t.cdm_table = tr.cdm_table

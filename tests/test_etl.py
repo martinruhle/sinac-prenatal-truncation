@@ -30,6 +30,7 @@ from sinac_truncation.etl import (
     config_problems,
     etl_reference,
     format_counts,
+    newborn_person_id,
     person_id,
     release_date,
     source_description,
@@ -41,15 +42,20 @@ from synthetic import (
     AGE,
     AT_LEAST,
     CDM_VERSION,
+    CHILD,
     CONCEPTS,
     EDUCATION,
     FEMALE,
     FIRST,
+    GRAM,
     JUNIOR_HIGH,
+    MALE,
     MAP,
     MEXICO,
+    MOTHER,
     NO_CARE,
     NOT_IN_CONCEPT,
+    PERSON_TABLE,
     PLURALITY,
     RECORDS_2022,
     RECORDS_2023,
@@ -62,11 +68,13 @@ from synthetic import (
     VISITS,
     WEEK,
     WEEKS,
+    WEIGHT,
     YEAR,
     Source,
     fetch,
     map_csv,
     module_schemas,
+    nid,
     pid,
     prepare_source,
 )
@@ -117,6 +125,9 @@ def test_person_id_is_the_record_s_position_in_its_year() -> None:
     """The example of docs/omop_mapping.md rule 7, and the bounds of D-059."""
     assert person_id(2023, 1_234_567) == 231_234_567
     assert person_id(2099, 9_999_999) < 2**31
+    assert newborn_person_id(2023, 1_234_567) == 1_231_234_567
+    assert person_id(2099, 9_999_999) < newborn_person_id(2000, 1)
+    assert newborn_person_id(2099, 9_999_999) < 2**31
     for year, row in ((1999, 1), (2100, 1), (2023, 0), (2023, 10_000_000)):
         with pytest.raises(ValueError):
             person_id(year, row)
@@ -240,6 +251,14 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
         (pid(5), FEMALE, 1990, None, None, None, 0, 0, 1, None, None, "2023:5", *[None] * 6),
         (pid(7), FEMALE, 1998, None, None, None, 0, 0, 5, None, None, "2023:7", *[None] * 6),
         (pid(8), FEMALE, 1996, 2, 29, None, 0, 0, 4, None, None, "2023:8", *[None] * 6),
+        # The newborns: born on the delivery date, with no location, and the sex of SEXO (D-103).
+        (nid(1), MALE, 2023, 3, 15, None, 0, 0, None, None, None, "2023:1", "1", 0, *[None] * 4),
+        (nid(2), MALE, 2023, 3, 15, None, 0, 0, None, None, None, "2023:2", "1", 0, *[None] * 4),
+        (nid(3), FEMALE, 2023, 6, 20, None, 0, 0, None, None, None, "2023:3", "2", 0, *[None] * 4),
+        (nid(4), 0, 2023, 1, 1, None, 0, 0, None, None, None, "2023:4", "0", 0, *[None] * 4),
+        (nid(5), 0, 2023, 12, 31, None, 0, 0, None, None, None, "2023:5", None, 0, *[None] * 4),
+        (nid(7), 0, 2023, 5, 5, None, 0, 0, None, None, None, "2023:7", "3", 0, *[None] * 4),
+        (nid(8), 0, 2023, 2, 28, None, 0, 0, None, None, None, "2023:8", "9", 0, *[None] * 4),
     ]
 
     assert fetch(
@@ -256,7 +275,7 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
     ]
 
     d = datetime.date
-    weeks, plural, age = "EDADGESTACIONAL", "PRODUCTOEMBARAZO", "EDAD"
+    weeks, plural, age, weight = "EDADGESTACIONAL", "PRODUCTOEMBARAZO", "EDAD", "PESO"
     assert fetch(
         source.connection,
         f"SELECT measurement_id, person_id, measurement_concept_id, measurement_date, "
@@ -285,6 +304,14 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
         (19, pid(8), WEEKS, d(2023, 2, 28), REGISTRY, None, 34, WEEK, weeks, 0, "34"),
         (20, pid(8), PLURALITY, d(2023, 2, 28), REGISTRY, None, 2, None, plural, 0, "2"),
         (21, pid(8), AGE, d(2023, 2, 28), REGISTRY, None, None, YEAR, age, 0, " 26"),
+        # Birth weight, on the newborn, extremes included and 9999 as NULL (D-105).
+        (22, nid(1), WEIGHT, d(2023, 3, 15), REGISTRY, None, 3200, GRAM, weight, 0, "3200"),
+        (23, nid(2), WEIGHT, d(2023, 3, 15), REGISTRY, None, 3200, GRAM, weight, 0, "3200"),
+        (24, nid(3), WEIGHT, d(2023, 6, 20), REGISTRY, None, 350, GRAM, weight, 0, "350"),
+        (25, nid(4), WEIGHT, d(2023, 1, 1), REGISTRY, None, None, GRAM, weight, 0, "9999"),
+        (26, nid(5), WEIGHT, d(2023, 12, 31), REGISTRY, None, None, GRAM, weight, 0, None),
+        (27, nid(7), WEIGHT, d(2023, 5, 5), REGISTRY, None, None, GRAM, weight, 0, "3.2"),
+        (28, nid(8), WEIGHT, d(2023, 2, 28), REGISTRY, None, 2100, GRAM, weight, 0, "2100"),
     ]
 
     visits, trim, edu = "TOTALCONSULTAS", "TRIMESTREPRIMERCONSULTA", "ESCOLARIDAD"
@@ -332,8 +359,10 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
         ("SINAC20_ENTRES", *catalogues, 0),
         ("SINAC20_ESCOL", *catalogues, 0),
         ("SINAC20_FECHANACMAD", *descriptor, 0),
+        ("SINAC20_PESO", *descriptor, 0),
         ("SINAC20_PRODEMB", *catalogues, 0),
         ("SINAC20_RESEXT", *catalogues, 0),
+        ("SINAC20_SEXO", *catalogues, 0),
         ("SINAC20_TOTCONS", *descriptor, 0),
         ("SINAC20_TRIMCONS", *catalogues, 0),
     ]
@@ -359,33 +388,57 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
 
 @pytest.mark.db
 def test_the_observation_period_is_the_delivery_day(source: Source) -> None:
-    """D-062: one day, the delivery, whatever the gestational age; every event on it (D-063)."""
+    """D-062: one day, the delivery, whatever the gestational age; every event on it (D-063).
+    The newborn is observed on the same day, its birth (D-103)."""
     source.run()
     deliveries = {
         pid(row): datetime.datetime.strptime(str(values[0]), "%d/%m/%Y").date()
         for row, values in enumerate(RECORDS_2023, start=1)
         if row != 6
     }
+    births = {person + (nid(1) - pid(1)): day for person, day in deliveries.items()}
     assert source.table("observation_period", "observation_period_id") == [
-        (person, person, day, day, REGISTRY) for person, day in sorted(deliveries.items())
+        (person, person, day, day, REGISTRY)
+        for person, day in sorted((deliveries | births).items())
     ]
     events = fetch(
         source.connection,
         f"SELECT person_id, measurement_date FROM {source.schemas.cdm}.measurement "
         f"UNION ALL SELECT person_id, observation_date FROM {source.schemas.cdm}.observation",
     )
-    assert len(events) == 6 * len(deliveries)
-    assert all(day == deliveries[person] for person, day in events)
+    assert len(events) == 6 * len(deliveries) + len(births)
+    assert all(day == (deliveries | births)[person] for person, day in events)
+
+
+@pytest.mark.db
+def test_each_mother_is_linked_to_her_newborn_both_ways(source: Source) -> None:
+    """D-104: "fact 1 is <relationship> of fact 2", once in each direction, both facts PERSONs."""
+    source.run()
+    loaded = [row for row in range(1, len(RECORDS_2023) + 1) if row != 6]
+    rows = fetch(
+        source.connection,
+        f"SELECT * FROM {source.schemas.cdm}.fact_relationship ORDER BY fact_id_1, fact_id_2",
+    )
+    assert rows == sorted(
+        [(PERSON_TABLE, pid(row), PERSON_TABLE, nid(row), MOTHER) for row in loaded]
+        + [(PERSON_TABLE, nid(row), PERSON_TABLE, pid(row), CHILD) for row in loaded]
+    )
 
 
 EXPECTED_2023_COUNTS: dict[tuple[str, str], int] = {
     ("staging", "rows"): 8,
-    ("person", "rows"): 7,
+    ("person", "rows"): 14,
+    ("person", "rows:mother"): 7,
+    ("person", "rows:newborn"): 7,
     ("person", "not_loaded:no_year_of_birth"): 1,
     ("person", "year_of_birth:mother_date"): 4,
     ("person", "year_of_birth:age"): 3,
-    ("observation_period", "rows"): 7,
-    ("measurement", "rows"): 21,
+    ("person", "gender:code_to_concept"): 3,
+    ("person", "gender:code_to_0"): 2,
+    ("person", "gender:not_in_catalogue"): 1,
+    ("person", "gender:blank"): 1,
+    ("observation_period", "rows"): 14,
+    ("measurement", "rows"): 28,
     ("measurement", "gestational_age_at_birth:value"): 4,
     ("measurement", "gestational_age_at_birth:code_to_null"): 1,
     ("measurement", "gestational_age_at_birth:not_integer"): 1,
@@ -399,6 +452,10 @@ EXPECTED_2023_COUNTS: dict[tuple[str, str], int] = {
     ("measurement", "mother_age_at_delivery:code_to_null"): 1,
     ("measurement", "mother_age_at_delivery:not_integer"): 1,
     ("measurement", "mother_age_at_delivery:blank"): 0,
+    ("measurement", "birth_weight:value"): 4,
+    ("measurement", "birth_weight:code_to_null"): 1,
+    ("measurement", "birth_weight:not_integer"): 1,
+    ("measurement", "birth_weight:blank"): 1,
     ("observation", "rows"): 21,
     ("observation", "prenatal_visits_count:value"): 4,
     ("observation", "prenatal_visits_count:code_to_null"): 1,
@@ -412,6 +469,7 @@ EXPECTED_2023_COUNTS: dict[tuple[str, str], int] = {
     ("observation", "mother_education:code_to_0"): 2,
     ("observation", "mother_education:not_in_catalogue"): 1,
     ("observation", "mother_education:blank"): 1,
+    ("fact_relationship", "rows"): 14,
     ("location", "country_concept_id:code_to_concept"): 4,
     ("location", "country_concept_id:code_to_0"): 2,
     ("location", "country_concept_id:not_in_catalogue"): 1,
@@ -427,17 +485,23 @@ CHECKS = (
     "concept_not_in_vocabulary:observation_period",
     "concept_not_in_vocabulary:measurement",
     "concept_not_in_vocabulary:observation",
+    "concept_not_in_vocabulary:fact_relationship",
     "concept_not_in_vocabulary:location",
     "concept_not_in_vocabulary:cdm_source",
     "concept_not_in_vocabulary:source_to_concept_map",
     "orphan_person:observation_period",
     "orphan_person:measurement",
     "orphan_person:observation",
+    "orphan_person:fact_relationship",
     "orphan_location:person",
     "person_without_one_observation_period",
-    "person_without_three_measurements",
-    "person_without_three_observations",
+    "mother_without_three_measurements",
+    "mother_without_three_observations",
+    "newborn_without_one_measurement",
+    "newborn_with_an_observation",
     "observation_period_not_the_delivery_day",
+    "newborn_birth_not_the_delivery_day",
+    "fact_relationship_not_the_record_pair",
     "event_outside_observation_period:measurement",
     "event_outside_observation_period:observation",
     "visit_occurrence_rows",
@@ -468,18 +532,18 @@ def test_counts_per_step_are_recorded(source: Source) -> None:
 
 @pytest.mark.db
 def test_person_plus_not_loaded_equals_staged(source: Source) -> None:
-    """The unit of analysis (D-051): one PERSON per staged record, less those without a year of
-    birth for the mother (D-060)."""
+    """The unit of analysis (D-051): one mother PERSON per staged record, less those without a
+    year of birth for the mother (D-060), and one newborn per mother (D-103)."""
     source.run((2022, 2023))
     counts = {(year, table, rule): count for year, table, rule, count in source.counts()}
     for year, records in ((2022, RECORDS_2022), (2023, RECORDS_2023)):
         staged = counts[(year, "staging", "rows")]
         assert staged == len(records)
-        assert (
-            counts[(year, "person", "rows")]
-            + counts[(year, "person", "not_loaded:no_year_of_birth")]
-            == staged
-        )
+        mothers = counts[(year, "person", "rows:mother")]
+        assert mothers + counts[(year, "person", "not_loaded:no_year_of_birth")] == staged
+        assert counts[(year, "person", "rows:newborn")] == mothers
+        assert counts[(year, "person", "rows")] == 2 * mothers
+        assert counts[(year, "fact_relationship", "rows")] == 2 * mothers
 
 
 @pytest.mark.db
@@ -510,6 +574,11 @@ def _map_with_a_target_not_in_concept(source: Source) -> None:
     (source.config_dir / "source_to_concept_map.csv").write_text(map_csv(rows), encoding="utf-8")
 
 
+def _sex_target_not_in_concept(source: Source) -> None:
+    rows = [(v, c, NOT_IN_CONCEPT if (v, c) == ("SINAC20_SEXO", "1") else t) for v, c, t in MAP]
+    (source.config_dir / "source_to_concept_map.csv").write_text(map_csv(rows), encoding="utf-8")
+
+
 def _a_visit(source: Source) -> None:
     with source.connection.cursor() as cursor:
         cursor.execute(
@@ -525,9 +594,10 @@ def _a_visit(source: Source) -> None:
     ("damage", "check"),
     [
         (_map_with_a_target_not_in_concept, "concept_not_in_vocabulary:source_to_concept_map: 1"),
+        (_sex_target_not_in_concept, "concept_not_in_vocabulary:person: 1"),
         (_a_visit, "visit_occurrence_rows: 1"),
     ],
-    ids=["target-not-in-concept", "a-visit"],
+    ids=["target-not-in-concept", "sex-not-in-concept", "a-visit"],
 )
 def test_a_failing_check_keeps_the_previous_load(source: Source, damage: Any, check: str) -> None:
     source.run()
@@ -545,12 +615,13 @@ def test_years_select_what_the_cdm_holds(source: Source) -> None:
     source.run((2022, 2023))
     persons = [row[0] for row in source.table("person", "person_id")]
     assert persons[:2] == [pid(1, 2022), pid(2, 2022)] == [220_000_001, 220_000_002]
-    assert len(persons) == 2 + 7
+    assert persons[9:11] == [nid(1, 2022), nid(2, 2022)] == [1_220_000_001, 1_220_000_002]
+    assert len(persons) == 2 * (2 + 7)
     assert len(source.table("location", "location_id")) == 7
 
     source.run((2023,))
     persons = [row[0] for row in source.table("person", "person_id")]
-    assert persons[0] == pid(1) and len(persons) == 7
+    assert persons[0] == pid(1) and len(persons) == 2 * 7
     assert {year for year, *_ in source.counts()} == {None, 2023}
 
 

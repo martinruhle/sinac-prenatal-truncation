@@ -138,6 +138,13 @@ def test_a_non_standard_concept_is_reported() -> None:
     assert "standard_concept must be 'S'" in problem
 
 
+def test_a_field_name_may_end_in_a_digit() -> None:
+    """The two ids of FACT_RELATIONSHIP are ``fact_id_1`` and ``fact_id_2`` (D-104)."""
+    fields = ("fact_relationship.domain_concept_id_1", "fact_relationship.domain_concept_id_2")
+    config = _with(("concepts", "person_table"), _concept("Metadata", *fields))
+    assert check_concept_sets(config) == []
+
+
 @pytest.mark.parametrize("fields", [[], "measurement.measurement_concept_id", ["measurement"]])
 def test_cdm_fields_must_list_table_fields(fields: object) -> None:
     config = _with(("concepts", "weeks_at_birth", "cdm_fields"), fields)

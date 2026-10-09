@@ -22,6 +22,7 @@ __all__ = [
     "FIRST_YEAR",
     "LAST_YEAR",
     "LOAD_FILES",
+    "NEWBORN_OFFSET",
     "POPULATED_TABLES",
     "ROWS_PER_YEAR",
     "SETUP_FILES",
@@ -35,6 +36,7 @@ __all__ = [
     "config_problems",
     "etl_reference",
     "format_counts",
+    "newborn_person_id",
     "person_id",
     "release_date",
     "repository_url",
@@ -56,6 +58,8 @@ SOURCE_COLUMNS: tuple[str, ...] = (
     "TOTALCONSULTAS",
     "TRIMESTREPRIMERCONSULTA",
     "ESCOLARIDAD",
+    "SEXO",
+    "PESO",
 )
 
 #: ``tables.sql`` creates the tables the ETL keeps in ``results``; ``records.sql`` casts every
@@ -64,13 +68,15 @@ SETUP_FILES: tuple[str, ...] = ("tables.sql", "records.sql")
 UNLOADABLE_FILE = "unloadable.sql"
 
 #: The files that write the CDM and the counts, in the order they run: LOCATION comes before
-#: PERSON, which references it, and the checks come last.
+#: PERSON, which references it, FACT_RELATIONSHIP comes after the PERSONs it links, and the checks
+#: come last.
 LOAD_FILES: tuple[str, ...] = (
     "location.sql",
     "person.sql",
     "observation_period.sql",
     "measurement.sql",
     "observation.sql",
+    "fact_relationship.sql",
     "cdm_source.sql",
     "counts.sql",
     "checks.sql",
@@ -84,6 +90,7 @@ POPULATED_TABLES: tuple[str, ...] = (
     "observation_period",
     "measurement",
     "observation",
+    "fact_relationship",
     "location",
     "cdm_source",
     "source_to_concept_map",
@@ -96,6 +103,7 @@ COUNTED_TABLES: tuple[str, ...] = (
     "observation_period",
     "measurement",
     "observation",
+    "fact_relationship",
     "location",
     "vocabulary",
     "source_to_concept_map",
@@ -108,6 +116,10 @@ COUNTED_TABLES: tuple[str, ...] = (
 FIRST_YEAR = 2000
 LAST_YEAR = 2099
 ROWS_PER_YEAR = 10_000_000
+
+#: The newborn of a record is the mother's ``person_id`` + NEWBORN_OFFSET (D-059). Every mother id
+#: is below it, and the newborn of row 9,999,999 of LAST_YEAR still fits the ``integer`` column.
+NEWBORN_OFFSET = 1_000_000_000
 
 #: The manifest entries a local vocabulary points at: the descriptor, when its codes are declared
 #: there, and otherwise the catalogue set of the 2020-2023 catalogue period (concept_sets.yml).
@@ -135,6 +147,15 @@ def person_id(year: int, source_row: int) -> int:
     if not 1 <= source_row < ROWS_PER_YEAR:
         raise ValueError(f"source_row {source_row} is outside 1-{ROWS_PER_YEAR - 1:,}")
     return (year - FIRST_YEAR) * ROWS_PER_YEAR + source_row
+
+
+def newborn_person_id(year: int, source_row: int) -> int:
+    """The ``person_id`` of the newborn of one record: its mother's + NEWBORN_OFFSET (D-059).
+
+    Raises:
+        ValueError: the year or the row does not fit the formula.
+    """
+    return person_id(year, source_row) + NEWBORN_OFFSET
 
 
 def year_problems(years: Sequence[int]) -> list[str]:

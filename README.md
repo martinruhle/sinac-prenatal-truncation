@@ -83,8 +83,9 @@ block. When one of them differs, `vocab` refuses the package and states the valu
 has: the sha256 and size, the version and, table by table, the rows.
 
 `cdm` populates the OMOP tables of the vertical slice from `staging`, as
-[`docs/omop_mapping.md`](docs/omop_mapping.md) maps them: PERSON (the mother), a one-day
-OBSERVATION_PERIOD, MEASUREMENT, OBSERVATION, LOCATION, CDM_SOURCE and the map of local codes.
+[`docs/omop_mapping.md`](docs/omop_mapping.md) maps them: PERSON (the mother and the newborn),
+a one-day OBSERVATION_PERIOD, MEASUREMENT, OBSERVATION, FACT_RELATIONSHIP, LOCATION, CDM_SOURCE
+and the map of local codes.
 The SQL is in [`sql/etl/`](sql/etl/) and reads every concept id from the configuration, loaded
 into `results.concept_sets`. Every value is cast there, and each rule's count goes to
 `results.etl_counts`, together with the post-load checks. The run is one transaction that commits

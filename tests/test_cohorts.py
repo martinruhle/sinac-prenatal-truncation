@@ -48,23 +48,23 @@ CONFIG = Path(__file__).resolve().parents[1] / "config"
 
 #: Records 9 to 15 of the 2023 file, in the order of SOURCE_COLUMNS: FECHANACIMIENTO,
 #: FECHANACIMIENTOMADRE, EDAD, RESIDEEXTRANJERO, ENTIDADRESIDENCIA, EDADGESTACIONAL,
-#: PRODUCTOEMBARAZO, TOTALCONSULTAS, TRIMESTREPRIMERCONSULTA, ESCOLARIDAD. Each is the normal case
-#: of record 1 but for its trap.
+#: PRODUCTOEMBARAZO, TOTALCONSULTAS, TRIMESTREPRIMERCONSULTA, ESCOLARIDAD, SEXO, PESO. Each is the
+#: normal case of record 1 but for its trap.
 COHORT_TRAPS_2023: tuple[tuple[str | None, ...], ...] = (
     # 9. A birth of 2022 in the 2023 file: leaves at step 2 when --years is 2023 (D-073).
-    ("31/12/2022", "01/01/1990", "32", "2", "09", "39", "1", "8", "1", "51"),
+    ("31/12/2022", "01/01/1990", "32", "2", "09", "39", "1", "8", "1", "51", "1", "3200"),
     # 10. RESIDEEXTRANJERO blank, so country_concept_id is NULL: unknown is not Mexico (step 3).
-    ("10/10/2023", "01/01/1990", "33", None, "09", "39", "1", "8", "1", "51"),
+    ("10/10/2023", "01/01/1990", "33", None, "09", "39", "1", "8", "1", "51", "1", "3200"),
     # 11. Weeks 99 and plurality 0: fails criteria 3 and 4, counted only at step 4.
-    ("11/11/2023", "01/01/1990", "33", "2", "09", "99", "0", "8", "1", "51"),
+    ("11/11/2023", "01/01/1990", "33", "2", "09", "99", "0", "8", "1", "51", "1", "3200"),
     # 12. Weeks that do not cast (D-075): NULL in the CDM, so not specified (step 4).
-    ("12/11/2023", "01/01/1990", "33", "2", "09", " 38", "1", "8", "1", "51"),
+    ("12/11/2023", "01/01/1990", "33", "2", "09", " 38", "1", "8", "1", "51", "1", "3200"),
     # 13. Plurality 0, "NO ESPECIFICADO": step 5.
-    ("13/11/2023", "01/01/1990", "33", "2", "09", "38", "0", "8", "1", "51"),
+    ("13/11/2023", "01/01/1990", "33", "2", "09", "38", "0", "8", "1", "51", "1", "3200"),
     # 14. A singleton born at 21 weeks: step 7.
-    ("14/11/2023", "01/01/1990", "33", "2", "09", "21", "1", "8", "1", "51"),
+    ("14/11/2023", "01/01/1990", "33", "2", "09", "21", "1", "8", "1", "51", "1", "3200"),
     # 15. A singleton born at exactly 22 weeks: the bound is inclusive (NOM-007 §3.45), it stays.
-    ("15/11/2023", "01/01/1990", "33", "2", "09", "22", "1", "8", "1", "51"),
+    ("15/11/2023", "01/01/1990", "33", "2", "09", "22", "1", "8", "1", "51", "1", "3200"),
 )
 
 #: The description and kind of each step, as docs/protocol.md §Attrition writes them.
@@ -83,7 +83,8 @@ STEPS: tuple[tuple[str | None, str], ...] = (
 EXPECTED_2023: tuple[tuple[int, int | None], ...] = (
     # 0. The 8 records of RECORDS_2023 and the 7 of COHORT_TRAPS_2023.
     (15, None),
-    # 1. Record 6: neither the mother's date of birth nor her age (D-060).
+    # 1. Record 6: neither the mother's date of birth nor her age (D-060). The 14 newborns that
+    #    PERSON also holds are not subjects (D-106).
     (14, 1),
     # 2. Record 9: born on 31/12/2022.
     (13, 1),
@@ -256,7 +257,13 @@ def test_every_sql_file_of_the_cohorts_exists() -> None:
 def test_the_cohort_sql_cites_configured_concepts_only() -> None:
     config = real_config()
     texts = cohorts.read_sql()
-    assert cited_concept_keys(texts) == {"gestational_age_at_birth", "birth_plurality"}
+    assert cited_concept_keys(texts) == {
+        "gestational_age_at_birth",
+        "birth_plurality",
+        # The subjects are the mothers, found through FACT_RELATIONSHIP (D-106).
+        "person_table",
+        "mother",
+    }
     assert cited_concept_keys(texts) <= set(config["concepts"])
     cited_vocabularies = set().union(*(vocabulary_ids(text) for text in texts.values()))
     assert cited_vocabularies == {MEXICO_CODE[0]}
@@ -454,7 +461,7 @@ def _more_staged_than_loaded(source: Source) -> None:
 
 @pytest.mark.db
 def test_a_broken_invariant_keeps_the_previous_cohort(source: Source) -> None:
-    """16 staged, 1 not loaded and 14 PERSON rows: step 1 cannot be consistent."""
+    """16 staged, 1 not loaded and 14 mother PERSONs: step 1 cannot be consistent."""
     source.run((2023,))
     run_cohorts(source, (2023,))
     before = snapshot(source)
@@ -462,6 +469,22 @@ def test_a_broken_invariant_keeps_the_previous_cohort(source: Source) -> None:
     with pytest.raises(cohorts.CohortError, match="the previous cohort was kept") as raised:
         run_cohorts(source, (2023,))
     assert "definition 1, 2023, step 1: 1 excluded, but 16 - 14 = 2" in str(raised.value)
+    assert snapshot(source) == before
+
+
+@pytest.mark.db
+def test_without_the_links_to_the_newborns_no_mother_is_found(source: Source) -> None:
+    """The subjects are the PERSONs that are the Mother of another (D-106). Without
+    FACT_RELATIONSHIP no subject is left, and step 1 no longer matches the counts of the ETL, so
+    an empty cohort cannot pass for a result."""
+    source.run((2023,))
+    run_cohorts(source, (2023,))
+    before = snapshot(source)
+    with source.connection.cursor() as cursor:
+        cursor.execute(f"DELETE FROM {source.schemas.cdm}.fact_relationship")
+    with pytest.raises(cohorts.CohortError, match="the previous cohort was kept") as raised:
+        run_cohorts(source, (2023,))
+    assert "definition 1, 2023, step 1: 1 excluded, but 15 - 0 = 15" in str(raised.value)
     assert snapshot(source) == before
 
 
