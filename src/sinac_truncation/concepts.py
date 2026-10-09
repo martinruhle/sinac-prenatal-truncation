@@ -131,9 +131,17 @@ def _check_source_vocabulary(vocabulary_id: str, entry: object) -> list[str]:
         value = entry.get(name)
         if not isinstance(value, str) or not value.strip():
             problems.append(f"source vocabulary {vocabulary_id!r}: {name} is missing")
-    field = entry.get("cdm_field")
-    if not isinstance(field, str) or not _FIELD.match(field):
-        problems.append(f"source vocabulary {vocabulary_id!r}: cdm_field is not a table.field name")
+    fields = entry.get("cdm_fields")
+    if not isinstance(fields, list) or not fields:
+        problems.append(
+            f"source vocabulary {vocabulary_id!r}: cdm_fields must list at least one table.field"
+        )
+    else:
+        problems += [
+            f"source vocabulary {vocabulary_id!r}: {field!r} is not a table.field name"
+            for field in fields
+            if not isinstance(field, str) or not _FIELD.match(field)
+        ]
     target_domain = entry.get("target_domain_id")
     if target_domain is not None and not isinstance(target_domain, str):
         problems.append(f"source vocabulary {vocabulary_id!r}: target_domain_id must be text")

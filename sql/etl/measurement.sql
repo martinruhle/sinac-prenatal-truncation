@@ -1,13 +1,16 @@
--- MEASUREMENT: two rows per PERSON, in this order: gestational age at delivery, then plurality
--- (docs/omop_mapping.md §MEASUREMENT, D-064, D-068). Both are dated on the delivery (D-063), and
--- a missing value keeps its row, with the raw value in value_source_value (D-067, D-075).
+-- MEASUREMENT: three rows per PERSON, in this order: gestational age at delivery, plurality,
+-- then the mother's declared age (docs/omop_mapping.md §MEASUREMENT, D-064, D-068, D-100). All
+-- are dated on the delivery (D-063), and a missing value keeps its row, with the raw value in
+-- value_source_value (D-067, D-075).
 WITH concepts AS (
     SELECT
         max(concept_id) FILTER (WHERE concept_key = 'registry') AS registry,
         max(concept_id) FILTER (WHERE concept_key = 'gestational_age_at_birth') AS weeks,
         max(concept_id) FILTER (WHERE concept_key = 'week') AS week,
         max(concept_id) FILTER (WHERE concept_key = 'birth_plurality') AS plurality,
-        max(concept_id) FILTER (WHERE concept_key = 'at_least') AS at_least
+        max(concept_id) FILTER (WHERE concept_key = 'at_least') AS at_least,
+        max(concept_id) FILTER (WHERE concept_key = 'mother_age_at_delivery') AS age,
+        max(concept_id) FILTER (WHERE concept_key = 'year') AS year
     FROM @results_schema.concept_sets
 ),
 
@@ -36,6 +39,20 @@ events AS (
         NULL::integer,
         'PRODUCTOEMBARAZO',
         r.productoembarazo
+    FROM pg_temp.records AS r
+    CROSS JOIN concepts AS c
+    WHERE r.loaded
+    UNION ALL
+    SELECT
+        r.person_id,
+        3 AS position,
+        c.age,
+        r.delivery_date,
+        NULL::integer,
+        r.age,
+        c.year,
+        'EDAD',
+        r.edad
     FROM pg_temp.records AS r
     CROSS JOIN concepts AS c
     WHERE r.loaded

@@ -17,7 +17,7 @@
 --   code_to_concept   a code whose target is a concept: that concept
 --   code_to_0         a code whose target is 0 (a flavor of null, or no standard concept): 0
 --   value             anything else that casts: the value itself
---   not_integer       a count or a number of weeks that is not digits only: NULL
+--   not_integer       a count, an age or a number of weeks that is not digits only: NULL
 --   not_in_catalogue  a coded value its catalogue does not publish: NULL for a number, 0 for a
 --                     concept
 --   not_two_digits    a state that is not a two-digit code: NULL
@@ -48,10 +48,12 @@ WITH parsed AS (
                 AND pg_input_is_valid(s.edad, 'integer')
                 THEN s.edad::integer
         END AS mother_age,
+        age_code.source_code IS NOT NULL AS age_is_code,
         weeks_code.source_code IS NOT NULL AS weeks_is_code,
         plurality_code.source_code IS NOT NULL AS plurality_is_code,
         visits_code.source_code IS NOT NULL AS visits_is_code,
         trimester_code.target_concept_id AS trimester_target,
+        education_code.target_concept_id AS education_target,
         country_code.target_concept_id AS country_target,
         state_code.source_code IS NOT NULL AS state_is_code
     FROM pg_temp.staged_records AS s
@@ -86,6 +88,10 @@ WITH parsed AS (
         ON trimester_code.source_vocabulary_id = 'SINAC20_TRIMCONS'
         AND trimester_code.source_code = s.trimestreprimerconsulta
         AND trimester_code.invalid_reason IS NULL
+    LEFT JOIN @cdm_schema.source_to_concept_map AS education_code
+        ON education_code.source_vocabulary_id = 'SINAC20_ESCOL'
+        AND education_code.source_code = s.escolaridad
+        AND education_code.invalid_reason IS NULL
     LEFT JOIN @cdm_schema.source_to_concept_map AS country_code
         ON country_code.source_vocabulary_id = 'SINAC20_RESEXT'
         AND country_code.source_code = s.resideextranjero
@@ -132,6 +138,18 @@ ruled AS (
             WHEN p.trimester_target IS NOT NULL THEN 'code_to_concept'
             ELSE 'not_in_catalogue'
         END AS trimester_rule,
+        CASE
+            WHEN p.edad IS NULL THEN 'blank'
+            WHEN p.age_is_code THEN 'code_to_null'
+            WHEN p.edad ~ '^[0-9]+$' THEN 'value'
+            ELSE 'not_integer'
+        END AS age_rule,
+        CASE
+            WHEN p.escolaridad IS NULL THEN 'blank'
+            WHEN p.education_target = 0 THEN 'code_to_0'
+            WHEN p.education_target IS NOT NULL THEN 'code_to_concept'
+            ELSE 'not_in_catalogue'
+        END AS education_rule,
         CASE
             WHEN p.resideextranjero IS NULL THEN 'blank'
             WHEN p.country_target = 0 THEN 'code_to_0'
@@ -205,5 +223,17 @@ SELECT
         WHEN 'code_to_concept' THEN r.trimester_target
         WHEN 'code_to_0' THEN 0
         WHEN 'not_in_catalogue' THEN 0
-    END AS trimester_concept_id
+    END AS trimester_concept_id,
+    -- The age the certificate declares, in completed years: the maternal age covariate (D-094,
+    -- D-100). It is read as declared, not computed from year_of_birth.
+    r.edad,
+    r.age_rule,
+    CASE WHEN r.age_rule = 'value' THEN r.edad::numeric END AS age,
+    r.escolaridad,
+    r.education_rule,
+    CASE r.education_rule
+        WHEN 'code_to_concept' THEN r.education_target
+        WHEN 'code_to_0' THEN 0
+        WHEN 'not_in_catalogue' THEN 0
+    END AS education_concept_id
 FROM ruled AS r;

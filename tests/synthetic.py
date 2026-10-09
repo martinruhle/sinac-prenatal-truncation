@@ -33,29 +33,32 @@ from sinac_truncation.etl import SOURCE_COLUMNS, person_id
 
 #: One record per trap, in the order of SOURCE_COLUMNS: FECHANACIMIENTO, FECHANACIMIENTOMADRE,
 #: EDAD, RESIDEEXTRANJERO, ENTIDADRESIDENCIA, EDADGESTACIONAL, PRODUCTOEMBARAZO, TOTALCONSULTAS,
-#: TRIMESTREPRIMERCONSULTA. ``None`` is a blank cell, which staging holds as NULL (D-069).
+#: TRIMESTREPRIMERCONSULTA, ESCOLARIDAD. ``None`` is a blank cell, which staging holds as NULL
+#: (D-069).
 RECORDS_2023: tuple[tuple[str | None, ...], ...] = (
     # 1. The normal case.
-    ("15/03/2023", "02/05/1995", "27", "2", "09", "39", "1", "8", "1"),
+    ("15/03/2023", "02/05/1995", "27", "2", "09", "39", "1", "8", "1", "51"),
     # 2. An exact duplicate of 1: kept, as a second PERSON (D-058).
-    ("15/03/2023", "02/05/1995", "27", "2", "09", "39", "1", "8", "1"),
-    # 3. Out of any plausible range, kept as they are (D-053, D-058); three or more; no care.
-    ("20/06/2023", "11/11/2000", "22", "2", "00", "12", "3", "45", "0"),
+    ("15/03/2023", "02/05/1995", "27", "2", "09", "39", "1", "8", "1", "51"),
+    # 3. Out of any plausible range, kept as they are (D-053, D-058); three or more; no care; an
+    #    age that is a code while the mother's date of birth is known; a technical program.
+    ("20/06/2023", "11/11/2000", "888", "2", "00", "12", "3", "45", "0", "132"),
     # 4. "No especificado" everywhere; 88 is not in SI_NO (D-057); the mother's date is a code.
-    ("01/01/2023", "09/09/9999", "30", "88", "00", "99", "0", "99", "8"),
+    ("01/01/2023", "09/09/9999", "30", "88", "00", "99", "0", "99", "8", "0"),
     # 5. Empty fields; resident abroad; a mother's date that is not a day of the calendar.
-    ("31/12/2023", "31/02/1990", "33", "1", "88", None, "1", None, None),
+    ("31/12/2023", "31/02/1990", "33", "1", "88", None, "1", None, None, None),
     # 6. Neither the mother's date of birth nor her age: not loaded (D-060).
-    ("10/07/2023", "99/99/9999", "999", "2", "15", "38", "1", "5", "2"),
+    ("10/07/2023", "99/99/9999", "999", "2", "15", "38", "1", "5", "2", "99"),
     # 7. Values that do not cast (D-075); a mother born after the delivery.
-    ("05/05/2023", "01/01/2024", "25", "3", "9", "ab", "7", " 7", "5"),
-    # 8. Twins; no visits, which is an answer; a mother born on a leap day.
-    ("28/02/2023", "29/02/1996", "26", "2", "31", "34", "2", "0", "1"),
+    ("05/05/2023", "01/01/2024", "25", "3", "9", "ab", "7", " 7", "5", "7"),
+    # 8. Twins; no visits, which is an answer; a mother born on a leap day, whose declared age
+    #    does not cast; education "NO APLICA".
+    ("28/02/2023", "29/02/1996", " 26", "2", "31", "34", "2", "0", "1", "88"),
 )
 
 RECORDS_2022: tuple[tuple[str | None, ...], ...] = (
-    ("03/03/2022", "15/08/1990", "31", "2", "09", "38", "1", "10", "1"),
-    ("04/04/2022", "20/01/1985", "37", "2", "14", "36", "1", "6", "2"),
+    ("03/03/2022", "15/08/1990", "31", "2", "09", "38", "1", "10", "1", "71"),
+    ("04/04/2022", "20/01/1985", "37", "2", "14", "36", "1", "6", "2", "81"),
 )
 
 SHA256 = {2023: "a" * 64, 2022: "b" * 64}
@@ -65,6 +68,8 @@ FEMALE, REGISTRY, WEEKS, WEEK, PLURALITY, AT_LEAST, VISITS, TRIMESTER, CDM_VERSI
     2_000_000_001, 2_000_000_010
 )
 FIRST, SECOND, THIRD, NO_CARE, MEXICO = range(2_000_000_011, 2_000_000_016)
+AGE, YEAR, EDUCATION = range(2_000_000_016, 2_000_000_019)
+NO_SCHOOLING, PRIMARY, JUNIOR_HIGH, SENIOR_HIGH, HIGHER = range(2_000_000_019, 2_000_000_024)
 NOT_IN_CONCEPT = 2_000_000_099
 
 
@@ -95,46 +100,54 @@ CONCEPTS: dict[str, dict[str, Any]] = {
     "week": _concept(WEEK, "Unit", "measurement.unit_concept_id"),
     "birth_plurality": _concept(PLURALITY, "Measurement", "measurement.measurement_concept_id"),
     "at_least": _concept(AT_LEAST, "Meas Value Operator", "measurement.operator_concept_id"),
+    "mother_age_at_delivery": _concept(AGE, "Measurement", "measurement.measurement_concept_id"),
+    "year": _concept(YEAR, "Unit", "measurement.unit_concept_id"),
     "prenatal_visits_count": _concept(VISITS, "Observation", "observation.observation_concept_id"),
     "first_prenatal_visit_trimester": _concept(
         TRIMESTER, "Observation", "observation.observation_concept_id"
     ),
+    "mother_education": _concept(EDUCATION, "Observation", "observation.observation_concept_id"),
     "cdm_version": _concept(CDM_VERSION, "Metadata", "cdm_source.cdm_version_concept_id"),
 }
 
 
-def _vocabulary(column: str, defined_in: str, field: str, domain: str | None) -> dict[str, Any]:
+def _vocabulary(column: str, defined_in: str, domain: str | None, *fields: str) -> dict[str, Any]:
     return {
         "source_column": column,
         "defined_in": defined_in,
-        "cdm_field": field,
+        "cdm_fields": list(fields),
         "target_domain_id": domain,
     }
 
 
 SOURCE_VOCABULARIES: dict[str, dict[str, Any]] = {
     "SINAC20_EDADGEST": _vocabulary(
-        "EDADGESTACIONAL", "descriptor", "measurement.value_as_number", None
+        "EDADGESTACIONAL", "descriptor", None, "measurement.value_as_number"
     ),
     "SINAC20_PRODEMB": _vocabulary(
-        "PRODUCTOEMBARAZO", "PRODUCTO_EMBARAZO", "measurement.value_as_number", None
+        "PRODUCTOEMBARAZO", "PRODUCTO_EMBARAZO", None, "measurement.value_as_number"
     ),
     "SINAC20_TOTCONS": _vocabulary(
-        "TOTALCONSULTAS", "descriptor", "observation.value_as_number", None
+        "TOTALCONSULTAS", "descriptor", None, "observation.value_as_number"
     ),
     "SINAC20_TRIMCONS": _vocabulary(
         "TRIMESTREPRIMERCONSULTA",
         "TRIMESTRE_PRIMER_CONSULTA",
-        "observation.value_as_concept_id",
         "Meas Value",
+        "observation.value_as_concept_id",
     ),
     "SINAC20_RESEXT": _vocabulary(
-        "RESIDEEXTRANJERO", "SI_NO", "location.country_concept_id", "Geography"
+        "RESIDEEXTRANJERO", "SI_NO", "Geography", "location.country_concept_id"
     ),
-    "SINAC20_ENTRES": _vocabulary("ENTIDADRESIDENCIA", "ENTIDADES", "location.state", None),
-    "SINAC20_EDAD": _vocabulary("EDAD", "descriptor", "person.year_of_birth", None),
+    "SINAC20_ENTRES": _vocabulary("ENTIDADRESIDENCIA", "ENTIDADES", None, "location.state"),
+    "SINAC20_ESCOL": _vocabulary(
+        "ESCOLARIDAD", "ESCOLARIDAD", "Observation", "observation.value_as_concept_id"
+    ),
+    "SINAC20_EDAD": _vocabulary(
+        "EDAD", "descriptor", None, "person.year_of_birth", "measurement.value_as_number"
+    ),
     "SINAC20_FECHANACMAD": _vocabulary(
-        "FECHANACIMIENTOMADRE", "descriptor", "person.year_of_birth", None
+        "FECHANACIMIENTOMADRE", "descriptor", None, "person.year_of_birth"
     ),
 }
 
@@ -159,6 +172,15 @@ MAP: tuple[tuple[str, str, int], ...] = (
     ("SINAC20_ENTRES", "00", 0),
     ("SINAC20_ENTRES", "88", 0),
     ("SINAC20_ENTRES", "99", 0),
+    ("SINAC20_ESCOL", "0", 0),
+    ("SINAC20_ESCOL", "1", NO_SCHOOLING),
+    ("SINAC20_ESCOL", "31", PRIMARY),
+    ("SINAC20_ESCOL", "51", JUNIOR_HIGH),
+    ("SINAC20_ESCOL", "71", SENIOR_HIGH),
+    ("SINAC20_ESCOL", "81", HIGHER),
+    ("SINAC20_ESCOL", "88", 0),
+    ("SINAC20_ESCOL", "99", 0),
+    ("SINAC20_ESCOL", "132", SENIOR_HIGH),
     ("SINAC20_EDAD", "888", 0),
     ("SINAC20_EDAD", "999", 0),
     ("SINAC20_FECHANACMAD", "09/09/9999", 0),
@@ -222,7 +244,7 @@ CONCEPT_ROWS: tuple[tuple[object, ...], ...] = (
     *(
         (concept_id, f"Synthetic {concept_id}", "Metadata", "SYNTH", "Undefined", "S",
          str(concept_id))
-        for concept_id in range(2_000_000_001, 2_000_000_016)
+        for concept_id in range(2_000_000_001, 2_000_000_024)
     ),
 )  # fmt: skip
 

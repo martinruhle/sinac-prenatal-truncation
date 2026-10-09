@@ -5,6 +5,10 @@
 # Each concept was looked up in Athena (athena.ohdsi.org) on the date below, and every one was
 # Standard and Valid there. The fields are copied from Athena, not typed from memory:
 #   concept_id, concept_name, vocabulary_id, concept_code, domain_id, standard_concept
+# The concepts added for the covariates (task 1.4.5: mother_age_at_delivery, year,
+# mother_education and the targets of SINAC20_ESCOL) were copied on 2026-10-08 from CONCEPT.csv of
+# the Athena bundle that config/sources.yml records (v5.0 29-AUG-26: LOINC 2.82, SNOMED CT
+# International 2026-02-01, UCUM 1.8.2), where every one is Standard and Valid.
 # cdm_fields lists the CDM fields the concept is written to. The domain of a standard concept
 # decides its table ("Write the data record into the table(s) corresponding to the domain of the
 # Standard CONCEPT_ID", OMOP CDM data model conventions), so a concept written to
@@ -78,6 +82,25 @@ concepts:
     standard_concept: S
     cdm_fields: [measurement.operator_concept_id]
 
+  mother_age_at_delivery:
+    concept_id: 36203531
+    concept_name: Age of Mother --at delivery
+    vocabulary_id: LOINC
+    concept_code: "85724-3"
+    domain_id: Measurement
+    standard_concept: S
+    cdm_fields: [measurement.measurement_concept_id]
+    source_column: EDAD
+
+  year:
+    concept_id: 9448
+    concept_name: year
+    vocabulary_id: UCUM
+    concept_code: "a"
+    domain_id: Unit
+    standard_concept: S
+    cdm_fields: [measurement.unit_concept_id]
+
   prenatal_visits_count:
     concept_id: 40771079
     concept_name: "Prenatal visits for this pregnancy #"
@@ -98,6 +121,16 @@ concepts:
     cdm_fields: [observation.observation_concept_id]
     source_column: TRIMESTREPRIMERCONSULTA
 
+  mother_education:
+    concept_id: 40760823
+    concept_name: Highest level of education Mother
+    vocabulary_id: LOINC
+    concept_code: "57712-2"
+    domain_id: Observation
+    standard_concept: S
+    cdm_fields: [observation.observation_concept_id]
+    source_column: ESCOLARIDAD
+
   cdm_version:
     concept_id: 902983
     concept_name: OMOP CDM Version 5.4.3
@@ -114,46 +147,51 @@ concepts:
 # of null or has no standard concept); any other value of that column is the value itself (D-067).
 # Each vocabulary is registered in VOCABULARY with vocabulary_concept_id = 0 (D-023).
 #   defined_in:       where DGIS publishes the codes (a catalogue, or the descriptor)
-#   cdm_field:        the CDM field the target concepts, or the values, go to
+#   cdm_fields:       the CDM fields the target concepts, or the values, go to
 #   target_domain_id: the domain every non-zero target must have; null when all targets are 0
 source_vocabularies:
   SINAC20_EDADGEST:
     source_column: EDADGESTACIONAL
     defined_in: descriptor
-    cdm_field: measurement.value_as_number
+    cdm_fields: [measurement.value_as_number]
     target_domain_id: null
   SINAC20_PRODEMB:
     source_column: PRODUCTOEMBARAZO
     defined_in: PRODUCTO_EMBARAZO
-    cdm_field: measurement.value_as_number
+    cdm_fields: [measurement.value_as_number]
     target_domain_id: null
   SINAC20_TOTCONS:
     source_column: TOTALCONSULTAS
     defined_in: descriptor
-    cdm_field: observation.value_as_number
+    cdm_fields: [observation.value_as_number]
     target_domain_id: null
   SINAC20_TRIMCONS:
     source_column: TRIMESTREPRIMERCONSULTA
     defined_in: TRIMESTRE_PRIMER_CONSULTA
-    cdm_field: observation.value_as_concept_id
+    cdm_fields: [observation.value_as_concept_id]
     target_domain_id: Meas Value
   SINAC20_RESEXT:
     source_column: RESIDEEXTRANJERO
     defined_in: SI_NO
-    cdm_field: location.country_concept_id
+    cdm_fields: [location.country_concept_id]
     target_domain_id: Geography
   SINAC20_ENTRES:
     source_column: ENTIDADRESIDENCIA
     defined_in: ENTIDADES
-    cdm_field: location.state
+    cdm_fields: [location.state]
     target_domain_id: null
+  SINAC20_ESCOL:
+    source_column: ESCOLARIDAD
+    defined_in: ESCOLARIDAD
+    cdm_fields: [observation.value_as_concept_id]
+    target_domain_id: Observation
   SINAC20_EDAD:
     source_column: EDAD
     defined_in: descriptor
-    cdm_field: person.year_of_birth
+    cdm_fields: [person.year_of_birth, measurement.value_as_number]
     target_domain_id: null
   SINAC20_FECHANACMAD:
     source_column: FECHANACIMIENTOMADRE
     defined_in: descriptor
-    cdm_field: person.year_of_birth
+    cdm_fields: [person.year_of_birth]
     target_domain_id: null

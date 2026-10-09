@@ -1,12 +1,14 @@
--- OBSERVATION: two rows per PERSON, in this order: the declared count of prenatal visits, then
--- the trimester of the first visit (docs/omop_mapping.md §OBSERVATION, D-065). The count is one
--- row, never one visit per declared consultation, and no VISIT_OCCURRENCE is written (D-066).
--- Both are dated on the delivery (D-063); a missing value keeps its row (D-067, D-075).
+-- OBSERVATION: three rows per PERSON, in this order: the declared count of prenatal visits, the
+-- trimester of the first visit, then the mother's education (docs/omop_mapping.md §OBSERVATION,
+-- D-065, D-101). The count is one row, never one visit per declared consultation, and no
+-- VISIT_OCCURRENCE is written (D-066). All are dated on the delivery (D-063); a missing value
+-- keeps its row (D-067, D-075).
 WITH concepts AS (
     SELECT
         max(concept_id) FILTER (WHERE concept_key = 'registry') AS registry,
         max(concept_id) FILTER (WHERE concept_key = 'prenatal_visits_count') AS visits,
-        max(concept_id) FILTER (WHERE concept_key = 'first_prenatal_visit_trimester') AS trimester
+        max(concept_id) FILTER (WHERE concept_key = 'first_prenatal_visit_trimester') AS trimester,
+        max(concept_id) FILTER (WHERE concept_key = 'mother_education') AS education
     FROM @results_schema.concept_sets
 ),
 
@@ -33,6 +35,19 @@ events AS (
         r.trimester_concept_id,
         'TRIMESTREPRIMERCONSULTA',
         r.trimestreprimerconsulta
+    FROM pg_temp.records AS r
+    CROSS JOIN concepts AS c
+    WHERE r.loaded
+    UNION ALL
+    SELECT
+        r.person_id,
+        3 AS position,
+        c.education,
+        r.delivery_date,
+        NULL::numeric,
+        r.education_concept_id,
+        'ESCOLARIDAD',
+        r.escolaridad
     FROM pg_temp.records AS r
     CROSS JOIN concepts AS c
     WHERE r.loaded

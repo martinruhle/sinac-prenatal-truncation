@@ -520,8 +520,9 @@ D-094 is a `[SCOPE CHANGE]` against proposal v2, and it specifies D-007.
     affiliation rose from 630,384 to 743,555.
 
   It enters as the gradient by insurance instead, where an unknown value is a level of its own.
-- **Maternal age is the age declared on the certificate.** How it reaches the CDM is decided by the
-  OMOP mapping ([`omop_mapping.md`](omop_mapping.md)).
+- **Maternal age is the age declared on the certificate.** It reaches the CDM as it was declared,
+  not computed from the mother's year of birth, which would move 9.9 % of the base cohort to
+  another age group ([`omop_mapping.md`](omop_mapping.md#measurement), D-100).
 
 ### Missing covariates
 

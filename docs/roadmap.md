@@ -28,7 +28,8 @@ download; **the repository contains no data**, only the code that loads and tran
 The detail lives in [`omop_mapping.md`](omop_mapping.md) and `docs/data_dictionary.md` (D-017);
 these are the ones that shape the schema. The vertical slice of v0.1 maps the mother, the
 observation period, gestational age, plurality, the two prenatal care items and residence
-(D-059 to D-068).
+(D-059 to D-068). Mapping v1, in v0.2, adds the mother's age and education, the covariates of the
+adjusted models (D-100, D-101).
 
 | SINAC item | OMOP destination | Note |
 |---|---|---|
@@ -39,7 +40,9 @@ observation period, gestational age, plurality, the two prenatal care items and 
 | Gestational weeks, birth weight | `MEASUREMENT` | Gestation on the mother, weight on the newborn (D-064) |
 | Plurality | `MEASUREMENT` | Criteria 4 and 5 of the base cohort (D-068) |
 | Total visits, trimester of the first visit | `OBSERVATION` | This is a **declared count**, not one row per visit; it is not modelled as visits (D-065, D-066) |
-| Insurance | `PAYER_PLAN_PERIOD` | For the gradient by insurance (v1.0); it is not an adjustment covariate (D-094) |
+| Mother's age | `MEASUREMENT` | The age declared on the certificate, an adjustment covariate (D-094, D-100) |
+| Mother's education | `OBSERVATION` | Each code maps to one of the five levels of the adjustment covariate (D-094, D-101) |
+| Insurance | `PAYER_PLAN_PERIOD` (planned) | Mapped in v1.0 with the gradient by insurance, which is its only use; the destination is decided then (D-094, D-102) |
 | Variables with no standard concept | `concept_id = 0` + `*_source_value` | OMOP convention; the codes are listed in `omop_mapping.md` and in `config/source_to_concept_map.csv` (D-067) |
 
 ## 2. Data source

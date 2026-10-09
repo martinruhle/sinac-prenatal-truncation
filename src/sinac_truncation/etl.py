@@ -55,6 +55,7 @@ SOURCE_COLUMNS: tuple[str, ...] = (
     "PRODUCTOEMBARAZO",
     "TOTALCONSULTAS",
     "TRIMESTREPRIMERCONSULTA",
+    "ESCOLARIDAD",
 )
 
 #: ``tables.sql`` creates the tables the ETL keeps in ``results``; ``records.sql`` casts every

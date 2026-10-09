@@ -377,12 +377,12 @@ CONCEPT_SETS = textwrap.dedent(
       SYNTH_WEEKS:
         source_column: WEEKS
         defined_in: descriptor
-        cdm_field: measurement.value_as_number
+        cdm_fields: [measurement.value_as_number]
         target_domain_id: null
       SYNTH_ANSWER:
         source_column: ANSWER
         defined_in: CATALOGUE
-        cdm_field: observation.value_as_concept_id
+        cdm_fields: [observation.value_as_concept_id]
         target_domain_id: Meas Value
     """
 )

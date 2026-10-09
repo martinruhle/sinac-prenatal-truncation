@@ -26,6 +26,10 @@ WITH per_year AS (
         ) AS plurality_not_in_catalogue,
         count(*) FILTER (WHERE loaded AND plurality_rule = 'blank') AS plurality_blank,
         count(*) FILTER (WHERE loaded AND plurality_at_least) AS plurality_at_least,
+        count(*) FILTER (WHERE loaded AND age_rule = 'value') AS age_value,
+        count(*) FILTER (WHERE loaded AND age_rule = 'code_to_null') AS age_code,
+        count(*) FILTER (WHERE loaded AND age_rule = 'not_integer') AS age_not_integer,
+        count(*) FILTER (WHERE loaded AND age_rule = 'blank') AS age_blank,
         count(*) FILTER (WHERE loaded AND visits_rule = 'value') AS visits_value,
         count(*) FILTER (WHERE loaded AND visits_rule = 'code_to_null') AS visits_code,
         count(*) FILTER (WHERE loaded AND visits_rule = 'not_integer') AS visits_not_integer,
@@ -38,6 +42,14 @@ WITH per_year AS (
             WHERE loaded AND trimester_rule = 'not_in_catalogue'
         ) AS trimester_not_in_catalogue,
         count(*) FILTER (WHERE loaded AND trimester_rule = 'blank') AS trimester_blank,
+        count(*) FILTER (
+            WHERE loaded AND education_rule = 'code_to_concept'
+        ) AS education_concept,
+        count(*) FILTER (WHERE loaded AND education_rule = 'code_to_0') AS education_0,
+        count(*) FILTER (
+            WHERE loaded AND education_rule = 'not_in_catalogue'
+        ) AS education_not_in_catalogue,
+        count(*) FILTER (WHERE loaded AND education_rule = 'blank') AS education_blank,
         count(*) FILTER (WHERE loaded AND country_rule = 'code_to_concept') AS country_concept,
         count(*) FILTER (WHERE loaded AND country_rule = 'code_to_0') AS country_0,
         count(*) FILTER (
@@ -85,6 +97,10 @@ CROSS JOIN LATERAL (
     ('measurement', 'birth_plurality:not_in_catalogue', p.plurality_not_in_catalogue),
     ('measurement', 'birth_plurality:blank', p.plurality_blank),
     ('measurement', 'birth_plurality:at_least', p.plurality_at_least),
+    ('measurement', 'mother_age_at_delivery:value', p.age_value),
+    ('measurement', 'mother_age_at_delivery:code_to_null', p.age_code),
+    ('measurement', 'mother_age_at_delivery:not_integer', p.age_not_integer),
+    ('measurement', 'mother_age_at_delivery:blank', p.age_blank),
     ('observation', 'prenatal_visits_count:value', p.visits_value),
     ('observation', 'prenatal_visits_count:code_to_null', p.visits_code),
     ('observation', 'prenatal_visits_count:not_integer', p.visits_not_integer),
@@ -97,6 +113,10 @@ CROSS JOIN LATERAL (
         p.trimester_not_in_catalogue
     ),
     ('observation', 'first_prenatal_visit_trimester:blank', p.trimester_blank),
+    ('observation', 'mother_education:code_to_concept', p.education_concept),
+    ('observation', 'mother_education:code_to_0', p.education_0),
+    ('observation', 'mother_education:not_in_catalogue', p.education_not_in_catalogue),
+    ('observation', 'mother_education:blank', p.education_blank),
     ('location', 'country_concept_id:code_to_concept', p.country_concept),
     ('location', 'country_concept_id:code_to_0', p.country_0),
     ('location', 'country_concept_id:not_in_catalogue', p.country_not_in_catalogue),
