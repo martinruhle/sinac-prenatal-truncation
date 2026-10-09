@@ -17,6 +17,7 @@ from sinac_truncation.etl import concept_keys
 __all__ = [
     "MEXICO_CODE",
     "SQL_FILES",
+    "TRIMESTER_CODES",
     "AttritionStep",
     "attrition_problems",
     "cited_concept_keys",
@@ -24,13 +25,27 @@ __all__ = [
 ]
 
 #: ``tables.sql`` creates the tables; each definition file writes its cohort and the step at which
-#: each subject leaves it; ``attrition.sql`` counts them. They run in this order.
-SQL_FILES: tuple[str, ...] = ("tables.sql", "01_base.sql", "attrition.sql")
+#: each subject leaves it; ``exposure.sql`` writes measures (a) and (c) of every subject, which the
+#: analysis cohort reads; ``attrition.sql`` counts them. They run in this order.
+SQL_FILES: tuple[str, ...] = (
+    "tables.sql",
+    "01_base.sql",
+    "exposure.sql",
+    "02_analysis.sql",
+    "attrition.sql",
+)
 
 #: The source code whose target in ``source_to_concept_map`` criterion 2 reads: RESIDEEXTRANJERO 2,
 #: "NO" (does not reside abroad) in the catalogue SI_NO, mapped to Mexico (docs/omop_mapping.md
 #: §LOCATION, D-068).
 MEXICO_CODE: tuple[str, str] = ("SINAC20_RESEXT", "2")
+
+#: The source codes whose targets in ``source_to_concept_map`` ``exposure.sql`` reads as the
+#: trimester of the first visit: 0 "NO RECIBIÓ" and the three trimesters of the catalogue
+#: TRIMESTRE_PRIMER_CONSULTA (D-065).
+TRIMESTER_CODES: tuple[tuple[str, str], ...] = tuple(
+    ("SINAC20_TRIMCONS", code) for code in ("0", "1", "2", "3")
+)
 
 
 class AttritionStep(NamedTuple):
