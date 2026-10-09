@@ -65,8 +65,9 @@ OWN_TABLE_DOMAINS: frozenset[str] = frozenset(
     {"Condition", "Procedure", "Drug", "Specimen", "Measurement", "Device"}
 )
 
-#: A CDM field as the configuration names it: ``table.field``, lower case.
-_FIELD = re.compile(r"\A[a-z_]+\.[a-z_]+\Z")
+#: A CDM field as the configuration names it: ``table.field``, lower case. A field name may end in
+#: a digit, as ``fact_relationship.domain_concept_id_1`` does.
+_FIELD = re.compile(r"\A[a-z_]+\.[a-z_][a-z0-9_]*\Z")
 
 #: The keys every concept entry must carry, copied from Athena when the concept was looked up.
 _CONCEPT_TEXT_KEYS = ("concept_name", "vocabulary_id", "concept_code", "domain_id")

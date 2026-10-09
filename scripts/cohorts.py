@@ -162,6 +162,10 @@ def load(
                         "SELECT unnest(%s::integer[])",
                         (list(years),),
                     )
+                    # A temporary table has no statistics until it is analyzed, and the planner
+                    # would assume thousands of years: with the newborns in PERSON, that took
+                    # the base cohort of 2020-2023 from about 1 to 7 minutes.
+                    cur.execute("ANALYZE pg_temp.cohort_years")
                 print(f"  {name:<24}{time.perf_counter() - start:7.1f} s")
             problems = attrition_problems(_attrition(cur, schemas), _cohort_rows(cur, schemas))
             if problems:

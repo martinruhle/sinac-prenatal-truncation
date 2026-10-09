@@ -29,15 +29,15 @@ The detail lives in [`omop_mapping.md`](omop_mapping.md) and `docs/data_dictiona
 these are the ones that shape the schema. The vertical slice of v0.1 maps the mother, the
 observation period, gestational age, plurality, the two prenatal care items and residence
 (D-059 to D-068). Mapping v1, in v0.2, adds the mother's age and education, the covariates of the
-adjusted models (D-100, D-101).
+adjusted models (D-100, D-101), and the newborn with its birth weight (D-103 to D-106).
 
 | SINAC item | OMOP destination | Note |
 |---|---|---|
-| Mother and newborn | `PERSON` (two records) | Linked through `FACT_RELATIONSHIP`. One mother `PERSON` per certificate, not per woman: SINAC publishes no mother identifier (D-051). The newborn arrives in v0.2 |
+| Mother and newborn | `PERSON` (two records) | Linked through `FACT_RELATIONSHIP` (D-103, D-104). One mother `PERSON` per certificate, not per woman: SINAC publishes no mother identifier (D-051). The newborn arrives in v0.2 |
 | Observation period | `OBSERVATION_PERIOD` | One day, the delivery: SINAC observes the pregnancy only at its end, and a window built from gestational age would make observed time equal to the outcome (D-062) |
 | Birth | `VISIT_OCCURRENCE` | Not in the v0.1 vertical slice, since no criterion uses it. If a later analysis needs the care unit, it goes in `CARE_SITE`. Prenatal visits are never created as visits (D-066) |
 | Mother's residence | `LOCATION` | Country from `RESIDEEXTRANJERO`, state from `ENTIDADRESIDENCIA` (D-068) |
-| Gestational weeks, birth weight | `MEASUREMENT` | Gestation on the mother, weight on the newborn (D-064) |
+| Gestational weeks, birth weight | `MEASUREMENT` | Gestation on the mother, weight on the newborn (D-064, D-105) |
 | Plurality | `MEASUREMENT` | Criteria 4 and 5 of the base cohort (D-068) |
 | Total visits, trimester of the first visit | `OBSERVATION` | This is a **declared count**, not one row per visit; it is not modelled as visits (D-065, D-066) |
 | Mother's age | `MEASUREMENT` | The age declared on the certificate, an adjustment covariate (D-094, D-100) |

@@ -1,11 +1,12 @@
-# OMOP mapping v1: the vertical slice and the covariates
+# OMOP mapping v1: the vertical slice, the covariates and the newborn
 
 How the SINAC records of 2020–2023 land in the OMOP CDM v5.4. Version 0 mapped the vertical slice
 (D-009): the tables that the base cohort of [`protocol.md`](protocol.md#base-cohort) and the v0.1
 milestone need. Version 1 adds the covariates of the adjusted odds ratios
-([`protocol.md`](protocol.md#covariates), D-094): the mother's age and education. Source
-variables are described in [`data_dictionary.md`](data_dictionary.md); this document says where
-each one goes (D-017).
+([`protocol.md`](protocol.md#covariates), D-094): the mother's age and education. It also adds
+the newborn as a `PERSON` of its own, linked to the mother, with its birth weight (D-103 to
+D-106). Source variables are described in [`data_dictionary.md`](data_dictionary.md); this
+document says where each one goes (D-017).
 
 Every populated field has one row, with its source, its rule and who decided it:
 
@@ -22,9 +23,10 @@ and domain, and that each domain is one the CDM allows in the field it is writte
 
 | Mapped | Not mapped yet | Why not yet |
 |---|---|---|
-| `PERSON` (the mother) | `PERSON` (the newborn), `FACT_RELATIONSHIP`, birth weight | No criterion and no covariate uses the newborn; they arrive in v0.2 with task 1.4.6 (D-085) |
+| `PERSON`: the mother, and the newborn (v1) | | |
+| `FACT_RELATIONSHIP`: mother and newborn (v1) | | |
 | `OBSERVATION_PERIOD` | `VISIT_OCCURRENCE`, `CARE_SITE` | No criterion uses the delivery visit, and no visit is ever created for prenatal care (D-066) |
-| `MEASUREMENT`: gestational age, plurality, mother's age (v1) | `AFILIACION` (insurance) | Only the gradient by insurance uses it (D-094, D-099), so it is mapped in v1.0 with the gradient (D-102) |
+| `MEASUREMENT`: gestational age, plurality, mother's age (v1), birth weight (v1) | `AFILIACION` (insurance) | Only the gradient by insurance uses it (D-094, D-099), so it is mapped in v1.0 with the gradient (D-102) |
 | `OBSERVATION`: total visits, trimester of the first visit, mother's education (v1) | `ATENCIONPRENATAL` | No rule of the protocol uses it: the common set of records rests on the trimester and the visit count (D-086). Candidate concept if it is ever mapped, checked in Athena: 44817093, LOINC 75204-8 "Prenatal care indicator [CDC.CS]", Observation |
 | `LOCATION`: residence | | |
 | `CDM_SOURCE`, and `VOCABULARY` and `SOURCE_TO_CONCEPT_MAP` rows for the local codes | | |
@@ -34,15 +36,17 @@ The base cohort needs four source fields: `FECHANACIMIENTO` (criterion 1), `RESI
 The adjusted models add four covariates (D-094): the mother's age (`EDAD`) and education
 (`ESCOLARIDAD`), the state of residence (`ENTIDADRESIDENCIA`, already in `LOCATION`) and the year
 of the delivery date. All of them land in the CDM, so the cohort SQL never reads `staging` (D-068).
+The newborn adds `SEXO` and `PESO`, which no criterion, covariate or model reads (CLAUDE.md rule
+3): they complete the data model the proposal commits to, with mother and newborn as two persons.
 
 ## Rules shared by every table
 
 1. **Type.** Every `*_type_concept_id` is `registry` (32879, "Registry"). OMOP requires a type
    concept that "best represents the provenance of the record"; the source is a registry of
    certificates, not an EHR or a claim. *Project, D-065.*
-2. **Dates.** Every event is dated `FECHANACIMIENTO`, the delivery date: gestational age is
-   measured at delivery, and the visit count, the trimester, the plurality and the mother's age
-   and education are recorded on the certificate at delivery. `FECHANACIMIENTO` is a full date (`dd/mm/yyyy`) in all 6,531,527
+2. **Dates.** Every event is dated `FECHANACIMIENTO`, the delivery date: gestational age and birth
+   weight are measured at delivery, and the visit count, the trimester, the plurality and the
+   mother's age and education are recorded on the certificate at delivery. `FECHANACIMIENTO` is a full date (`dd/mm/yyyy`) in all 6,531,527
    records of 2020–2023, so no date is imputed: a record without a valid one would fail
    criterion 1. `*_datetime` fields stay NULL: they are optional, the hour is not used, and 68
    records carry `99:99`. *Project, D-063.*
@@ -88,7 +92,10 @@ of the delivery date. All of them land in the CDM, so the cohort SQL never reads
    - `person_id` of the mother = (year − 2000) × 10,000,000 + `source_row`. Row 1,234,567 of 2023
      is person 231,234,567, so any id leads back to its CSV row. Loading 2020–2022 after 2023 does
      not renumber 2023. The largest file has 1,747,847 rows, and the formula fits the `integer`
-     column up to 2099. The newborn, from v0.2, is the mother's id + 1,000,000,000.
+     column up to 2099.
+   - `person_id` of the newborn = the mother's + 1,000,000,000 (D-103). Every mother id is below
+     1,000,000,000, and the newborn of row 9,999,999 of 2099 is 1,999,999,999, which still fits.
+     Row 1,234,567 of 2023 gives mother 231,234,567 and newborn 1,231,234,567.
    - `observation_period_id` = `person_id` (one period per person).
    - `measurement_id` and `observation_id` are `row_number()` over (`person_id`, the order of the
      rows listed below), recomputed on each load.
@@ -134,9 +141,37 @@ declares, held as a `MEASUREMENT` row ([below](#measurement), D-100).
 fields encode US OMB categories, which are not the construct SINAC records (D-061); the question
 the two variables open is future work ([`roadmap.md`](roadmap.md#47-indigenous-mothers)).
 
+### PERSON (the newborn)
+
+One row per loaded record, that is, per mother `PERSON` (D-103). The live-born child of the
+certificate is a person of its own, linked to the mother through
+[`FACT_RELATIONSHIP`](#fact_relationship). A record whose mother is not loaded (D-060) gives no
+newborn either: the link needs both persons, and the record leaves at attrition step 1.
+
+| Field | DDL | Source | Rule | Decided by |
+|---|---|---|---|---|
+| `person_id` | required | year, `source_row` | The mother's id + 1,000,000,000 | Project, D-059, D-103 |
+| `gender_concept_id` | required | `SEXO` | The target of the code in `SINAC20_SEXO`: 1 "HOMBRE" → `MALE` (8507), 2 "MUJER" → `FEMALE` (8532); 0 "NO ESPECIFICADO", 9 "SE IGNORA", a blank or a code the catalogue does not publish → 0 | OMOP: "Use the gender or sex value present in the data under the assumption that it is the biological sex at birth". Project, D-067, D-103 |
+| `year_of_birth`, `month_of_birth`, `day_of_birth` | required, optional, optional | `FECHANACIMIENTO` | The delivery date, a full date in every record (rule 2) | OMOP: "For data sources that provide the precise date of birth, the month should be extracted" |
+| `birth_datetime` | optional | — | NULL. The hour is not used (D-063), and 68 records of 2020 carry `HORANACIMIENTO` `99:99` | Project, D-103 |
+| `race_concept_id`, `ethnicity_concept_id` | required | — | 0, as for the mother | Project, D-061 |
+| `location_id` | optional | — | NULL. The residence the certificate records is the mother's | Project, D-103 |
+| `person_source_value` | optional | year, `source_row` | The mother's: `'<year>:<source_row>'`. Both come from the same row of the file, and the id tells them apart | Project, D-059 |
+| `gender_source_value` | optional | `SEXO` | Verbatim | OMOP: "Put the assigned sex at birth of the person as it appears in the source data" |
+| `gender_source_concept_id` | optional | — | 0: a code of a local vocabulary has no concept (rule 4) | OMOP (rule 4) |
+| every other field | optional | — | NULL | — |
+
+- **Why 0 for the unknown sexes, not `UNKNOWN`.** The Gender vocabulary has 8551 "UNKNOWN", but it
+  is deprecated and non-standard in the loaded bundle; only `MALE` and `FEMALE` are standard. The
+  flavors of null map to 0 (rule 3), and the raw code stays in `gender_source_value`.
+- **The newborn never enters a cohort.** The subjects are the mothers, found through
+  `FACT_RELATIONSHIP` ([below](#fact_relationship), D-106).
+
 ### OBSERVATION_PERIOD
 
-One row per `PERSON`: **a single day, the delivery** (D-062).
+One row per `PERSON`: **a single day, the delivery** (D-062). The newborn is observed on the same
+day, its birth, and on no other: OMOP asks for at least one period per `PERSON`, and SINAC sees
+the newborn once (D-103).
 
 | Field | DDL | Source | Rule | Decided by |
 |---|---|---|---|---|
@@ -168,7 +203,9 @@ follows from that:
 
 ### MEASUREMENT
 
-Three rows per `PERSON`, in this order: gestational age, plurality, then the mother's age.
+Three rows per mother `PERSON`, in this order: gestational age, plurality, then the mother's age.
+One row per newborn `PERSON`: its birth weight. The newborns have the highest ids, so their rows
+come last.
 
 **Gestational age at delivery**, on the mother (roadmap):
 
@@ -233,6 +270,31 @@ Why the declared age, and not one computed from `PERSON`:
   `EDAD` in 99.41 % of the base cohort and changes the group of 9,948 records (0.16 %). Some of the
   differences are of five years or more, typing errors in one of the two fields that the data
   cannot settle. OMOP tools that compute age from `PERSON` keep doing so; the study reads `EDAD`.
+
+**Birth weight** (`PESO`), on the newborn (D-105). No criterion, covariate or model reads it
+(CLAUDE.md rule 3):
+
+| Field | DDL | Source | Rule | Decided by |
+|---|---|---|---|---|
+| `person_id` | required | — | The newborn | Project, D-064, D-105 |
+| `measurement_concept_id` | required | `PESO` | `birth_weight` (3011043) | Project, D-105 |
+| `measurement_date`, `measurement_type_concept_id`, `measurement_source_*` | | | As for gestational age | — |
+| `value_as_number` | optional | `PESO` | Grams as an integer, as recorded; NULL for the code 9999 of `SINAC20_PESO`, a blank or a value that is not digits only | Project, D-067, D-105 |
+| `unit_concept_id` | optional | — | `gram` (8504) | Descriptor: "Peso del nacido vivo (gramos)" |
+| `value_source_value` | optional | `PESO` | Verbatim | Project, D-067 |
+| every other field | optional | — | NULL. No `range_low`/`range_high`: DGIS publishes no range for 2020–2023 | Project, D-053, D-105 |
+
+- **The concept is the item of the birth certificate.** LOINC 8339-4 "Birth weight Measured"
+  belongs to the panel "U.S. standard certificate of live birth - recommended 2003 revision set"
+  (LOINC 86347-2), the panel of the visit count and of plurality (D-065).
+- **Every weight is loaded as recorded.** Over 2020–2023, 328 weights are below 500 g (the lowest
+  270 g) and one is 7,650 g (2022). The 2015–2019 list of DGIS gives an acceptable range of 20 to
+  6,000 g; the 2020–2023 descriptor gives none, so no range is applied, as for gestational age
+  (D-053).
+- **Code 9999 is frequent and not at random.** It occurs in 354,847 records of 2020–2023 (5.4 %).
+  Among singletons it occurs in 11.1 % of the preterm births and in 4.8 % of the births at term.
+  Any descriptive table of birth weight has to state this
+  ([`data_dictionary.md`](data_dictionary.md#what-the-files-show)).
 
 ### OBSERVATION
 
@@ -311,6 +373,32 @@ attended, complete or not; a technical program counts at the general level it re
 - LOINC 57712-2 is the item of the US standard certificate of live birth, the same panel as the
   visit count (D-065).
 
+### FACT_RELATIONSHIP
+
+Two rows per loaded record, which link its mother and its newborn (D-104). The CDM asks for every
+relationship in both directions: "All relationships are directional, and each relationship is
+represented twice symmetrically within the FACT_RELATIONSHIP table". A row reads "fact 1 is
+*relationship* of fact 2".
+
+| Row | `domain_concept_id_1` | `fact_id_1` | `domain_concept_id_2` | `fact_id_2` | `relationship_concept_id` |
+|---|---|---|---|---|---|
+| The mother is the Mother of the newborn | `person_table` (1147314) | mother | `person_table` | newborn | `mother` (4248584) |
+| The newborn is the Child of the mother | `person_table` | newborn | `person_table` | mother | `child` (4285883) |
+
+- **The relationship concepts.** SNOMED 72705000 "Mother" and 67822003 "Child" are standard
+  concepts of the Relationship domain, and "Mother" says more than "Parent". The pair proposed on
+  the OHDSI forum, "Parent of" (4050951) and "Child of" (4051272), sits in the Observation domain,
+  which that same thread took for an error to be fixed. It still does in the loaded bundle.
+- **The domain concept.** The CDM examples name a fact's table through a concept of
+  the Domain vocabulary, here 56 "Person". That concept is deprecated in the loaded bundle (valid
+  until 27 September 2022) with no replacement. The CDM vocabulary names the table itself,
+  1147314 "person" (class Table), which is standard and valid. The OHDSI forum points to the
+  Table concepts for this field (2021 and 2022); the CDM specification has not settled it, and its
+  `domain_concept_id_*` fields require no domain.
+- **What reads it.** The cohort SQL finds the mothers as the first fact of a `mother` row
+  (D-106), so the newborns, which share the mother's `person_source_value`, never become
+  subjects. ATLAS and Achilles do not read this table.
+
 ### LOCATION (residence)
 
 One row per distinct pair (`RESIDEEXTRANJERO`, `ENTIDADRESIDENCIA`), referenced by
@@ -359,6 +447,10 @@ and the five targets of `ESCOLARIDAD`) were copied on 2026-10-08 from `CONCEPT` 
 bundle (LOINC 2.82, SNOMED CT International 2026-02-01, UCUM 1.8.2). With them,
 `validate-concepts` passes all 23 concept ids.
 
+The concepts added for the newborn (v1: `birth_weight`, `gram`, `mother`, `child`, `person_table`
+and the two targets of `SEXO`) were copied on 2026-10-09 from the same bundle. With them,
+`validate-concepts` passes all 29 concept ids.
+
 | Key | concept_id | Vocabulary | Code | Name | Domain | Written to |
 |---|---|---|---|---|---|---|
 | `female` | 8532 | Gender | F | FEMALE | Gender | `person.gender_concept_id` |
@@ -372,6 +464,11 @@ bundle (LOINC 2.82, SNOMED CT International 2026-02-01, UCUM 1.8.2). With them,
 | `prenatal_visits_count` | 40771079 | LOINC | 68493-6 | Prenatal visits for this pregnancy # | Observation | `observation.observation_concept_id` |
 | `first_prenatal_visit_trimester` | 44817052 | LOINC | 75163-6 | Mother's Trimester of first prenatal visit [CDC.CS] | Observation | `observation.observation_concept_id` |
 | `mother_education` | 40760823 | LOINC | 57712-2 | Highest level of education Mother | Observation | `observation.observation_concept_id` |
+| `birth_weight` | 3011043 | LOINC | 8339-4 | Birth weight Measured | Measurement | `measurement.measurement_concept_id` |
+| `gram` | 8504 | UCUM | g | gram | Unit | `measurement.unit_concept_id` |
+| `mother` | 4248584 | SNOMED | 72705000 | Mother | Relationship | `fact_relationship.relationship_concept_id` |
+| `child` | 4285883 | SNOMED | 67822003 | Child | Relationship | `fact_relationship.relationship_concept_id` |
+| `person_table` | 1147314 | CDM | CDM370 | person | Metadata | `fact_relationship.domain_concept_id_1`, `_2` |
 | `cdm_version` | 902983 | CDM | CDM v5.4.3 | OMOP CDM Version 5.4.3 | Metadata | `cdm_source.cdm_version_concept_id` |
 
 Targets of `source_to_concept_map`:
@@ -388,6 +485,8 @@ Targets of `source_to_concept_map`:
 | 43020414 | SNOMED | 603435002 | Educated to junior high school level | Observation | `ESCOLARIDAD` 51, 52, 111, 112 |
 | 43020395 | SNOMED | 603434003 | Educated to senior high school level | Observation | `ESCOLARIDAD` 71, 72, 131, 132 |
 | 4076230 | SNOMED | 224299000 | Received higher education | Observation | `ESCOLARIDAD` 81, 82, 101, 102 |
+| 8507 | Gender | M | MALE | Gender | `SEXO` 1 |
+| 8532 | Gender | F | FEMALE | Gender | `SEXO` 2 |
 
 Rejected alternatives:
 
@@ -404,6 +503,13 @@ Rejected alternatives:
 | Education, answers | The LOINC answers of the US certificate, such as LA12455-4 "8th grade or less" and LA12456-2 "9th - 12th grade, no diploma" | They follow US grades, and *secundaria* falls across two of them (D-101) |
 | Education, answers | Concept 0 for every code, with the levels in SQL | A valid answer would look like a missing one, the distinction D-065 kept for the trimester, and the grouping would need configuration of its own (D-101) |
 | Insurance | `PAYER_PLAN_PERIOD` in v0.2 | No analysis of v0.2 uses insurance; it is mapped with the gradient of v1.0 (D-102) |
+| Newborn sex, codes 0 and 9 | 8551 "UNKNOWN" (Gender) | Deprecated and non-standard in the loaded bundle; a flavor of null is 0 (D-067, D-103) |
+| Newborn location | The mother's `LOCATION` | The certificate records the mother's residence, not the newborn's (D-103) |
+| Mother–newborn link | 4050951 "Parent of" and 4051272 "Child of" (SNOMED, Observation) | Observation concepts, and less precise than Mother and Child (D-104) |
+| Mother–newborn link | 581436 "Parent to Child Measurement" (Relationship) | It links measurements, not persons (D-104) |
+| Domain of the linked facts | 56 "Person" (Domain) | Deprecated in the loaded bundle since 2022-09-27, with no replacement (D-104) |
+| Birth weight | 4264825, SNOMED 364589006 "Birth weight" (Measurement) | Valid, but 8339-4 is the item of the birth certificate panel, as for the visit count (D-105) |
+| Birth weight | 40759177, LOINC 56056-5 "Birth weight - Reported" (Observation) | Its domain would send the weight to `OBSERVATION` (D-105) |
 
 ## Codes without a standard concept
 
@@ -430,6 +536,9 @@ value in the source field. Record counts are orientation, over 2020–2023.
 | `ESCOLARIDAD` | 88 | NO APLICA | 64 | `value_as_concept_id` 0 |
 | `ESCOLARIDAD` | 99 | SE IGNORA | 17,734 | `value_as_concept_id` 0 |
 | `FECHANACIMIENTOMADRE` | 09/09/9999 | fecha no especificada | 767 | not used for `year_of_birth` |
+| `SEXO` | 0 | NO ESPECIFICADO | 3,957 | `gender_concept_id` 0 of the newborn |
+| `SEXO` | 9 | SE IGNORA | 654 | `gender_concept_id` 0 of the newborn |
+| `PESO` | 9999 | No Especificado (descriptor) | 354,847 | `value_as_number` NULL |
 
 `TRIMESTREPRIMERCONSULTA` 0, "NO RECIBIÓ" (167,885 records), and `TOTALCONSULTAS` 0 (195,252
 records) are answers, not missing values: they map to "No prenatal care" and to the number 0.
@@ -457,8 +566,13 @@ says the system sets it when the question does not apply, and education applies 
 - **1.4.5, covariates (v1).** The ETL writes the age and education rows and counts each of their
   rules per year (`mother_age_at_delivery:*`, `mother_education:*`). Its checks now require three
   rows each of `MEASUREMENT` and `OBSERVATION` per `PERSON`.
-- **1.4.6, the newborn.** The newborn `PERSON` will have rows of its own, such as birth weight, so
-  the per-person checks above have to count the mothers apart from the newborns.
+- **1.4.6, the newborn.** The ETL writes the newborn `PERSON`, its observation period, its birth
+  weight and the two `FACT_RELATIONSHIP` rows, and counts the sex and weight rules per year
+  (`gender:*`, `birth_weight:*`) with `person rows:mother` and `rows:newborn`. The per-person
+  checks count the mothers apart from the newborns (`mother_without_*`,
+  `newborn_without_one_measurement`, `newborn_with_an_observation`), and new checks assert the
+  newborn's date of birth and the two links of every record. The cohort SQL takes the mothers
+  through `FACT_RELATIONSHIP` (D-106).
 - **1.6.4, odds ratios.** The step "covariates known" (D-095) reads the CDM: `value_as_number` of
   `mother_age_at_delivery` is not NULL, `value_as_concept_id` of `mother_education` is not 0, and
   `LOCATION.state` is not NULL. The seven age groups are cut from `value_as_number`, with bounds

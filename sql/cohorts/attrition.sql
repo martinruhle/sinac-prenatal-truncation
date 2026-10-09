@@ -4,12 +4,13 @@
 --   step 0    the records staged from the file: `staging rows` of results.etl_counts
 --   step 1    the data model: the records the ETL could not load as a PERSON for lack of the
 --             mother's year of birth leave (`person not_loaded:no_year_of_birth`, D-060), and the
---             PERSONs of the file remain. Steps 0 and 1 are the same in every definition.
+--             mother PERSONs of the file remain; the newborns are never subjects (D-106). Steps 0
+--             and 1 are the same in every definition.
 --   step 2+   the steps of the definition (pg_temp.cohort_steps): each excludes the subjects whose
 --             first failed step it is, and the subjects that fail none of it or the steps before
 --             remain (pg_temp.cohort_exits).
 -- Remaining and excluded are counted apart, so scripts/cohorts.py can check that they agree. At
--- step 1 that crosses the counts of the ETL with the PERSONs of the CDM.
+-- step 1 that crosses the counts of the ETL with the mother PERSONs of the CDM.
 DELETE FROM @results_schema.attrition
 WHERE cohort_definition_id IN (SELECT s.cohort_definition_id FROM pg_temp.cohort_steps AS s);
 

@@ -5,21 +5,33 @@
 --
 --   concept_not_in_vocabulary:<table>  distinct concept ids written to the table that CONCEPT
 --                                      does not hold
---   orphan_person:<table>              rows whose person_id is not a PERSON
+--   orphan_person:<table>              rows whose person_id, or one of the two fact ids of
+--                                      FACT_RELATIONSHIP, is not a PERSON
 --   orphan_location:person             PERSON rows whose location_id is not a LOCATION
---   person_without_*                   PERSON rows without exactly one observation period, or
---                                      without the three rows each of MEASUREMENT and OBSERVATION
+--   person_without_one_observation_period
+--                                      PERSON rows without exactly one observation period
+--   mother_without_*                   mother PERSONs without the three rows each of
+--                                      MEASUREMENT and OBSERVATION
+--   newborn_without_one_measurement, newborn_with_an_observation
+--                                      newborn PERSONs without exactly one MEASUREMENT row, their
+--                                      weight, or with an OBSERVATION row (D-103, D-105)
 --   observation_period_not_the_delivery_day
 --                                      periods longer than one day, or on another day than the
 --                                      delivery of their record (D-062)
+--   newborn_birth_not_the_delivery_day newborn PERSONs whose date of birth is not the delivery
+--                                      date of their record (D-103)
+--   fact_relationship_not_the_record_pair
+--                                      rows missing from, or added to, the two rows that link the
+--                                      mother and the newborn of each loaded record (D-104)
 --   event_outside_observation_period:<table>
 --                                      events dated outside their person's observation period
 --                                      (D-063)
 --   visit_occurrence_rows              the slice writes no visit (D-066)
 --   vocabulary_not_registered          source vocabularies of the map missing from VOCABULARY
---   person_not_matched_to_staging      loaded records without their PERSON, and PERSON rows
---                                      without a loaded record: PERSON is staging minus the
---                                      records without a year of birth (D-060)
+--   person_not_matched_to_staging      loaded records without their mother or newborn PERSON,
+--                                      and PERSON rows that are neither of a loaded record: PERSON
+--                                      is twice staging minus the records without a year of birth
+--                                      (D-060, D-103)
 --   staging_rows_not_load_counts       years whose records differ from the table count staging
 --                                      recorded in load_counts (D-069)
 --   cdm_source_rows_not_one            CDM_SOURCE holds one row
@@ -53,6 +65,11 @@ WITH written (cdm_table, concept_id) AS (
         ])
     FROM @cdm_schema.observation
     UNION
+    SELECT DISTINCT
+        'fact_relationship',
+        unnest(ARRAY[domain_concept_id_1, domain_concept_id_2, relationship_concept_id])
+    FROM @cdm_schema.fact_relationship
+    UNION
     SELECT DISTINCT 'location', country_concept_id FROM @cdm_schema.location
     UNION
     SELECT DISTINCT 'cdm_source', cdm_version_concept_id FROM @cdm_schema.cdm_source
@@ -70,9 +87,37 @@ missing AS (
     GROUP BY w.cdm_table
 ),
 
+-- The two PERSONs of each loaded record, with the day both were observed.
+roles AS (
+    SELECT person_id, 'mother' AS role, delivery_date FROM pg_temp.records WHERE loaded
+    UNION ALL
+    SELECT newborn_person_id, 'newborn', delivery_date FROM pg_temp.records WHERE loaded
+),
+
+-- The rows FACT_RELATIONSHIP must hold: the mother is the Mother of the newborn, and the newborn
+-- the Child of the mother (D-104).
+links AS (
+    SELECT l.*
+    FROM pg_temp.records AS r
+    CROSS JOIN (
+        SELECT
+            max(concept_id) FILTER (WHERE concept_key = 'person_table') AS person,
+            max(concept_id) FILTER (WHERE concept_key = 'mother') AS mother,
+            max(concept_id) FILTER (WHERE concept_key = 'child') AS child
+        FROM @results_schema.concept_sets
+    ) AS c
+    CROSS JOIN LATERAL (
+        VALUES
+        (c.person, r.person_id, c.person, r.newborn_person_id, c.mother),
+        (c.person, r.newborn_person_id, c.person, r.person_id, c.child)
+    ) AS l (domain_1, fact_1, domain_2, fact_2, relationship)
+    WHERE r.loaded
+),
+
 per_person AS (
     SELECT
         p.person_id,
+        r.role,
         coalesce(o.n, 0) AS periods,
         coalesce(m.n, 0) AS measurements,
         coalesce(e.n, 0) AS observations
@@ -86,6 +131,7 @@ per_person AS (
     LEFT JOIN (
         SELECT person_id, count(*) AS n FROM @cdm_schema.observation GROUP BY person_id
     ) AS e ON p.person_id = e.person_id
+    LEFT JOIN roles AS r ON p.person_id = r.person_id
 ),
 
 staged AS (
@@ -113,6 +159,10 @@ FROM (
     (
         'concept_not_in_vocabulary:observation',
         coalesce((SELECT concepts FROM missing WHERE cdm_table = 'observation'), 0)
+    ),
+    (
+        'concept_not_in_vocabulary:fact_relationship',
+        coalesce((SELECT concepts FROM missing WHERE cdm_table = 'fact_relationship'), 0)
     ),
     (
         'concept_not_in_vocabulary:location',
@@ -154,6 +204,19 @@ FROM (
         )
     ),
     (
+        'orphan_person:fact_relationship',
+        (
+            SELECT count(*) FROM @cdm_schema.fact_relationship AS f
+            WHERE
+                NOT EXISTS (
+                    SELECT 1 FROM @cdm_schema.person AS p WHERE p.person_id = f.fact_id_1
+                )
+                OR NOT EXISTS (
+                    SELECT 1 FROM @cdm_schema.person AS p WHERE p.person_id = f.fact_id_2
+                )
+        )
+    ),
+    (
         'orphan_location:person',
         (
             SELECT count(*) FROM @cdm_schema.person AS p
@@ -169,21 +232,63 @@ FROM (
         (SELECT count(*) FROM per_person WHERE periods <> 1)
     ),
     (
-        'person_without_three_measurements',
-        (SELECT count(*) FROM per_person WHERE measurements <> 3)
+        'mother_without_three_measurements',
+        (SELECT count(*) FROM per_person WHERE role = 'mother' AND measurements <> 3)
     ),
     (
-        'person_without_three_observations',
-        (SELECT count(*) FROM per_person WHERE observations <> 3)
+        'mother_without_three_observations',
+        (SELECT count(*) FROM per_person WHERE role = 'mother' AND observations <> 3)
+    ),
+    (
+        'newborn_without_one_measurement',
+        (SELECT count(*) FROM per_person WHERE role = 'newborn' AND measurements <> 1)
+    ),
+    (
+        'newborn_with_an_observation',
+        (SELECT count(*) FROM per_person WHERE role = 'newborn' AND observations <> 0)
     ),
     (
         'observation_period_not_the_delivery_day',
         (
             SELECT count(*) FROM @cdm_schema.observation_period AS o
-            LEFT JOIN pg_temp.records AS r ON o.person_id = r.person_id AND r.loaded
+            LEFT JOIN roles AS r ON o.person_id = r.person_id
             WHERE
                 o.observation_period_start_date <> o.observation_period_end_date
                 OR o.observation_period_start_date IS DISTINCT FROM r.delivery_date
+        )
+    ),
+    (
+        'newborn_birth_not_the_delivery_day',
+        (
+            SELECT count(*) FROM @cdm_schema.person AS p
+            INNER JOIN roles AS r ON p.person_id = r.person_id AND r.role = 'newborn'
+            WHERE
+                make_date(p.year_of_birth, p.month_of_birth, p.day_of_birth)
+                IS DISTINCT FROM r.delivery_date
+        )
+    ),
+    (
+        'fact_relationship_not_the_record_pair',
+        (
+            SELECT count(*) FROM (
+                (
+                    SELECT * FROM links
+                    EXCEPT ALL
+                    SELECT
+                        domain_concept_id_1, fact_id_1, domain_concept_id_2, fact_id_2,
+                        relationship_concept_id
+                    FROM @cdm_schema.fact_relationship
+                )
+                UNION ALL
+                (
+                    SELECT
+                        domain_concept_id_1, fact_id_1, domain_concept_id_2, fact_id_2,
+                        relationship_concept_id
+                    FROM @cdm_schema.fact_relationship
+                    EXCEPT ALL
+                    SELECT * FROM links
+                )
+            ) AS differences
         )
     ),
     (
@@ -224,19 +329,12 @@ FROM (
     (
         'person_not_matched_to_staging',
         (
-            SELECT count(*) FROM pg_temp.records AS r
-            WHERE
-                r.loaded
-                AND NOT EXISTS (
-                    SELECT 1 FROM @cdm_schema.person AS p WHERE p.person_id = r.person_id
-                )
-        )
-        + (
-            SELECT count(*) FROM @cdm_schema.person AS p
+            SELECT count(*) FROM roles AS r
             WHERE NOT EXISTS (
-                SELECT 1 FROM pg_temp.records AS r WHERE r.person_id = p.person_id AND r.loaded
+                SELECT 1 FROM @cdm_schema.person AS p WHERE p.person_id = r.person_id
             )
         )
+        + (SELECT count(*) FROM per_person WHERE role IS NULL)
     ),
     (
         'staging_rows_not_load_counts',

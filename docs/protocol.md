@@ -143,7 +143,7 @@ live-born children.
 What this implies for the OMOP mapping (the detail is in [`omop_mapping.md`](omop_mapping.md)):
 
 - One `PERSON` for the mother and one for the newborn per certificate, linked through
-  `FACT_RELATIONSHIP`.
+  `FACT_RELATIONSHIP` (D-103, D-104). Only the mothers are subjects of the cohorts (D-106).
 - **The mother `PERSON` is one per certificate, not one per woman.** A woman with two births in
   2020–2023 becomes two `PERSON` records. This is a documented deviation from the OMOP convention
   that a `PERSON` is a unique individual, and it is unavoidable here: no published variable

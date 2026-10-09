@@ -1,9 +1,9 @@
 """The synthetic source the database tests load: records, configuration, manifest, vocabulary.
 
-Eight 2023 records each carry a trap: a normal case, an exact duplicate, weeks and visits out of any
-plausible range, "no especificado" everywhere, empty fields, no year of birth for the mother, values
-that do not cast, and twins. Two 2022 records test a load of several years. The fixture imitates
-traps, not volumes.
+Eight 2023 records each carry a trap: a normal case, an exact duplicate, weeks, visits and a birth
+weight out of any plausible range, "no especificado" everywhere, empty fields, no year of birth for
+the mother, values that do not cast, and twins. Two 2022 records test a load of several years. The
+fixture imitates traps, not volumes.
 
 The configuration, the manifest and the vocabulary are synthetic too, with concept ids above
 2,000,000,000, the OMOP range for local concepts (D-023). ``data/`` is never touched.
@@ -29,36 +29,38 @@ import etl
 import sql_runner
 import stage
 from sinac_truncation.concepts import STCM_COLUMNS
-from sinac_truncation.etl import SOURCE_COLUMNS, person_id
+from sinac_truncation.etl import SOURCE_COLUMNS, newborn_person_id, person_id
 
 #: One record per trap, in the order of SOURCE_COLUMNS: FECHANACIMIENTO, FECHANACIMIENTOMADRE,
 #: EDAD, RESIDEEXTRANJERO, ENTIDADRESIDENCIA, EDADGESTACIONAL, PRODUCTOEMBARAZO, TOTALCONSULTAS,
-#: TRIMESTREPRIMERCONSULTA, ESCOLARIDAD. ``None`` is a blank cell, which staging holds as NULL
-#: (D-069).
+#: TRIMESTREPRIMERCONSULTA, ESCOLARIDAD, SEXO, PESO. ``None`` is a blank cell, which staging holds
+#: as NULL (D-069).
 RECORDS_2023: tuple[tuple[str | None, ...], ...] = (
     # 1. The normal case.
-    ("15/03/2023", "02/05/1995", "27", "2", "09", "39", "1", "8", "1", "51"),
+    ("15/03/2023", "02/05/1995", "27", "2", "09", "39", "1", "8", "1", "51", "1", "3200"),
     # 2. An exact duplicate of 1: kept, as a second PERSON (D-058).
-    ("15/03/2023", "02/05/1995", "27", "2", "09", "39", "1", "8", "1", "51"),
-    # 3. Out of any plausible range, kept as they are (D-053, D-058); three or more; no care; an
-    #    age that is a code while the mother's date of birth is known; a technical program.
-    ("20/06/2023", "11/11/2000", "888", "2", "00", "12", "3", "45", "0", "132"),
+    ("15/03/2023", "02/05/1995", "27", "2", "09", "39", "1", "8", "1", "51", "1", "3200"),
+    # 3. Out of any plausible range, kept as they are (D-053, D-058, D-105); three or more; no
+    #    care; an age that is a code while the mother's date of birth is known; a technical
+    #    program; a girl.
+    ("20/06/2023", "11/11/2000", "888", "2", "00", "12", "3", "45", "0", "132", "2", "350"),
     # 4. "No especificado" everywhere; 88 is not in SI_NO (D-057); the mother's date is a code.
-    ("01/01/2023", "09/09/9999", "30", "88", "00", "99", "0", "99", "8", "0"),
+    ("01/01/2023", "09/09/9999", "30", "88", "00", "99", "0", "99", "8", "0", "0", "9999"),
     # 5. Empty fields; resident abroad; a mother's date that is not a day of the calendar.
-    ("31/12/2023", "31/02/1990", "33", "1", "88", None, "1", None, None, None),
-    # 6. Neither the mother's date of birth nor her age: not loaded (D-060).
-    ("10/07/2023", "99/99/9999", "999", "2", "15", "38", "1", "5", "2", "99"),
-    # 7. Values that do not cast (D-075); a mother born after the delivery.
-    ("05/05/2023", "01/01/2024", "25", "3", "9", "ab", "7", " 7", "5", "7"),
+    ("31/12/2023", "31/02/1990", "33", "1", "88", None, "1", None, None, None, None, None),
+    # 6. Neither the mother's date of birth nor her age: not loaded (D-060), nor is the newborn.
+    ("10/07/2023", "99/99/9999", "999", "2", "15", "38", "1", "5", "2", "99", "2", "3100"),
+    # 7. Values that do not cast (D-075); a mother born after the delivery; a sex the catalogue
+    #    SEXO does not publish.
+    ("05/05/2023", "01/01/2024", "25", "3", "9", "ab", "7", " 7", "5", "7", "3", "3.2"),
     # 8. Twins; no visits, which is an answer; a mother born on a leap day, whose declared age
-    #    does not cast; education "NO APLICA".
-    ("28/02/2023", "29/02/1996", " 26", "2", "31", "34", "2", "0", "1", "88"),
+    #    does not cast; education "NO APLICA"; sex "SE IGNORA".
+    ("28/02/2023", "29/02/1996", " 26", "2", "31", "34", "2", "0", "1", "88", "9", "2100"),
 )
 
 RECORDS_2022: tuple[tuple[str | None, ...], ...] = (
-    ("03/03/2022", "15/08/1990", "31", "2", "09", "38", "1", "10", "1", "71"),
-    ("04/04/2022", "20/01/1985", "37", "2", "14", "36", "1", "6", "2", "81"),
+    ("03/03/2022", "15/08/1990", "31", "2", "09", "38", "1", "10", "1", "71", "2", "3300"),
+    ("04/04/2022", "20/01/1985", "37", "2", "14", "36", "1", "6", "2", "81", "1", "2900"),
 )
 
 SHA256 = {2023: "a" * 64, 2022: "b" * 64}
@@ -70,6 +72,7 @@ FEMALE, REGISTRY, WEEKS, WEEK, PLURALITY, AT_LEAST, VISITS, TRIMESTER, CDM_VERSI
 FIRST, SECOND, THIRD, NO_CARE, MEXICO = range(2_000_000_011, 2_000_000_016)
 AGE, YEAR, EDUCATION = range(2_000_000_016, 2_000_000_019)
 NO_SCHOOLING, PRIMARY, JUNIOR_HIGH, SENIOR_HIGH, HIGHER = range(2_000_000_019, 2_000_000_024)
+WEIGHT, GRAM, MOTHER, CHILD, PERSON_TABLE, MALE = range(2_000_000_024, 2_000_000_030)
 NOT_IN_CONCEPT = 2_000_000_099
 
 
@@ -107,6 +110,16 @@ CONCEPTS: dict[str, dict[str, Any]] = {
         TRIMESTER, "Observation", "observation.observation_concept_id"
     ),
     "mother_education": _concept(EDUCATION, "Observation", "observation.observation_concept_id"),
+    "birth_weight": _concept(WEIGHT, "Measurement", "measurement.measurement_concept_id"),
+    "gram": _concept(GRAM, "Unit", "measurement.unit_concept_id"),
+    "mother": _concept(MOTHER, "Relationship", "fact_relationship.relationship_concept_id"),
+    "child": _concept(CHILD, "Relationship", "fact_relationship.relationship_concept_id"),
+    "person_table": _concept(
+        PERSON_TABLE,
+        "Metadata",
+        "fact_relationship.domain_concept_id_1",
+        "fact_relationship.domain_concept_id_2",
+    ),
     "cdm_version": _concept(CDM_VERSION, "Metadata", "cdm_source.cdm_version_concept_id"),
 }
 
@@ -149,6 +162,8 @@ SOURCE_VOCABULARIES: dict[str, dict[str, Any]] = {
     "SINAC20_FECHANACMAD": _vocabulary(
         "FECHANACIMIENTOMADRE", "descriptor", None, "person.year_of_birth"
     ),
+    "SINAC20_SEXO": _vocabulary("SEXO", "SEXO", "Gender", "person.gender_concept_id"),
+    "SINAC20_PESO": _vocabulary("PESO", "descriptor", None, "measurement.value_as_number"),
 }
 
 #: (vocabulary, code, target). The codes are the ones docs/omop_mapping.md lists; the targets are
@@ -184,6 +199,11 @@ MAP: tuple[tuple[str, str, int], ...] = (
     ("SINAC20_EDAD", "888", 0),
     ("SINAC20_EDAD", "999", 0),
     ("SINAC20_FECHANACMAD", "09/09/9999", 0),
+    ("SINAC20_SEXO", "0", 0),
+    ("SINAC20_SEXO", "1", MALE),
+    ("SINAC20_SEXO", "2", FEMALE),
+    ("SINAC20_SEXO", "9", 0),
+    ("SINAC20_PESO", "9999", 0),
 )
 
 
@@ -244,7 +264,7 @@ CONCEPT_ROWS: tuple[tuple[object, ...], ...] = (
     *(
         (concept_id, f"Synthetic {concept_id}", "Metadata", "SYNTH", "Undefined", "S",
          str(concept_id))
-        for concept_id in range(2_000_000_001, 2_000_000_024)
+        for concept_id in range(2_000_000_001, 2_000_000_030)
     ),
 )  # fmt: skip
 
@@ -360,6 +380,7 @@ class Source:
             "observation_period": self.table("observation_period", "observation_period_id"),
             "measurement": self.table("measurement", "measurement_id"),
             "observation": self.table("observation", "observation_id"),
+            "fact_relationship": self.table("fact_relationship", "fact_id_1, fact_id_2"),
             "location": self.table("location", "location_id"),
             "source_to_concept_map": self.table(
                 "source_to_concept_map", "source_vocabulary_id, source_code"
@@ -419,3 +440,8 @@ def prepare_source(
 
 def pid(row: int, year: int = 2023) -> int:
     return person_id(year, row)
+
+
+def nid(row: int, year: int = 2023) -> int:
+    """The newborn of a record (D-059)."""
+    return newborn_person_id(year, row)

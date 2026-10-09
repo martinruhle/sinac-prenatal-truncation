@@ -17,7 +17,8 @@
 --   code_to_concept   a code whose target is a concept: that concept
 --   code_to_0         a code whose target is 0 (a flavor of null, or no standard concept): 0
 --   value             anything else that casts: the value itself
---   not_integer       a count, an age or a number of weeks that is not digits only: NULL
+--   not_integer       a count, an age, a number of weeks or a weight that is not digits only:
+--                     NULL
 --   not_in_catalogue  a coded value its catalogue does not publish: NULL for a number, 0 for a
 --                     concept
 --   not_two_digits    a state that is not a two-digit code: NULL
@@ -31,6 +32,9 @@ WITH parsed AS (
         -- D-059: (year - 2000) x 10,000,000 + source_row. bigint until unloadable.sql has
         -- checked that it fits the integer columns of the CDM.
         (s.source_year - 2000)::bigint * 10000000 + s.source_row AS person_id,
+        -- The newborn of the record: the mother's id + 1,000,000,000 (D-059, D-103).
+        (s.source_year - 2000)::bigint * 10000000 + s.source_row + 1000000000
+        AS newborn_person_id,
         CASE
             WHEN s.fechanacimiento ~ '^[0-9]{2}/[0-9]{2}/[0-9]{4}$'
                 AND pg_input_is_valid(iso.delivery, 'date')
@@ -55,7 +59,9 @@ WITH parsed AS (
         trimester_code.target_concept_id AS trimester_target,
         education_code.target_concept_id AS education_target,
         country_code.target_concept_id AS country_target,
-        state_code.source_code IS NOT NULL AS state_is_code
+        state_code.source_code IS NOT NULL AS state_is_code,
+        sex_code.target_concept_id AS sex_target,
+        weight_code.source_code IS NOT NULL AS weight_is_code
     FROM pg_temp.staged_records AS s
     CROSS JOIN LATERAL (
         SELECT
@@ -100,6 +106,14 @@ WITH parsed AS (
         ON state_code.source_vocabulary_id = 'SINAC20_ENTRES'
         AND state_code.source_code = s.entidadresidencia
         AND state_code.invalid_reason IS NULL
+    LEFT JOIN @cdm_schema.source_to_concept_map AS sex_code
+        ON sex_code.source_vocabulary_id = 'SINAC20_SEXO'
+        AND sex_code.source_code = s.sexo
+        AND sex_code.invalid_reason IS NULL
+    LEFT JOIN @cdm_schema.source_to_concept_map AS weight_code
+        ON weight_code.source_vocabulary_id = 'SINAC20_PESO'
+        AND weight_code.source_code = s.peso
+        AND weight_code.invalid_reason IS NULL
 ),
 
 ruled AS (
@@ -161,7 +175,19 @@ ruled AS (
             WHEN p.state_is_code THEN 'code_to_null'
             WHEN p.entidadresidencia ~ '^[0-9]{2}$' THEN 'value'
             ELSE 'not_two_digits'
-        END AS state_rule
+        END AS state_rule,
+        CASE
+            WHEN p.sexo IS NULL THEN 'blank'
+            WHEN p.sex_target = 0 THEN 'code_to_0'
+            WHEN p.sex_target IS NOT NULL THEN 'code_to_concept'
+            ELSE 'not_in_catalogue'
+        END AS sex_rule,
+        CASE
+            WHEN p.peso IS NULL THEN 'blank'
+            WHEN p.weight_is_code THEN 'code_to_null'
+            WHEN p.peso ~ '^[0-9]+$' THEN 'value'
+            ELSE 'not_integer'
+        END AS weight_rule
     FROM parsed AS p
 )
 
@@ -235,5 +261,18 @@ SELECT
         WHEN 'code_to_concept' THEN r.education_target
         WHEN 'code_to_0' THEN 0
         WHEN 'not_in_catalogue' THEN 0
-    END AS education_concept_id
+    END AS education_concept_id,
+    -- The newborn (D-103): its sex, from the catalogue SEXO, and its birth weight in grams, as
+    -- the certificate records it, extremes included (D-105).
+    r.newborn_person_id,
+    r.sexo,
+    r.sex_rule,
+    -- gender_concept_id is required, so a blank or an uncatalogued sex is 0 as well (D-067).
+    CASE r.sex_rule
+        WHEN 'code_to_concept' THEN r.sex_target
+        ELSE 0
+    END AS newborn_gender_concept_id,
+    r.peso,
+    r.weight_rule,
+    CASE WHEN r.weight_rule = 'value' THEN r.peso::numeric END AS weight
 FROM ruled AS r;

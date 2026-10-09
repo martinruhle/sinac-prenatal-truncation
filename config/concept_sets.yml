@@ -9,6 +9,9 @@
 # mother_education and the targets of SINAC20_ESCOL) were copied on 2026-10-08 from CONCEPT.csv of
 # the Athena bundle that config/sources.yml records (v5.0 29-AUG-26: LOINC 2.82, SNOMED CT
 # International 2026-02-01, UCUM 1.8.2), where every one is Standard and Valid.
+# The concepts added for the newborn (task 1.4.6: birth_weight, gram, mother, child, person_table
+# and the targets of SINAC20_SEXO) were copied on 2026-10-09 from the same bundle, where every one
+# is Standard and Valid.
 # cdm_fields lists the CDM fields the concept is written to. The domain of a standard concept
 # decides its table ("Write the data record into the table(s) corresponding to the domain of the
 # Standard CONCEPT_ID", OMOP CDM data model conventions), so a concept written to
@@ -101,6 +104,25 @@ concepts:
     standard_concept: S
     cdm_fields: [measurement.unit_concept_id]
 
+  birth_weight:
+    concept_id: 3011043
+    concept_name: Birth weight Measured
+    vocabulary_id: LOINC
+    concept_code: "8339-4"
+    domain_id: Measurement
+    standard_concept: S
+    cdm_fields: [measurement.measurement_concept_id]
+    source_column: PESO
+
+  gram:
+    concept_id: 8504
+    concept_name: gram
+    vocabulary_id: UCUM
+    concept_code: "g"
+    domain_id: Unit
+    standard_concept: S
+    cdm_fields: [measurement.unit_concept_id]
+
   prenatal_visits_count:
     concept_id: 40771079
     concept_name: "Prenatal visits for this pregnancy #"
@@ -130,6 +152,39 @@ concepts:
     standard_concept: S
     cdm_fields: [observation.observation_concept_id]
     source_column: ESCOLARIDAD
+
+  # FACT_RELATIONSHIP reads "fact 1 is <relationship> of fact 2", and every link is written in
+  # both directions (OMOP CDM v5.4, FACT_RELATIONSHIP ETL conventions): the mother is the Mother
+  # of the newborn, and the newborn is the Child of the mother (D-104).
+  mother:
+    concept_id: 4248584
+    concept_name: Mother
+    vocabulary_id: SNOMED
+    concept_code: "72705000"
+    domain_id: Relationship
+    standard_concept: S
+    cdm_fields: [fact_relationship.relationship_concept_id]
+
+  child:
+    concept_id: 4285883
+    concept_name: Child
+    vocabulary_id: SNOMED
+    concept_code: "67822003"
+    domain_id: Relationship
+    standard_concept: S
+    cdm_fields: [fact_relationship.relationship_concept_id]
+
+  # The table both facts point to. The Domain concept 56 "Person" of the CDM examples is
+  # deprecated in the loaded bundle (valid until 2022-09-27, no replacement); the CDM vocabulary
+  # names the table itself, with a standard concept (D-104).
+  person_table:
+    concept_id: 1147314
+    concept_name: person
+    vocabulary_id: CDM
+    concept_code: "CDM370"
+    domain_id: Metadata
+    standard_concept: S
+    cdm_fields: [fact_relationship.domain_concept_id_1, fact_relationship.domain_concept_id_2]
 
   cdm_version:
     concept_id: 902983
@@ -194,4 +249,14 @@ source_vocabularies:
     source_column: FECHANACIMIENTOMADRE
     defined_in: descriptor
     cdm_fields: [person.year_of_birth]
+    target_domain_id: null
+  SINAC20_SEXO:
+    source_column: SEXO
+    defined_in: SEXO
+    cdm_fields: [person.gender_concept_id]
+    target_domain_id: Gender
+  SINAC20_PESO:
+    source_column: PESO
+    defined_in: descriptor
+    cdm_fields: [measurement.value_as_number]
     target_domain_id: null

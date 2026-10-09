@@ -6,7 +6,9 @@
 --   pg_temp.cohort_exits   every subject with the first step it fails, NULL when it stays
 --
 -- The subjects are the mother PERSONs of the record files of --years (pg_temp.cohort_years). The
--- year of the file is the one person_source_value carries, '<year>:<source_row>' (D-059).
+-- year of the file is the one person_source_value carries, '<year>:<source_row>' (D-059). PERSON
+-- also holds the newborns, with the same person_source_value; a mother is the PERSON that is the
+-- Mother of another in FACT_RELATIONSHIP (D-104, D-106).
 --
 -- Each criterion is read as the CDM holds it (docs/omop_mapping.md), and is met only when it is
 -- true: a value the CDM does not know, NULL, never meets one, so no record passes a criterion
@@ -26,9 +28,11 @@ WITH concepts AS (
     SELECT
         max(c.concept_id) FILTER (WHERE c.concept_key = 'gestational_age_at_birth') AS weeks,
         max(c.concept_id) FILTER (WHERE c.concept_key = 'birth_plurality') AS plurality,
+        max(c.concept_id) FILTER (WHERE c.concept_key = 'person_table') AS person,
+        max(c.concept_id) FILTER (WHERE c.concept_key = 'mother') AS mother,
         -- Mexico is the target of RESIDEEXTRANJERO 2, "NO" (does not reside abroad), in the map
         -- the ETL loaded (docs/omop_mapping.md §LOCATION). scripts/cohorts.py checks that there
-        -- is exactly one, and that both keys above are in concept_sets, before this runs.
+        -- is exactly one, and that the keys above are in concept_sets, before this runs.
         (
             SELECT m.target_concept_id
             FROM @cdm_schema.source_to_concept_map AS m
@@ -48,6 +52,18 @@ subjects AS (
     FROM @cdm_schema.person AS p
     INNER JOIN pg_temp.cohort_years AS y
         ON split_part(p.person_source_value, ':', 1) = y.source_year::text
+    CROSS JOIN concepts AS c
+    -- domain_concept_id_2 is left out: the ETL checks that every row is one of the two links of
+    -- its record (D-104), and an equality on both domains makes the planner read them as equal
+    -- to each other, estimate 0.5 % of the rows and run nested loops over 6.5 million mothers.
+    WHERE EXISTS (
+        SELECT 1
+        FROM @cdm_schema.fact_relationship AS f
+        WHERE
+            f.fact_id_1 = p.person_id
+            AND f.domain_concept_id_1 = c.person
+            AND f.relationship_concept_id = c.mother
+    )
 )
 
 SELECT

@@ -394,14 +394,16 @@ def build_parser() -> argparse.ArgumentParser:
         "cdm",
         help="populate the OMOP tables of the vertical slice from staging",
         description=(
-            "Empties and refills PERSON, OBSERVATION_PERIOD, MEASUREMENT, OBSERVATION, LOCATION, "
-            "CDM_SOURCE and SOURCE_TO_CONCEPT_MAP from staging.sinac_<year>, as "
+            "Empties and refills PERSON (the mother and the newborn), OBSERVATION_PERIOD, "
+            "MEASUREMENT, OBSERVATION, FACT_RELATIONSHIP, LOCATION, CDM_SOURCE and "
+            "SOURCE_TO_CONCEPT_MAP from staging.sinac_<year>, as "
             "docs/omop_mapping.md maps them, with the SQL of sql/etl/. The concept ids come from "
             "config/concept_sets.yml and config/source_to_concept_map.csv, loaded into "
             "results.concept_sets and the map. Every value is cast here, and each rule's count "
             "goes to results.etl_counts. A record with no valid delivery date stops the run. The "
             "load is one transaction that commits only when every post-load check (anti-joins, "
-            "one-day observation periods, no VISIT_OCCURRENCE, PERSON against staging) counts 0, "
+            "one-day observation periods, no VISIT_OCCURRENCE, PERSON and FACT_RELATIONSHIP "
+            "against staging) counts 0, "
             "so a failed run keeps the previous load. The CDM then holds exactly the years given "
             "(D-073). Needs `db-init`, `vocab` and `stage` first; run it again after `vocab`, "
             "which empties VOCABULARY."
