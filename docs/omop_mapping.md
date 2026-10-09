@@ -389,7 +389,7 @@ represented twice symmetrically within the FACT_RELATIONSHIP table". A row reads
   concepts of the Relationship domain, and "Mother" says more than "Parent". The pair proposed on
   the OHDSI forum, "Parent of" (4050951) and "Child of" (4051272), sits in the Observation domain,
   which that same thread took for an error to be fixed. It still does in the loaded bundle.
-- **The domain concept** (FOR APPROVAL). The CDM examples name a fact's table through a concept of
+- **The domain concept.** The CDM examples name a fact's table through a concept of
   the Domain vocabulary, here 56 "Person". That concept is deprecated in the loaded bundle (valid
   until 27 September 2022) with no replacement. The CDM vocabulary names the table itself,
   1147314 "person" (class Table), which is standard and valid. The OHDSI forum points to the
