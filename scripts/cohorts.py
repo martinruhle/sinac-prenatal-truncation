@@ -6,8 +6,9 @@ Every criterion is SQL (rule 5); the invariants the result must meet live in
 
 A run first checks what it needs, before it touches anything: the years of ``--years`` loaded in
 the CDM, and the concepts the SQL reads. It then replaces the cohort and the attrition of each
-definition in one transaction, which commits only when every invariant of the attrition holds;
-otherwise the previous cohort stays as it was, as the ETL does (D-073).
+definition, and the exposure measures (task 1.6.1), in one transaction, which commits only when
+every invariant of the attrition holds; otherwise the previous cohort stays as it was, as the ETL
+does (D-073).
 """
 
 import time
@@ -23,6 +24,7 @@ import sql_runner
 from sinac_truncation.cohorts import (
     MEXICO_CODE,
     SQL_FILES,
+    TRIMESTER_CODES,
     AttritionStep,
     attrition_problems,
     cited_concept_keys,
@@ -95,22 +97,25 @@ def check_database(
                         "config/concept_sets.yml"
                     )
 
-            vocabulary, code = MEXICO_CODE
-            cur.execute(
-                sql.SQL(
-                    "SELECT count(*) FROM {} WHERE source_vocabulary_id = %s AND source_code = %s "
-                    "AND invalid_reason IS NULL AND target_concept_id <> 0"
-                ).format(stcm),
-                (vocabulary, code),
-            )
-            row = cur.fetchone()
-            targets = 0 if row is None else int(row[0])
-            if targets != 1:
-                raise CohortError(
-                    f"{schemas.cdm}.source_to_concept_map maps {vocabulary} {code!r} to {targets} "
-                    "concepts, and criterion 2 needs exactly one: run `pipeline.py cdm` again, "
-                    "which reloads config/source_to_concept_map.csv"
+            readers = [(MEXICO_CODE, "criterion 2")] + [
+                (trimester, "the trimester of the first visit") for trimester in TRIMESTER_CODES
+            ]
+            for (vocabulary, code), reader in readers:
+                cur.execute(
+                    sql.SQL(
+                        "SELECT count(*) FROM {} WHERE source_vocabulary_id = %s "
+                        "AND source_code = %s AND invalid_reason IS NULL AND target_concept_id <> 0"
+                    ).format(stcm),
+                    (vocabulary, code),
                 )
+                row = cur.fetchone()
+                targets = 0 if row is None else int(row[0])
+                if targets != 1:
+                    raise CohortError(
+                        f"{schemas.cdm}.source_to_concept_map maps {vocabulary} {code!r} to "
+                        f"{targets} concepts, and {reader} needs exactly one: run `pipeline.py "
+                        "cdm` again, which reloads config/source_to_concept_map.csv"
+                    )
     except psycopg.errors.UndefinedTable as error:
         raise CohortError(
             f"{str(error).strip()}. Run `pipeline.py db-init` and `cdm` first."
@@ -215,6 +220,6 @@ def run(
         print(line)
     print(
         f"\nevery attrition check holds; built in {time.perf_counter() - start:.1f} s. Rows in "
-        f"{schemas.results}.cohort and {schemas.results}.attrition"
+        f"{schemas.results}.cohort, {schemas.results}.attrition and {schemas.results}.exposure"
     )
     return steps

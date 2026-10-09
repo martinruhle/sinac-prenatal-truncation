@@ -4,6 +4,8 @@
 --   results.cohort         one row per subject that meets every criterion, on its delivery day
 --   pg_temp.cohort_steps   its steps, after the data-model steps 0 and 1 of attrition.sql
 --   pg_temp.cohort_exits   every subject with the first step it fails, NULL when it stays
+--   pg_temp.base_criteria  every subject with its criteria and completed weeks, which the files
+--                          that follow read until the run commits
 --
 -- The subjects are the mother PERSONs of the record files of --years (pg_temp.cohort_years). The
 -- year of the file is the one person_source_value carries, '<year>:<source_row>' (D-059). PERSON
@@ -71,6 +73,7 @@ SELECT
     s.source_year,
     -- The delivery: every event of a certificate is dated FECHANACIMIENTO (D-063).
     weeks.measurement_date AS delivery_date,
+    weeks.value_as_number AS weeks,
     EXISTS (
         SELECT 1
         FROM pg_temp.cohort_years AS y
