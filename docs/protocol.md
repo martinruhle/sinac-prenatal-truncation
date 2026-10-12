@@ -471,6 +471,10 @@ The first trimester runs to 13 completed weeks, the second from 14 to 27, and th
 
 - **Every definition has its own attrition table** (rule 5 of [`../CLAUDE.md`](../CLAUDE.md)).
   Each sensitivity definition repeats the same tail after its own prefix (D-087).
+- **Definition 2 is [`../sql/cohorts/02_analysis.sql`](../sql/cohorts/02_analysis.sql)**, with
+  steps 8 and 9 of its attrition (D-107). It reads measures (a) and (c), which
+  [`../sql/cohorts/exposure.sql`](../sql/cohorts/exposure.sql) writes for every mother into
+  `results.exposure` (D-108).
 - **The counts are orientation**, measured once with a throwaway query over an approximation of the
   base cohort that differs from it by 526 records. The table of record is the one the cohort SQL
   writes.

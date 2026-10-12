@@ -415,9 +415,10 @@ def build_parser() -> argparse.ArgumentParser:
         "cohorts",
         help="build the cohorts of sql/cohorts/ and their attrition from the CDM",
         description=(
-            "Builds every cohort defined in sql/cohorts/ (the base cohort of docs/protocol.md) "
-            "on the record files of the years given, and its attrition: one row per step, per "
-            "definition and per year, into results.cohort and results.attrition. Steps 0 and 1 "
+            "Builds every cohort defined in sql/cohorts/ (the base and analysis cohorts of "
+            "docs/protocol.md) on the record files of the years given, and its attrition: one row "
+            "per step, per definition and per year, into results.cohort and results.attrition. "
+            "Exposure measures (a) and (c) of every mother go to results.exposure. Steps 0 and 1 "
             "come from results.etl_counts, the rest from the CDM; criterion 1 keeps the births "
             "of those years (D-073). The years must be loaded by `cdm` first. Each run replaces "
             "the rows of its definitions in one transaction that commits only when the attrition "

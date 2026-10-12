@@ -92,11 +92,13 @@ into `results.concept_sets`. Every value is cast there, and each rule's count go
 only when every check counts 0, and running it again gives the same tables (D-073). It registers
 the local vocabularies in VOCABULARY, which `vocab` empties, so run `cdm` again after `vocab`.
 
-`cohorts` builds the base cohort of [`docs/protocol.md`](docs/protocol.md#base-cohort) from the
-CDM, with the SQL of [`sql/cohorts/`](sql/cohorts/), on the record files of the years given in
-`--years`, which `cdm` must have loaded. It writes one row per mother and pregnancy into
-`results.cohort` and the attrition table into `results.attrition`: one row per step, per
-definition and per year, a step that removes nobody included. The run is one transaction that
+`cohorts` builds the base cohort of [`docs/protocol.md`](docs/protocol.md#base-cohort) and the
+analysis cohort of [§Records analysed](docs/protocol.md#records-analysed) from the CDM, with the
+SQL of [`sql/cohorts/`](sql/cohorts/), on the record files of the years given in `--years`, which
+`cdm` must have loaded. It writes one row per mother and pregnancy into `results.cohort`, the
+attrition table into `results.attrition` (one row per step, per definition and per year, a step
+that removes nobody included), and exposure measures (a) and (c) of every mother into
+`results.exposure`. The run is one transaction that
 commits only when the attrition is consistent: the counts never grow, each step excludes what it
 removes, and the last step equals the cohort. Running it again gives the same tables.
 
