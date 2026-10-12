@@ -431,6 +431,11 @@ What SINAC changes in the algorithm:
   - Part 4, which imputes a missing gestational age from birth weight, is not used. Records
     without a gestational age leave at criterion 3, and birth weight is never used (rule 3).
 
+**Implementation.** `compute_apncu()` computes the index of one record and returns every step of
+the program, and the analysis calls it once per combination of count, trimester and weeks
+(D-110). A record that the common set removes is refused, not set to missing. Its tests hold a
+reference table worked out by hand from the program and from the article's worked example.
+
 **The index contains the outcome.** Its expected visits depend on the completed weeks at delivery,
 so APNCU is derived from gestational age. Its odds ratio measures the artefact of its construction,
 which Koroukian and Rimm (2002) showed. It is never read as an effect and never used as a predictor
