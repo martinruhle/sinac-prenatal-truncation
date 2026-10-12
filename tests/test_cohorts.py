@@ -1,5 +1,8 @@
 """Tests for the base cohort and its attrition (task 1.5.1, docs/protocol.md §Base cohort).
 
+The analysis cohort, definition 2, and the measures it reads are tested in ``test_exposure.py``;
+here only the base cohort is read, except where a run must leave everything as it was.
+
 The records are the traps of ``tests/synthetic.py``, the eight the ETL tests load, plus the seven
 below. Those eight leave nobody at steps 2, 4, 5 and 7: every record with an unknown gestational age
 or plurality also lives abroad and leaves at step 3 first. A step that removes nobody in the fixture
@@ -28,6 +31,7 @@ import sql_runner
 from sinac_truncation.cohorts import (
     MEXICO_CODE,
     SQL_FILES,
+    TRIMESTER_CODES,
     AttritionStep,
     attrition_problems,
     cited_concept_keys,
@@ -263,10 +267,15 @@ def test_the_cohort_sql_cites_configured_concepts_only() -> None:
         # The subjects are the mothers, found through FACT_RELATIONSHIP (D-106).
         "person_table",
         "mother",
+        # Measures (a) and (c), and the covariates of the analysis cohort (task 1.6.1).
+        "prenatal_visits_count",
+        "first_prenatal_visit_trimester",
+        "mother_age_at_delivery",
+        "mother_education",
     }
     assert cited_concept_keys(texts) <= set(config["concepts"])
     cited_vocabularies = set().union(*(vocabulary_ids(text) for text in texts.values()))
-    assert cited_vocabularies == {MEXICO_CODE[0]}
+    assert cited_vocabularies == {MEXICO_CODE[0], TRIMESTER_CODES[0][0]}
     assert cited_concept_keys(texts) == set().union(*(concept_keys(t) for t in texts.values()))
 
 
@@ -329,25 +338,42 @@ def run_cohorts(source: Source, years: Sequence[int]) -> list[AttritionStep]:
     return cohorts.run(source.connection, years, schemas=source.schemas)
 
 
-def attrition(source: Source) -> list[tuple[Any, ...]]:
+def attrition(source: Source, definition: int | None = 1) -> list[tuple[Any, ...]]:
+    """The attrition of one definition, the base cohort unless named; ``None`` for all of them."""
     return fetch(
         source.connection,
         f"SELECT cohort_definition_id, source_year, step, kind, description, remaining, excluded "
         f"FROM {source.schemas.results}.attrition "
+        "WHERE %s::integer IS NULL OR cohort_definition_id = %s "
         "ORDER BY cohort_definition_id, source_year, step",
+        definition,
+        definition,
     )
 
 
-def cohort(source: Source) -> list[tuple[Any, ...]]:
+def cohort(source: Source, definition: int | None = 1) -> list[tuple[Any, ...]]:
+    """The rows of one definition, the base cohort unless named; ``None`` for all of them."""
     return fetch(
         source.connection,
         f"SELECT cohort_definition_id, subject_id, cohort_start_date, cohort_end_date "
-        f"FROM {source.schemas.results}.cohort ORDER BY cohort_definition_id, subject_id",
+        f"FROM {source.schemas.results}.cohort "
+        "WHERE %s::integer IS NULL OR cohort_definition_id = %s "
+        "ORDER BY cohort_definition_id, subject_id",
+        definition,
+        definition,
     )
 
 
 def snapshot(source: Source) -> dict[str, list[tuple[Any, ...]]]:
-    return {"cohort": cohort(source), "attrition": attrition(source)}
+    """Everything a run of the cohorts writes, every definition and the measures included."""
+    return {
+        "cohort": cohort(source, None),
+        "attrition": attrition(source, None),
+        "exposure": fetch(
+            source.connection,
+            f"SELECT * FROM {source.schemas.results}.exposure ORDER BY subject_id",
+        ),
+    }
 
 
 def delivery(record: Sequence[str | None]) -> datetime.date:
@@ -364,7 +390,7 @@ def test_each_step_removes_the_records_its_criterion_names(source: Source) -> No
     source.run((2023,))
     returned = run_cohorts(source, (2023,))
     assert attrition(source) == expected_rows(2023, EXPECTED_2023)
-    assert [tuple(step) for step in returned] == attrition(source)
+    assert [tuple(step) for step in returned] == attrition(source, None)
 
 
 @pytest.mark.db
@@ -504,14 +530,26 @@ def _no_mexico_in_the_map(source: Source) -> None:
         )
 
 
+def _no_first_trimester_in_the_map(source: Source) -> None:
+    with source.connection.cursor() as cursor:
+        cursor.execute(
+            f"UPDATE {source.schemas.cdm}.source_to_concept_map SET target_concept_id = 0 "
+            "WHERE source_vocabulary_id = 'SINAC20_TRIMCONS' AND source_code = '1'"
+        )
+
+
 @pytest.mark.db
 @pytest.mark.parametrize(
     ("damage", "message"),
     [
         (_no_plurality_concept, "lacks the concept 'birth_plurality'"),
         (_no_mexico_in_the_map, "maps SINAC20_RESEXT '2' to 0 concepts"),
+        (
+            _no_first_trimester_in_the_map,
+            "maps SINAC20_TRIMCONS '1' to 0 concepts, and the trimester of the first visit",
+        ),
     ],
-    ids=["no-plurality-key", "no-mexico-target"],
+    ids=["no-plurality-key", "no-mexico-target", "no-first-trimester-target"],
 )
 def test_a_concept_the_cohort_cannot_read_is_refused(
     source: Source, damage: Any, message: str

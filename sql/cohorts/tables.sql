@@ -7,6 +7,9 @@
 -- attrition: per definition and per year of the record files, one row per step, a step that
 --   removes nobody included (docs/protocol.md §Attrition). Step 0 starts from the files and
 --   excludes nobody, so its `excluded` is NULL.
+-- exposure: one row per mother PERSON of the record files of the run, with the declared prenatal
+--   care and measures (a) and (c) (task 1.6.1, docs/protocol.md §The measures). A value the CDM
+--   does not know is NULL; which records are analysed is decided by the cohorts, not here.
 --
 -- scripts/cohorts.py replaces the rows of the definitions it builds, in one transaction.
 CREATE TABLE IF NOT EXISTS @results_schema.cohort (
@@ -26,6 +29,18 @@ CREATE TABLE IF NOT EXISTS @results_schema.attrition (
     remaining bigint NOT NULL,
     excluded bigint,
     PRIMARY KEY (cohort_definition_id, source_year, step)
+);
+
+CREATE TABLE IF NOT EXISTS @results_schema.exposure (
+    subject_id integer PRIMARY KEY,
+    -- TOTALCONSULTAS: measure (a) per count.
+    visits integer,
+    -- TRIMESTREPRIMERCONSULTA: 0 "NO RECIBIÓ", or the trimester of the first visit.
+    first_visit_trimester integer,
+    -- Measure (a): '0', '1-4', '5-7' or '8+'.
+    visits_level text,
+    -- Measure (c): the first visit was in the first trimester.
+    first_trimester_start boolean
 );
 
 -- The objects of one run, dropped when it commits:
