@@ -480,6 +480,10 @@ The first trimester runs to 13 completed weeks, the second from 14 to 27, and th
   steps 8 and 9 of its attrition (D-107). It reads measures (a) and (c), which
   [`../sql/cohorts/exposure.sql`](../sql/cohorts/exposure.sql) writes for every mother into
   `results.exposure` (D-108).
+- **Definitions 3 to 5 are [`../sql/cohorts/03_landmark_28.sql`](../sql/cohorts/03_landmark_28.sql),
+  [`04_landmark_32.sql`](../sql/cohorts/04_landmark_32.sql) and
+  [`05_landmark_34.sql`](../sql/cohorts/05_landmark_34.sql)**, with step 10 of their attrition, of
+  kind design. Each is the same file with another week (D-111).
 - **The counts are orientation**, measured once with a throwaway query over an approximation of the
   base cohort that differs from it by 526 records. The table of record is the one the cohort SQL
   writes.
