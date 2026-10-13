@@ -26,12 +26,16 @@ __all__ = [
 
 #: ``tables.sql`` creates the tables; each definition file writes its cohort and the step at which
 #: each subject leaves it; ``exposure.sql`` writes measures (a) and (c) of every subject, which the
-#: analysis cohort reads; ``attrition.sql`` counts them. They run in this order.
+#: analysis cohort reads; the landmark cohorts of measure (d) start from the analysis cohort;
+#: ``attrition.sql`` counts them. They run in this order.
 SQL_FILES: tuple[str, ...] = (
     "tables.sql",
     "01_base.sql",
     "exposure.sql",
     "02_analysis.sql",
+    "03_landmark_28.sql",
+    "04_landmark_32.sql",
+    "05_landmark_34.sql",
     "attrition.sql",
 )
 
