@@ -302,6 +302,19 @@ def write(
         )
 
 
+def check_line(row: ShareRow) -> str:
+    """The line of the report that states the built-in check of one scenario."""
+    estimate = row.share.simulated
+    what = (
+        f"built-in check, scenario {row.scenario}: the odds ratio of (c), {row.share.level} "
+        f"against {FIRST_TRIMESTER},"
+    )
+    if estimate.odds_ratio is None or estimate.lower is None or estimate.upper is None:
+        # A small table can leave a cell empty; there is then no interval that could exclude 1.
+        return f"{what} does not exist: a cell is empty"
+    return f"{what} is {estimate.odds_ratio:.4f} ({estimate.lower:.4f} to {estimate.upper:.4f})"
+
+
 def run(
     conn: sql_runner.Connection,
     *,
@@ -336,12 +349,7 @@ def run(
     )
     for row in result.rows:
         if row.measure == "c":
-            estimate = row.share.simulated
-            print(
-                f"built-in check, scenario {row.scenario}: the odds ratio of (c), "
-                f"{row.share.level} against {FIRST_TRIMESTER}, is {estimate.odds_ratio:.4f} "
-                f"({estimate.lower:.4f} to {estimate.upper:.4f})"
-            )
+            print(check_line(row))
     print()
     for line in format_shares(result.rows):
         print(line)

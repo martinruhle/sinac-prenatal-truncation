@@ -20,7 +20,15 @@ import etl
 import simulate as script
 import sql_runner
 from sinac_truncation.cohorts import LANDMARK_WEEKS
-from sinac_truncation.measures import level_counts, reached
+from sinac_truncation.measures import (
+    FIRST_TRIMESTER,
+    LATER_OR_NO_CARE,
+    Crude,
+    Share,
+    ShareRow,
+    level_counts,
+    reached,
+)
 from sinac_truncation.simulation import Combination
 from synthetic import RECORDS_2023, Source, fetch, module_schemas, prepare_source
 
@@ -127,6 +135,16 @@ def test_a_simulated_association_of_measure_c_stops_the_run(
     observed = {definition: ANALYSIS for definition in (2, 3, 4, 5)}
     with pytest.raises(script.SimulateError, match="built-in check failed"):
         script.compute(script.read_settings(), observed)
+
+
+def test_the_report_states_the_check_with_or_without_an_odds_ratio() -> None:
+    """A small table can leave a cell of (c) empty, as the synthetic records of this module do."""
+    empty = Crude(None, None, None, 0.1)
+    row = ShareRow(2, "c", "", "e1", FIRST_TRIMESTER, Share(LATER_OR_NO_CARE, empty, empty, None))
+    assert script.check_line(row).endswith("does not exist: a cell is empty")
+    estimate = Crude(1.0042, 0.9968, 1.0115, 0.0003)
+    row = row._replace(share=row.share._replace(simulated=estimate))
+    assert script.check_line(row).endswith("is 1.0042 (0.9968 to 1.0115)")
 
 
 # --- The simulation on the compose database ------------------------------------------------------
