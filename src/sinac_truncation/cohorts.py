@@ -15,6 +15,7 @@ from typing import NamedTuple
 from sinac_truncation.etl import concept_keys
 
 __all__ = [
+    "LANDMARK_WEEKS",
     "MEXICO_CODE",
     "SQL_FILES",
     "TRIMESTER_CODES",
@@ -38,6 +39,11 @@ SQL_FILES: tuple[str, ...] = (
     "05_landmark_34.sql",
     "attrition.sql",
 )
+
+#: The week of each landmark cohort of measure (d), by definition: its file keeps the analysis
+#: cohort with ``EDADGESTACIONAL`` at that week or more (D-090, D-111). The null simulation applies
+#: the same filter to its pregnancies, and a test ties each week to its file.
+LANDMARK_WEEKS: Mapping[int, int] = {3: 28, 4: 32, 5: 34}
 
 #: The source code whose target in ``source_to_concept_map`` criterion 2 reads: RESIDEEXTRANJERO 2,
 #: "NO" (does not reside abroad) in the catalogue SI_NO, mapped to Mexico (docs/omop_mapping.md

@@ -30,8 +30,8 @@ uv run --env-file .env python scripts/pipeline.py --help
 `db-init` puts the OMOP schema in it.
 
 One file is downloaded by hand before `all`: the Athena vocabulary package (see `vocab` below).
-`all` then runs `download`, `stage`, `vocab`, `validate-concepts`, `cdm` and `cohorts` in that
-order on the years given, and stops at the first step that fails (D-082). Each step is also a
+`all` then runs `download`, `stage`, `vocab`, `validate-concepts`, `cdm`, `cohorts` and `simulate`
+in that order on the years given, and stops at the first step that fails (D-082). Each step is also a
 subcommand of its own, described below. `publish` is not a step of `all`: it runs at a milestone
 only. Every milestone is rebuilt this way from a clean clone before it is tagged
 ([`docs/reproducibility.md`](docs/reproducibility.md)).
@@ -44,7 +44,8 @@ defaults of [`compose.yml`](compose.yml):
 
 - **Wall time: 24 min 15 s.** `all` took 21 min 2 s with the four record files already on disk:
   `stage` 2 min 31 s, `vocab` 4 min 56 s, `cdm` 12 min 43 s and `cohorts` 47 s. Downloading the
-  four files took another 3 min 13 s on that connection.
+  four files took another 3 min 13 s on that connection. `simulate` became a step of `all` after
+  this measurement, and its own time was not measured end to end.
 - **Disk: 17.0 GB at the peak.** `data/` holds 2.35 GB: the four ZIPs (0.27 GB), their extracted
   CSVs (1.67 GB), the Parquet copies (0.21 GB) and the Athena package (0.20 GB). The Postgres
   volume holds 11.2 GB once the run ends, 10.1 GB of database and 1.1 GB of write-ahead log. It
@@ -102,6 +103,23 @@ that removes nobody included), and exposure measures (a) and (c) of every mother
 `results.exposure`. The run is one transaction that
 commits only when the attrition is consistent: the counts never grow, each step excludes what it
 removes, and the last step equals the cohort. Running it again gives the same tables.
+
+`simulate` runs the null simulation of
+[`docs/protocol.md`](docs/protocol.md#null-simulation) on the analysis cohort that `cohorts`
+built. It is a world where prenatal care has no effect on preterm birth:
+- **The pregnancies.** Each record of the cohort becomes one simulated pregnancy, with the same
+  completed weeks at delivery and a first-visit trimester drawn independently of them.
+- **The visits.** They follow the NOM-007-SSA2-2016 calendar of
+  [`config/nom007_schedule.yml`](config/nom007_schedule.yml) until delivery, in two scenarios: the
+  perfect calendar, and the calendar with misses at a rate set from the cohort.
+- **The comparison.** Measures (a) to (d) of the observed records and of the simulated
+  pregnancies are computed with the same code. The output is the share of each observed
+  difference in preterm births that truncation alone produces (D-112).
+- **Reproducibility.** The seed and the scenarios are in
+  [`config/null_simulation.yml`](config/null_simulation.yml), and two runs give the same output.
+- **The tables.** The run writes `results.simulation`, `results.simulated_combination` and
+  `results.truncation_share` in one transaction, once the built-in check of measure (c) holds.
+- **Time.** The simulation of 2020–2023 itself takes about a second.
 
 `publish` writes the results a milestone versions under [`results/`](results/) (D-014): the
 attrition of the base cohort, `results/attrition_base.csv`, and `results/manifest.json`, which
