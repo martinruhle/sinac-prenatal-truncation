@@ -45,7 +45,7 @@ defaults of [`compose.yml`](compose.yml):
 - **Wall time: 24 min 15 s.** `all` took 21 min 2 s with the four record files already on disk:
   `stage` 2 min 31 s, `vocab` 4 min 56 s, `cdm` 12 min 43 s and `cohorts` 47 s. Downloading the
   four files took another 3 min 13 s on that connection. `simulate` became a step of `all` after
-  this measurement, and its own time was not measured end to end.
+  this measurement; on its own, on the same laptop, it took 12.9 s on 15 October 2026.
 - **Disk: 17.0 GB at the peak.** `data/` holds 2.35 GB: the four ZIPs (0.27 GB), their extracted
   CSVs (1.67 GB), the Parquet copies (0.21 GB) and the Athena package (0.20 GB). The Postgres
   volume holds 11.2 GB once the run ends, 10.1 GB of database and 1.1 GB of write-ahead log. It
@@ -119,7 +119,7 @@ built. It is a world where prenatal care has no effect on preterm birth:
   [`config/null_simulation.yml`](config/null_simulation.yml), and two runs give the same output.
 - **The tables.** The run writes `results.simulation`, `results.simulated_combination` and
   `results.truncation_share` in one transaction, once the built-in check of measure (c) holds.
-- **Time.** The simulation of 2020–2023 itself takes about a second.
+- **Time.** On 2020–2023 the run took 12.9 s, about one of them simulating.
 
 `publish` writes the results a milestone versions under [`results/`](results/) (D-014): the
 attrition of the base cohort, `results/attrition_base.csv`, and `results/manifest.json`, which
