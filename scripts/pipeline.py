@@ -16,6 +16,7 @@ import download
 import etl
 import load_vocab
 import publish
+import simulate
 import sql_runner
 import stage
 import validate_concepts
@@ -208,8 +209,30 @@ def build_cohorts(*, years: Sequence[int]) -> int:
     return 0
 
 
+def run_simulation() -> int:
+    """Run the null simulation on the analysis and landmark cohorts in the database."""
+    try:
+        conninfo = sql_runner.conninfo_from_env()
+    except sql_runner.MissingEnvironmentError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    schemas = etl.Schemas(cdm=CDM_SCHEMA, staging=STAGING_SCHEMA, results=RESULTS_SCHEMA)
+    try:
+        with psycopg.connect(conninfo) as conn:
+            simulate.run(conn, schemas=schemas)
+    except simulate.SimulateError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    except psycopg.OperationalError as error:
+        print(f"error: cannot reach the database: {error}", file=sys.stderr)
+        return 2
+    return 0
+
+
 def run_all(*, years: Sequence[int]) -> int:
-    """Rebuild the cohorts from the raw files: every step in order, stopping at the first failure.
+    """Rebuild the cohorts and the null simulation from the raw files: every step in order,
+    stopping at the first failure.
 
     `db-init` is not a step, because it refuses a schema that already holds tables; neither is
     `publish`, which runs at a milestone only (D-082).
@@ -229,6 +252,7 @@ def run_all(*, years: Sequence[int]) -> int:
         ("validate-concepts", lambda: check_concepts()),
         ("cdm", lambda: build_cdm(years=years)),
         ("cohorts", lambda: build_cohorts(years=years)),
+        ("simulate", lambda: run_simulation()),
     )
     for name, step in steps:
         print(f"== {name}")
@@ -428,13 +452,34 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_years_option(cohorts_parser, what="years whose record files the cohorts are built on")
 
+    subcommands.add_parser(
+        "simulate",
+        help="run the null simulation on the cohorts and compare it with the observed records",
+        description=(
+            "Runs the null simulation of docs/protocol.md on the analysis cohort that `cohorts` "
+            "built (D-096, D-097): one pregnancy per record, with its completed weeks at "
+            "delivery and a first-visit trimester drawn independently of them, and visits on the "
+            "NOM-007-SSA2-2016 calendar of config/nom007_schedule.yml until delivery. Each "
+            "scenario of config/null_simulation.yml draws from its own stream of the seed, so "
+            "two runs give the same output. p, the probability of each visit in the scenario "
+            "with misses, is set from the analysis cohort. Measures (a) to (d) of the observed "
+            "records and of the simulated pregnancies are computed with the same code, and each "
+            "level is compared with its reference: crude odds ratios, risk differences, and the "
+            "share of the observed risk difference that truncation alone produces (D-112). The "
+            "run replaces results.simulation, results.simulated_combination and "
+            "results.truncation_share in one transaction, once the built-in check of measure "
+            "(c) holds. Needs `cohorts` first."
+        ),
+    )
+
     all_parser = subcommands.add_parser(
         "all",
-        help="run download, stage, vocab, validate-concepts, cdm and cohorts in order",
+        help="run download, stage, vocab, validate-concepts, cdm, cohorts and simulate in order",
         description=(
-            "Rebuilds the cohorts from the raw files: runs download, stage, vocab, "
-            "validate-concepts, cdm and cohorts on the years given, in that order, and stops at "
-            "the first step that fails, returning its exit code. Needs `db-init` once before and "
+            "Rebuilds the cohorts and the null simulation from the raw files: runs download, "
+            "stage, vocab, validate-concepts, cdm, cohorts and simulate on the years given, in "
+            "that order, and stops at the first step that fails, returning its exit code. Needs "
+            "`db-init` once before and "
             "the Athena package on disk (see `vocab`). It does not publish: `publish` runs at a "
             "milestone only (D-014, D-082)."
         ),
@@ -486,6 +531,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return build_cdm(years=args.years)
     if args.command == "cohorts":
         return build_cohorts(years=args.years)
+    if args.command == "simulate":
+        return run_simulation()
     if args.command == "all":
         return run_all(years=args.years)
     if args.command == "publish":

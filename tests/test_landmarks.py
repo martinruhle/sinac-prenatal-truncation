@@ -22,7 +22,7 @@ import pytest
 import cohorts
 import etl
 import sql_runner
-from sinac_truncation.cohorts import SQL_FILES
+from sinac_truncation.cohorts import LANDMARK_WEEKS, SQL_FILES
 from synthetic import RECORDS_2023, Source, fetch, module_schemas, pid, prepare_source
 
 #: Records 9 to 17 of the 2023 file, in the order of SOURCE_COLUMNS: FECHANACIMIENTO,
@@ -155,6 +155,11 @@ def test_the_landmark_files_run_after_the_analysis_cohort() -> None:
     names = [name for name, *_ in LANDMARKS]
     start = SQL_FILES.index("02_analysis.sql") + 1
     assert list(SQL_FILES[start : start + len(names)]) == names
+
+
+def test_the_package_reads_the_weeks_of_the_landmark_files() -> None:
+    """The null simulation filters its pregnancies on LANDMARK_WEEKS, so they must be the files'."""
+    assert {definition: week for _, definition, week in LANDMARKS} == dict(LANDMARK_WEEKS)
 
 
 def test_the_landmark_files_differ_only_in_their_definition_and_week() -> None:

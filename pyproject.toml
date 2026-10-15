@@ -10,6 +10,7 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "duckdb>=1.5.5",
     "httpx>=0.28.1",
+    "numpy>=2.5.3",
     "pandas>=3.0.5",
     "psycopg[binary]>=3.3.5",
     "pyyaml>=6.0.3",
@@ -47,6 +48,7 @@ known-first-party = [
     "load_vocab",
     "pipeline",
     "publish",
+    "simulate",
     "sql_runner",
     "stage",
     "synthetic",

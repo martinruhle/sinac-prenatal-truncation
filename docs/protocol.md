@@ -593,7 +593,7 @@ The output tables are defined here, before anything runs (D-098).
 | `attrition.csv` | definition, year of the record files, step | those of `attrition_base.csv`, which it replaces at the `v0.2-progress` publish |
 | `exposure_distribution.csv` | source, definition, period, outcome cut-off, measure, variant, level, outcome | births |
 | `estimates.csv` | estimate | source, definition, period, outcome cut-off, measure, variant, level, reference, model, stratum variable, stratum value, births, preterm births, odds ratio, lower and upper limits of the 95 % interval |
-| `truncation_share.csv` | definition, measure, variant, level, scenario | observed crude odds ratio, simulated odds ratio, share |
+| `truncation_share.csv` | definition, measure, variant, level, scenario | reference, observed crude odds ratio with the lower and upper limits of its 95 % interval, simulated odds ratio, observed and simulated risk differences, share (D-112) |
 | `excluded_profile.csv` | definition, step, group (retained, excluded) | births, % preterm, % first-trimester start, % no prenatal care, % born outside a health facility |
 
 The columns take these values:
@@ -643,7 +643,11 @@ Two fixed scenarios (D-010, D-096):
   trimester and are delivered at 38 weeks or more, the only ones the calendar lets reach eight
   visits. p makes their share with eight visits equal to the observed share with 8 or more visits
   among the same births of definition 2. It is computed from definition 2 when the simulation runs
-  and written next to its output.
+  and written next to its output, in `results.simulation`.
+  - Each later visit happens with probability p, so a pregnancy of that group has all eight with
+    probability p⁷. p is the seventh root of the observed share.
+  - On 2020–2023, 60.85 % of those 3,999,436 births had 8 visits or more, so p = 0.9315
+    (orientation, [§What the run shows](#what-the-run-shows)).
 - **Why the world is null.** In both scenarios, adherence ignores how long the pregnancy lasts.
 - **What each one shows.** E1 gives the largest association the calendar can produce, and E2 a
   realistic one.
@@ -653,17 +657,61 @@ Two fixed scenarios (D-010, D-096):
 - **The same measures as the observed analysis, with the same code**: (a), (a) per count, (b) on
   the ACOG schedule with the midpoint rule, (c), and (d) on the same landmark weeks. Only crude
   odds ratios are computed, because the simulated world has no confounders.
+  - **One table for both worlds** (D-113). A definition and a scenario both reduce to the births
+    per combination of completed weeks, first-visit trimester and visits.
+    [`../sql/analysis/combinations.sql`](../sql/analysis/combinations.sql) counts them for the
+    observed definitions.
+  - **One module** computes the measures and their crude odds ratios from that table:
+    `src/sinac_truncation/measures.py`, with the cut points of
+    [`../config/nom007_schedule.yml`](../config/nom007_schedule.yml) and `compute_apncu()` for
+    (b).
+  - **The landmarks.** The simulated landmark cohorts are the pregnancies that reached the week,
+    the filter of step 10.
 - **A built-in check.** The odds ratio of (c) must be 1 within its confidence interval, because the
-  first trimester is drawn independently of the delivery week.
+  first trimester is drawn independently of the delivery week. A run whose check fails writes
+  nothing.
+- **A cross-check with the exact expectation** (D-115). The two scenarios are simple enough to
+  have a closed form: each week split by the observed trimester shares, and in E2 a binomial
+  count of the later visits.
+  - `expected()` computes it with no draw, and the measures run on it with the same code.
+  - Each run writes, in `results.simulation`, the largest relative difference between a
+    simulated share and the exact one.
+  - On 2020–2023 the difference is at most 0.61 % in E1 and 1.49 % in E2, the latter for no care
+    in the landmark cohort of week 34 (2.47 against 2.50).
+- **Why a simulation, when a calculation gives the same numbers** (D-115).
+  - For E1 and E2 the closed form would have been enough, and the separation of the reference
+    follows from the calendar alone.
+  - The simulation stays the method of the study, as proposal v2 and D-097 set it, for two
+    reasons:
+    - **It builds pregnancies one by one, like the records.** A scenario with no closed form only
+      changes the rule each pregnancy follows, not the code that measures them. Examples are
+      visits at variable weeks, misses that depend on each other, or the sampling calendar of the
+      doctoral cohort ([`roadmap.md`](roadmap.md#52-what-does-transfer)).
+    - **Two computations of one model check each other.** A fault in the code of either would
+      show as a gap between their shares.
+- **The calendar leaves the reference of three measures with one outcome** (D-112).
+  - **(a), (a) per count and (d).** The eighth visit starts at week 38, so a pregnancy delivered
+    preterm has seven visits at most. The reference, eight visits or more, holds no preterm birth
+    in either scenario, whatever reading of the range 38–41 is used. In the observed records,
+    177,704 of the 437,153 preterm births (40.7 %) had 8 visits or more.
+  - **(b).** At 40 weeks, the ACOG schedule expects 13 visits from a start in month 2, and the
+    calendar gives 8. A start in the first trimester is then Adequate only when the pregnancy is
+    delivered by week 33, and a later start is never Adequate. The reference holds no term birth.
+  - **What follows.** The simulated odds ratios of these measures against their reference are 0
+    or infinite, so they are left empty. The share below is built so that it still exists.
 - **The calendar caps the count at eight.** The observed mean is 8.25 visits among term births that
   started care in the first trimester.
   - The simulation reproduces the levels of (a), whose top level is 8 or more, and the per-count
     curve up to 8.
   - It produces nothing above eight, so no association above eight observed visits can come from
     truncation.
-- **Seed and parameters live in configuration.** One integer seed gives each scenario a stream of
-  its own, so adding a scenario does not change the others. Two runs with the same seed give the
-  same output.
+- **Seed and parameters live in configuration**, in
+  [`../config/nom007_schedule.yml`](../config/nom007_schedule.yml) and
+  [`../config/null_simulation.yml`](../config/null_simulation.yml) (D-114).
+  - One integer seed gives each scenario a stream of its own, so adding a scenario does not change
+    the others.
+  - The seed is 43. It is arbitrary: any seed gives a valid run.
+  - Two runs with the same seed give the same output.
 - **One run per scenario, at the size of definition 2** (D-097).
   - The simulated confidence intervals then have the width of the observed ones.
   - At that size, Monte Carlo replicates are not needed.
@@ -671,14 +719,68 @@ Two fixed scenarios (D-010, D-096):
 
 ### What truncation alone explains
 
-For each measure, level and scenario, the share is log(simulated odds ratio) ÷ log(observed crude
-odds ratio) (D-097, `FOR APPROVAL`).
+For each measure, level and scenario, the share is the simulated risk difference ÷ the observed
+risk difference (D-112, `FOR APPROVAL`). The risk difference is the preterm share of the level
+minus that of the reference. It replaces log(simulated odds ratio) ÷ log(observed crude odds
+ratio) of D-097: the empty cells make that ratio infinite or 0 for every measure but (c).
 
-- **How to read it.** 1 means that truncation alone reproduces the observed association, and 0
-  that it produces none of it.
-- **When it is reported.** Only where the observed confidence interval excludes 1.
-- **Why the crude odds ratio.** The simulation has no covariates, so the observed crude odds ratio
+- **How to read it.**
+  - 1: truncation alone reproduces the observed difference in preterm births.
+  - 0: truncation alone produces none of it.
+  - Above 1: truncation alone produces more than is observed.
+- **Why the risk difference.**
+  - It exists when a cell is empty.
+  - The two worlds have the same preterm share, 7.05 %, because every simulated pregnancy keeps
+    the weeks of a record. A difference of the same size is then the same number of preterm
+    births.
+- **When it is reported.**
+  - The observed confidence interval of the crude odds ratio must exclude 1, and the simulated
+    difference must exist.
+  - A level the calendar cannot produce, such as more than eight visits or APNCU Adequate Plus,
+    has no simulated difference.
+- **Why the crude comparison.** The simulation has no covariates, so the observed crude odds ratio
   is the comparison. The adjusted one is reported beside it in `estimates.csv`.
+- **What it does not measure.** The null world produces no preterm birth with eight visits, while
+  40.7 % of the observed ones have them, so the calendar is stricter than the care mothers
+  receive. A share above 1 says that truncation alone can produce the observed association, and
+  more. It does not say how much of it truncation produces with the visits mothers actually had.
+  - Adding visits off the calendar was rejected (D-112). It would need a rate that no source gives.
+  - The answer moves with that rate. In a trial on 2020–2023, quadrupling it took the share of no
+    care against 8 or more visits, on the odds-ratio scale, from 2.0 to 0.66.
+
+### What the run shows
+
+Measured once as orientation, on definition 2 of 2020–2023 with seed 43: 6,203,597 pregnancies
+per scenario. The table of record is `truncation_share.csv`, published at `v0.2-progress`.
+
+| Measure | Level, against the reference | Observed difference (points) | Share E1 | Share E2 |
+|---|---|---|---|---|
+| (a) | 0 visits, against 8 or more | 4.87 | 1.5 | 1.5 |
+| (a) | 1–4 visits | 3.68 | 6.9 | 6.9 |
+| (a) | 5–7 visits | 1.93 | 10.5 | 5.4 |
+| (d) week 28 | 5–7 visits | 1.80 | 11.3 | 5.8 |
+| (d) week 32 | 5–7 visits | 1.47 | 12.9 | 6.7 |
+| (d) week 34 | 5–7 visits | 1.07 | 16.1 | 8.2 |
+| (b) | Inadequate, against Adequate | −2.85 | 32.6 | 32.8 |
+| (b) | Intermediate | −4.00 | 23.6 | 23.5 |
+| (c) | trimester 0, 2 or 3, against trimester 1 | 0.00 | not reported | not reported |
+
+- **(a), (a) per count and (d).** Every share is above 1 in both scenarios.
+  - Per count, the shares run from 1.6 to 33.9 for 0 to 7 visits. No simulated pregnancy has
+    more than 8.
+  - The landmarks shrink the observed difference of 5–7 visits more than the simulated one, so the
+    share rises with the week.
+- **(b).** In the observed records, Adequate has more preterm births (8.26 %) than Inadequate
+  (5.41 %) and Intermediate (4.27 %). The null world produces that inversion more than 20 times
+  over. This is the artefact of its construction ([§APNCU](#apncu-measure-b)).
+- **(c).** The built-in check holds.
+  - The simulated odds ratio is 1.00 (0.997–1.012) in E1 and 1.00 (0.988–1.002) in E2.
+  - The observed crude odds ratio is also 1.00 (0.993–1.008), so there is no association for
+    truncation to explain.
+
+**What truncation alone explains.** On the calendar of the norm, truncation alone can produce more
+than the whole observed crude association of every measure it truncates: (a), (a) per count, (b)
+and (d). The measure it does not truncate, (c), shows no crude association.
 
 ## Limitations
 
@@ -707,7 +809,9 @@ The exposure measures, the analysis and the simulation add five more, stated whe
 - The bounds of the trimesters have no published source (§Trimester boundaries).
 - The intervals of the definition with multiples ignore the twins of one pregnancy (§Sensitivity
   analyses and gradients).
-- The simulated calendar cannot produce more than eight visits (§Null simulation).
+- The simulated calendar cannot produce more than eight visits, nor eight before week 38. It is
+  stricter than the care mothers receive, so its shares say whether truncation alone can produce
+  the observed association, not how much of it it produces (§Null simulation).
 
 The ones the proposal already anticipated are in
 [`proposal_v2.md`](proposal_v2.md#anticipated-limitations).
