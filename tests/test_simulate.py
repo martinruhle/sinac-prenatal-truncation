@@ -184,10 +184,25 @@ def test_two_runs_with_the_same_seed_write_the_same_tables(source: Source) -> No
     assert tables(source) == first
 
     # p: 4 of the 5 first-trimester starts delivered at 38 weeks or more had 8 visits or more.
+    # Ten records report no share (every observed interval includes 1), so there is no difference
+    # from the exact expectation to record.
     assert first["simulation"] == [
-        ("e1", "Perfect calendar", 43, 1, False, 10, None, None, None, None),
-        ("e2", "Calendar with misses", 43, 2, True, 10, pytest.approx(0.8 ** (1 / 7)), 38, 5, 0.8),
+        ("e1", "Perfect calendar", 43, 1, False, 10, None, None, None, None, None),
+        (
+            "e2",
+            "Calendar with misses",
+            43,
+            2,
+            True,
+            10,
+            pytest.approx(0.8 ** (1 / 7)),
+            38,
+            5,
+            0.8,
+            None,
+        ),
     ]
+    assert all(row[-1] is None for row in first["truncation_share"])
     for scenario in ("e1", "e2"):
         assert sum(row[4] for row in first["simulated_combination"] if row[0] == scenario) == 10
     measures = {(row[0], row[1]) for row in first["truncation_share"]}

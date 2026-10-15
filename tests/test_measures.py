@@ -19,10 +19,12 @@ from sinac_truncation.measures import (
     Crude,
     LevelCount,
     Share,
+    ShareRow,
     compare,
     crude,
     excludes_one,
     format_shares,
+    largest_share_difference,
     level_counts,
     ordered_levels,
     reached,
@@ -293,3 +295,15 @@ def test_the_report_has_one_line_per_row_and_blanks_what_does_not_exist() -> Non
     ]
     # Only the observed risk difference exists, 0 points.
     assert line.split() == ["3", "d", "1-4", "e1", "0.00"]
+
+
+def test_the_largest_share_difference_is_relative_and_per_scenario() -> None:
+    """Shares of 2.5 and 4.0 against exact ones of 2.0 and 4.0: 25 % in e1; none in e2."""
+
+    def row(scenario: str, level: str, share: float | None) -> ShareRow:
+        empty = Crude(None, None, None, None)
+        return ShareRow(2, "a", "", scenario, "8+", Share(level, empty, empty, share))
+
+    simulated = [row("e1", "0", 2.5), row("e1", "1-4", 4.0), row("e2", "0", None)]
+    exact = [row("e1", "0", 2.0), row("e1", "1-4", 4.0), row("e2", "0", 1.5)]
+    assert largest_share_difference(simulated, exact) == {"e1": pytest.approx(0.25), "e2": None}

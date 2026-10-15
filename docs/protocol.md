@@ -670,6 +670,25 @@ Two fixed scenarios (D-010, D-096):
 - **A built-in check.** The odds ratio of (c) must be 1 within its confidence interval, because the
   first trimester is drawn independently of the delivery week. A run whose check fails writes
   nothing.
+- **A cross-check with the exact expectation** (D-115). The two scenarios are simple enough to
+  have a closed form: each week split by the observed trimester shares, and in E2 a binomial
+  count of the later visits.
+  - `expected()` computes it with no draw, and the measures run on it with the same code.
+  - Each run writes, in `results.simulation`, the largest relative difference between a
+    simulated share and the exact one.
+  - On 2020–2023 the difference is at most 0.61 % in E1 and 1.49 % in E2, the latter for no care
+    in the landmark cohort of week 34 (2.47 against 2.50).
+- **Why a simulation, when a calculation gives the same numbers** (D-115).
+  - For E1 and E2 the closed form would have been enough, and the separation of the reference
+    follows from the calendar alone.
+  - The simulation stays the method of the study, as proposal v2 and D-097 set it, for two
+    reasons:
+    - **It builds pregnancies one by one, like the records.** A scenario with no closed form only
+      changes the rule each pregnancy follows, not the code that measures them. Examples are
+      visits at variable weeks, misses that depend on each other, or the sampling calendar of the
+      doctoral cohort ([`roadmap.md`](roadmap.md#52-what-does-transfer)).
+    - **Two computations of one model check each other.** A fault in the code of either would
+      show as a gap between their shares.
 - **The calendar leaves the reference of three measures with one outcome** (D-112).
   - **(a), (a) per count and (d).** The eighth visit starts at week 38, so a pregnancy delivered
     preterm has seven visits at most. The reference, eight visits or more, holds no preterm birth

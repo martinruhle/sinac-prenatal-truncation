@@ -119,6 +119,8 @@ built. It is a world where prenatal care has no effect on preterm birth:
   [`config/null_simulation.yml`](config/null_simulation.yml), and two runs give the same output.
 - **The tables.** The run writes `results.simulation`, `results.simulated_combination` and
   `results.truncation_share` in one transaction, once the built-in check of measure (c) holds.
+- **The cross-check.** Each run also computes the exact expectation of each scenario, without
+  draws, and records how far the simulated shares are from it (D-115).
 - **Time.** On 2020–2023 the run took 12.9 s, about one of them simulating.
 
 `publish` writes the results a milestone versions under [`results/`](results/) (D-014): the

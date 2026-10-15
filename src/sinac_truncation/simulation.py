@@ -11,8 +11,9 @@ functions as values, which ``scripts/simulate.py`` reads from ``config/``. The v
 the model, not of SINAC, which records no visit date (rule 4).
 """
 
-from collections import Counter
+from bisect import bisect_right
 from collections.abc import Iterable, Mapping, Sequence
+from math import comb
 from typing import Any, NamedTuple
 
 import numpy as np
@@ -24,6 +25,7 @@ __all__ = [
     "SimulationError",
     "calendar_first_weeks",
     "calibrate",
+    "expected",
     "first_visits",
     "simulate",
 ]
@@ -49,7 +51,9 @@ class Combination(NamedTuple):
     trimester: int
     #: Total prenatal visits (``TOTALCONSULTAS``).
     visits: int
-    births: int
+    #: A whole count for records and simulated pregnancies; a mean, with fractions, for the exact
+    #: expectation of :func:`expected`.
+    births: float
 
 
 class Scenario(NamedTuple):
@@ -158,7 +162,8 @@ def calibrate(
     later_visits = len(first_weeks) - 1 - first_visit[1]
     return Calibration(
         from_week=from_week,
-        births=births,
+        # The observed births are whole counts.
+        births=int(births),
         full_calendar_share=share,
         visit_probability=share ** (1 / later_visits),
     )
@@ -176,6 +181,15 @@ def _checked(combinations: Iterable[Combination]) -> list[Combination]:
     if not rows:
         raise SimulationError("there is no birth to simulate")
     return rows
+
+
+def _births_by(rows: Iterable[Combination], field: str) -> dict[int, float]:
+    """The births per value of one field of the combinations, by rising value."""
+    births: dict[int, float] = {}
+    for row in rows:
+        value = getattr(row, field)
+        births[value] = births.get(value, 0) + row.births
+    return dict(sorted(births.items()))
 
 
 def simulate(
@@ -219,9 +233,7 @@ def simulate(
         np.array([row.weeks for row in rows], dtype=np.int64),
         np.array([row.births for row in rows], dtype=np.int64),
     )
-    observed = Counter[int]()
-    for row in rows:
-        observed[row.trimester] += row.births
+    observed = _births_by(rows, "trimester")
     codes = np.array(sorted(observed), dtype=np.int64)
     shares = np.array([observed[code] for code in sorted(observed)], dtype=np.float64)
 
@@ -256,3 +268,58 @@ def simulate(
         )
         for key, count in zip(unique.tolist(), counts.tolist(), strict=True)
     ]
+
+
+def expected(
+    combinations: Iterable[Combination],
+    scenario: Scenario,
+    *,
+    first_weeks: Sequence[int],
+    first_visit: Mapping[int, int],
+    visit_probability: float,
+) -> list[Combination]:
+    """The births :func:`simulate` gives on average: the exact expectation of a scenario, with no
+    draw (D-115).
+
+    The births of each observed week are split across the trimesters in their observed shares.
+    The visits of a pregnancy then follow from the calendar: all of them in E1, and in E2 the
+    first one plus a binomial count of the later ones. The births are means, with fractions.
+
+    Both scenarios are simple enough to have this closed form, so it checks the simulation: two
+    computations of the same model have to agree, up to the noise of the draws. A scenario with
+    no closed form would have only the simulation.
+
+    Raises:
+        SimulationError: as :func:`simulate`.
+    """
+    if not 0 <= visit_probability <= 1:
+        raise SimulationError(f"p = {visit_probability} is not a probability")
+    rows = _checked(combinations)
+    by_weeks = _births_by(rows, "weeks")
+    by_trimester = _births_by(rows, "trimester")
+    total = sum(by_trimester.values())
+
+    births: dict[tuple[int, int, int], float] = {}
+
+    def add(key: tuple[int, int, int], mass: float) -> None:
+        births[key] = births.get(key, 0) + mass
+
+    for weeks, delivered in by_weeks.items():
+        reached = bisect_right(first_weeks, weeks)
+        for trimester, started in by_trimester.items():
+            mass = delivered * started / total
+            possible = 0 if trimester == 0 else max(reached - first_visit[trimester], 0)
+            if possible == 0:
+                add((weeks, 0, 0), mass)
+            elif not scenario.misses:
+                add((weeks, trimester, possible), mass)
+            else:
+                later = possible - 1
+                for kept in range(later + 1):
+                    chance = (
+                        comb(later, kept)
+                        * visit_probability**kept
+                        * (1 - visit_probability) ** (later - kept)
+                    )
+                    add((weeks, trimester, 1 + kept), mass * chance)
+    return [Combination(*key, births=mass) for key, mass in sorted(births.items()) if mass > 0]

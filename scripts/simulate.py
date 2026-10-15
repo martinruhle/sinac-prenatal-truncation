@@ -34,6 +34,7 @@ from sinac_truncation.measures import (
     compare,
     excludes_one,
     format_shares,
+    largest_share_difference,
 )
 from sinac_truncation.simulation import (
     Calibration,
@@ -42,6 +43,7 @@ from sinac_truncation.simulation import (
     SimulationError,
     calendar_first_weeks,
     calibrate,
+    expected,
     first_visits,
     simulate,
 )
@@ -183,10 +185,14 @@ class Run:
     calibration: Calibration
     simulated: Mapping[str, list[Combination]]
     rows: list[ShareRow]
+    #: Per scenario, the largest relative difference between a simulated share and the share of
+    #: the exact expectation (D-115); ``None`` when no share is reported.
+    share_difference: Mapping[str, float | None]
 
 
 def compute(settings: Settings, observed: Mapping[int, Sequence[Combination]]) -> Run:
-    """Calibrate p, simulate each scenario and compare it with the observed definitions.
+    """Calibrate p, simulate each scenario and compare it with the observed definitions, then
+    check the simulated shares against those of the exact expectation (D-115).
 
     Raises:
         SimulateError: the built-in check fails: the simulated odds ratio of (c) excludes 1,
@@ -221,7 +227,24 @@ def compute(settings: Settings, observed: Mapping[int, Sequence[Combination]]) -
                 f"{estimate.upper:.4f}), and the first trimester is drawn independently of the "
                 "weeks. Nothing was written."
             )
-    return Run(calibration, simulated, rows)
+    exact = {
+        scenario.id: expected(
+            analysis,
+            scenario,
+            first_weeks=settings.first_weeks,
+            first_visit=settings.first_visit,
+            visit_probability=calibration.visit_probability,
+        )
+        for scenario in settings.scenarios
+    }
+    exact_rows = compare(
+        observed,
+        exact,
+        settings.cuts,
+        analysis_definition=ANALYSIS_DEFINITION,
+        landmarks=LANDMARK_WEEKS,
+    )
+    return Run(calibration, simulated, rows, largest_share_difference(rows, exact_rows))
 
 
 def write(
@@ -231,18 +254,16 @@ def write(
     run: Run,
     sql_texts: Mapping[str, str],
 ) -> None:
-    """Replace the rows of the three tables of the simulation, in one transaction."""
+    """Rebuild the three tables of the simulation, in one transaction."""
 
     def table(name: str) -> sql.Identifier:
         return sql.Identifier(schemas.results, name)
 
     with conn.transaction(), conn.cursor() as cur:
         cur.execute(render_sql(sql_texts["simulation_tables.sql"], schemas.markers))
-        for name in ("simulation", "simulated_combination", "truncation_share"):
-            cur.execute(sql.SQL("DELETE FROM {}").format(table(name)))
         calibration = run.calibration
         cur.executemany(
-            sql.SQL("INSERT INTO {} VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)").format(
+            sql.SQL("INSERT INTO {} VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)").format(
                 table("simulation")
             ),
             [
@@ -263,6 +284,7 @@ def write(
                         if scenario.misses
                         else (None, None, None, None)
                     ),
+                    run.share_difference.get(scenario.id),
                 )
                 for scenario in settings.scenarios
             ],
@@ -350,6 +372,14 @@ def run(
     for row in result.rows:
         if row.measure == "c":
             print(check_line(row))
+    for scenario, difference in result.share_difference.items():
+        if difference is None:
+            print(f"cross-check, scenario {scenario}: no share is reported to compare")
+        else:
+            print(
+                f"cross-check, scenario {scenario}: the shares are within {difference:.2%} of "
+                "those of the exact expectation"
+            )
     print()
     for line in format_shares(result.rows):
         print(line)

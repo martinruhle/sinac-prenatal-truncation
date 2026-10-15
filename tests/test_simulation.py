@@ -7,8 +7,8 @@ small synthetic tables, and the scenarios run on them with the same code as on t
 """
 
 import random
-from collections import Counter
 from collections.abc import Sequence
+from math import comb, sqrt
 
 import pytest
 
@@ -20,6 +20,7 @@ from sinac_truncation.simulation import (
     SimulationError,
     calendar_first_weeks,
     calibrate,
+    expected,
     first_visits,
     simulate,
 )
@@ -180,9 +181,9 @@ TIED = [births(40, 1, count=6_000), births(30, 3, count=4_000)]
 def test_every_record_keeps_its_weeks(scenario: Scenario) -> None:
     observed = [*TIED, births(22, 0, count=50), births(37, 2, count=700)]
     simulated = run(observed, scenario)
-    by_weeks = Counter[int]()
+    by_weeks: dict[int, float] = {}
     for row in simulated:
-        by_weeks[row.weeks] += row.births
+        by_weeks[row.weeks] = by_weeks.get(row.weeks, 0) + row.births
     assert by_weeks == {40: 6_000, 30: 4_000, 22: 50, 37: 700}
 
 
@@ -269,3 +270,70 @@ def test_p_makes_the_share_with_every_visit_that_of_the_observed_term_births() -
 def test_p_cannot_be_set_without_a_first_trimester_start_at_term() -> None:
     with pytest.raises(SimulationError):
         calibrate([births(37, 1, visits=7)], SETTINGS.first_weeks, SETTINGS.first_visit)
+
+
+# --- The exact expectation (D-115) ----------------------------------------------------------------
+
+
+def exact(
+    combinations: Sequence[Combination], scenario: Scenario = E1, *, p: float = 0.9
+) -> list[Combination]:
+    return expected(
+        combinations,
+        scenario,
+        first_weeks=SETTINGS.first_weeks,
+        first_visit=SETTINGS.first_visit,
+        visit_probability=p,
+    )
+
+
+@pytest.mark.parametrize(("trimester", "weeks", "visits", "recorded"), E1_VISITS)
+def test_the_exact_e1_of_one_trimester_is_the_simulated_e1(
+    trimester: int, weeks: int, visits: int, recorded: int
+) -> None:
+    """With every record in one trimester, nothing is drawn, so the two must be equal."""
+    observed = [births(weeks, trimester, count=3)]
+    assert exact(observed) == run(observed) == [Combination(weeks, recorded, visits, 3)]
+
+
+def test_the_exact_e2_has_the_binomial_count_of_later_visits() -> None:
+    """Delivered at 40 weeks from the first trimester: 1 + k visits with probability
+    C(7, k) × 0.9^k × 0.1^(7 - k)."""
+    rows = exact([births(40, 1, count=1_000)], E2, p=0.9)
+    assert [row.visits for row in rows] == list(range(1, 9))
+    for row in rows:
+        kept = row.visits - 1
+        assert row.births == pytest.approx(1_000 * comb(7, kept) * 0.9**kept * 0.1 ** (7 - kept))
+
+
+def test_the_exact_expectation_splits_each_week_by_the_observed_trimesters() -> None:
+    """60 % of the records start in the first trimester, so 60 % of each week does."""
+    rows = exact(TIED)
+    assert sum(row.births for row in rows) == pytest.approx(10_000)
+    at_30 = sum(row.births for row in rows if row.weeks == 30)
+    first_at_30 = sum(row.births for row in rows if row.weeks == 30 and row.trimester == 1)
+    assert (at_30, first_at_30) == pytest.approx((4_000, 2_400))
+
+
+def test_the_exact_e2_with_p_1_is_e1() -> None:
+    assert exact(MANY, E2, p=1.0) == pytest.approx(exact(MANY, E1))
+
+
+@pytest.mark.parametrize("scenario", [E1, E2], ids=["e1", "e2"])
+def test_the_simulation_agrees_with_its_exact_expectation(scenario: Scenario) -> None:
+    """Two computations of one model. Each simulated count is a sum of independent draws, so it
+    falls within 5 standard deviations of its mean, sqrt(mean) at most, but by a chance of less
+    than one in a million per count."""
+    large = [row._replace(births=row.births * 100) for row in MANY]
+    means = {(row.weeks, row.trimester, row.visits): row.births for row in exact(large, scenario)}
+    simulated = {(row.weeks, row.trimester, row.visits): row.births for row in run(large, scenario)}
+    assert set(simulated) <= set(means)
+    for key, mean in means.items():
+        assert abs(simulated.get(key, 0) - mean) <= 5 * sqrt(mean) + 1, key
+
+
+def test_the_exact_expectation_refuses_what_the_simulation_refuses() -> None:
+    with pytest.raises(SimulationError):
+        exact([births(40, 1)], E2, p=-0.1)
+    with pytest.raises(SimulationError):
+        exact([])

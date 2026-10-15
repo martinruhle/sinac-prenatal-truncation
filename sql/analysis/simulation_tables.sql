@@ -1,10 +1,12 @@
 -- The tables of the null simulation (task 1.7.1, docs/protocol.md §Null simulation). They live in
--- results, next to the cohorts they are computed from. scripts/simulate.py replaces their rows in
--- one transaction on every run.
+-- results, next to the cohorts they are computed from. scripts/simulate.py rebuilds them in one
+-- transaction on every run, so a failed run keeps the previous tables.
 --
 -- simulation: one row per scenario of config/null_simulation.yml, with the seed and the stream it
 --   drew from, and, for the scenario with misses, p and the observed births p was set from
---   (D-096): the protocol writes the parameters next to the output.
+--   (D-096): the protocol writes the parameters next to the output. exact_share_difference is
+--   the largest relative difference between a simulated share and the share of the exact
+--   expectation (D-115), NULL when no share is reported.
 -- simulated_combination: the simulated pregnancies of each scenario, one row per combination of
 --   completed weeks at delivery, first-visit trimester and visits. The visits are those of the
 --   model, not of SINAC (CLAUDE.md rule 4). Every measure is computed from this table.
@@ -12,7 +14,12 @@
 --   the level with the reference in the observed records and in the simulated pregnancies, and
 --   the share of the observed risk difference that truncation alone produces (D-112). A value
 --   that does not exist is NULL: an odds ratio with an empty cell, a share that is not reported.
-CREATE TABLE IF NOT EXISTS @results_schema.simulation (
+DROP TABLE IF EXISTS
+@results_schema.simulation,
+@results_schema.simulated_combination,
+@results_schema.truncation_share;
+
+CREATE TABLE @results_schema.simulation (
     scenario text PRIMARY KEY,
     name text NOT NULL,
     seed bigint NOT NULL,
@@ -22,10 +29,11 @@ CREATE TABLE IF NOT EXISTS @results_schema.simulation (
     visit_probability double precision,
     calibration_from_week integer,
     calibration_births bigint,
-    calibration_share double precision
+    calibration_share double precision,
+    exact_share_difference double precision
 );
 
-CREATE TABLE IF NOT EXISTS @results_schema.simulated_combination (
+CREATE TABLE @results_schema.simulated_combination (
     scenario text NOT NULL,
     weeks integer NOT NULL,
     first_visit_trimester integer NOT NULL,
@@ -34,7 +42,7 @@ CREATE TABLE IF NOT EXISTS @results_schema.simulated_combination (
     PRIMARY KEY (scenario, weeks, first_visit_trimester, visits)
 );
 
-CREATE TABLE IF NOT EXISTS @results_schema.truncation_share (
+CREATE TABLE @results_schema.truncation_share (
     cohort_definition_id integer NOT NULL,
     measure text NOT NULL,
     -- acog_midpoint for (b), empty for the other measures (docs/protocol.md §Output tables).

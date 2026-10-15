@@ -36,6 +36,7 @@ __all__ = [
     "crude",
     "excludes_one",
     "format_shares",
+    "largest_share_difference",
     "level_counts",
     "ordered_levels",
     "reached",
@@ -77,10 +78,11 @@ class VisitCuts(NamedTuple):
 
 
 class LevelCount(NamedTuple):
-    """The births of one level of a measure, and the preterm ones among them."""
+    """The births of one level of a measure, and the preterm ones among them: whole counts, or
+    means for an exact expectation (:func:`~sinac_truncation.simulation.expected`)."""
 
-    births: int
-    preterm: int
+    births: float
+    preterm: float
 
 
 class Crude(NamedTuple):
@@ -150,8 +152,8 @@ def level_counts(
     Measure (d) is measure (a) on a landmark cohort, so it takes the combinations of that cohort:
     those of the definition in the database, or :func:`reached` on simulated ones.
     """
-    births: dict[str, int] = {}
-    preterm: dict[str, int] = {}
+    births: dict[str, float] = {}
+    preterm: dict[str, float] = {}
     for combination in combinations:
         level = _level(measure, combination, cuts)
         births[level] = births.get(level, 0) + combination.births
@@ -328,6 +330,32 @@ def compare(
                 definition, "d", scenario, observed[definition], reached(pregnancies, week), cuts
             )
     return rows
+
+
+def largest_share_difference(
+    rows: Sequence[ShareRow], exact: Sequence[ShareRow]
+) -> dict[str, float | None]:
+    """Per scenario, the largest relative difference between a simulated share and the share of
+    the exact expectation for the same definition, measure, variant and level (D-115).
+
+    It is the noise the draws add to the shares. ``None`` for a scenario with no share reported
+    in both.
+    """
+
+    def key(row: ShareRow) -> tuple[int, str, str, str, str]:
+        return (row.definition, row.measure, row.variant, row.share.level, row.scenario)
+
+    reference = {key(row): row.share.share for row in exact}
+    largest: dict[str, float | None] = {}
+    for row in rows:
+        largest.setdefault(row.scenario, None)
+        simulated, computed = row.share.share, reference.get(key(row))
+        if simulated is None or not computed:
+            continue
+        difference = abs(simulated - computed) / abs(computed)
+        current = largest[row.scenario]
+        largest[row.scenario] = difference if current is None else max(current, difference)
+    return largest
 
 
 def _number(value: float | None, digits: int) -> str:
