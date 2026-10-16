@@ -9,6 +9,7 @@ Every criterion is SQL, in ``sql/cohorts/`` (CLAUDE.md rule 5, docs/protocol.md 
 """
 
 from collections.abc import Mapping, Sequence
+from decimal import Decimal
 from itertools import groupby
 from typing import NamedTuple
 
@@ -17,18 +18,23 @@ from sinac_truncation.etl import concept_keys
 __all__ = [
     "LANDMARK_WEEKS",
     "MEXICO_CODE",
+    "PROFILE_GROUPS",
     "SQL_FILES",
     "TRIMESTER_CODES",
+    "VALIDITY",
     "AttritionStep",
+    "ProfileRow",
     "attrition_problems",
     "cited_concept_keys",
     "format_attrition",
+    "profile_problems",
 ]
 
 #: ``tables.sql`` creates the tables; each definition file writes its cohort and the step at which
 #: each subject leaves it; ``exposure.sql`` writes measures (a) and (c) of every subject, which the
 #: analysis cohort reads; the landmark cohorts of measure (d) start from the analysis cohort;
-#: ``attrition.sql`` counts them. They run in this order.
+#: ``attrition.sql`` counts them; ``excluded_profile.sql`` profiles the records each validity step
+#: removes, from the temporary tables of the run. They run in this order.
 SQL_FILES: tuple[str, ...] = (
     "tables.sql",
     "01_base.sql",
@@ -38,6 +44,7 @@ SQL_FILES: tuple[str, ...] = (
     "04_landmark_32.sql",
     "05_landmark_34.sql",
     "attrition.sql",
+    "excluded_profile.sql",
 )
 
 #: The week of each landmark cohort of measure (d), by definition: its file keeps the analysis
@@ -69,6 +76,28 @@ class AttritionStep(NamedTuple):
     remaining: int
     #: ``None`` at step 0, which starts from the files and excludes nobody.
     excluded: int | None
+
+
+#: The kind of the steps that ``excluded_profile.sql`` profiles: those that remove a record for a
+#: value it lacks (docs/protocol.md §Attrition, D-121).
+VALIDITY = "validity"
+
+#: The two groups of each profiled step, in the order of their rows.
+PROFILE_GROUPS: tuple[str, str] = ("excluded", "retained")
+
+
+class ProfileRow(NamedTuple):
+    """A row of ``results.excluded_profile``: one group of one validity step of one definition."""
+
+    cohort_definition_id: int
+    step: int
+    #: One of :data:`PROFILE_GROUPS`.
+    subject_group: str
+    births: int
+    #: Percentages with two decimals; ``None`` when no birth of the group has the value.
+    preterm_percent: Decimal | None
+    first_trimester_start_percent: Decimal | None
+    no_prenatal_care_percent: Decimal | None
 
 
 def cited_concept_keys(sql_texts: Mapping[str, str]) -> frozenset[str]:
@@ -148,6 +177,42 @@ def attrition_problems(
             problems.append(
                 f"definition {definition}, {year}: the cohort holds {count:,} rows and there is no "
                 "attrition"
+            )
+    return problems
+
+
+def profile_problems(profile: Sequence[ProfileRow], steps: Sequence[AttritionStep]) -> list[str]:
+    """Every way the profile of the excluded records disagrees with the attrition.
+
+    Each step of kind :data:`VALIDITY` of each definition has one row per group of
+    :data:`PROFILE_GROUPS`, and no other step has a row. Over the years of the run, the excluded
+    births are the sum of the step's ``excluded``, and the retained births the sum of its
+    ``remaining``.
+
+    Returns:
+        One message per disagreement; an empty list when the two agree.
+    """
+    expected: dict[tuple[int, int, str], int] = {}
+    for step in steps:
+        if step.kind != VALIDITY:
+            continue
+        counts = zip(PROFILE_GROUPS, (step.excluded or 0, step.remaining), strict=True)
+        for group, count in counts:
+            key = (step.cohort_definition_id, step.step, group)
+            expected[key] = expected.get(key, 0) + count
+    found = {(row.cohort_definition_id, row.step, row.subject_group): row.births for row in profile}
+    problems: list[str] = []
+    for key in sorted(expected.keys() | found.keys()):
+        definition, number, group = key
+        where = f"definition {definition}, step {number}, {group}"
+        if key not in found:
+            problems.append(f"{where}: the profile has no row")
+        elif key not in expected:
+            problems.append(f"{where}: the profile has a row, and the step is not one of validity")
+        elif found[key] != expected[key]:
+            problems.append(
+                f"{where}: the profile counts {found[key]:,} births and the attrition "
+                f"{expected[key]:,}"
             )
     return problems
 

@@ -288,7 +288,8 @@ def run_all(*, years: Sequence[int]) -> int:
 
 
 def publish_results(*, years: Sequence[int]) -> int:
-    """Rebuild the cohorts at this commit and write the attrition and its manifest to results/."""
+    """Rebuild the results at this commit and write the five output files and their manifest to
+    results/."""
     try:
         conninfo = sql_runner.conninfo_from_env()
     except sql_runner.MissingEnvironmentError as error:
@@ -532,17 +533,20 @@ def build_parser() -> argparse.ArgumentParser:
 
     publish_parser = subcommands.add_parser(
         "publish",
-        help="rebuild the cohorts and write their attrition and a manifest to results/",
+        help="rebuild the results and write the five output tables and a manifest to results/",
         description=(
-            "Publishes what one commit produces, end to end (D-080). Refuses to start when a "
-            "file outside results/ differs from the commit, or when the CDM was not loaded by "
-            "`cdm` from this commit with nothing uncommitted and with the vocabulary "
-            "config/sources.yml declares. It then rebuilds the cohorts as `cohorts` does, writes "
-            "the attrition of the base cohort to results/attrition_base.csv, reads it back "
-            "against the run, and writes results/manifest.json: the commit, the period, the "
-            "sha256 of each record file and of the vocabulary package, and the sha256 of the "
-            "CSV. Counts are published exactly, with no small-cell suppression (D-040). Run it at "
-            "a milestone, after `cdm`, and commit results/ on its own (D-014)."
+            "Publishes what one commit produces, end to end (D-080, D-122). Refuses to start "
+            "when a file outside results/ differs from the commit, or when the CDM was not "
+            "loaded by `cdm` from this commit with nothing uncommitted and with the vocabulary "
+            "config/sources.yml declares. It then rebuilds the cohorts, the null simulation and "
+            "the odds ratios as `cohorts`, `simulate` and `estimate` do, and writes the five "
+            "output tables of D-098 to results/: attrition.csv, exposure_distribution.csv, "
+            "estimates.csv, truncation_share.csv and excluded_profile.csv. Each is read back "
+            "against the run; any other CSV of results/ is removed; results/manifest.json comes "
+            "last: the commit, the period, the sha256 of each record file and of the vocabulary "
+            "package, and the sha256 of each CSV. Counts are published exactly, with no "
+            "small-cell suppression (D-040). Run it at a milestone, after `cdm`, and commit "
+            "results/ on its own (D-014)."
         ),
     )
     add_years_option(publish_parser, what="years whose record files are published")

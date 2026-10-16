@@ -32,10 +32,13 @@ from sinac_truncation.cohorts import (
     MEXICO_CODE,
     SQL_FILES,
     TRIMESTER_CODES,
+    VALIDITY,
     AttritionStep,
+    ProfileRow,
     attrition_problems,
     cited_concept_keys,
     format_attrition,
+    profile_problems,
 )
 from sinac_truncation.etl import concept_keys, vocabulary_ids
 from synthetic import (
@@ -242,6 +245,49 @@ def test_the_report_has_one_line_per_step_in_order() -> None:
     assert lines[1].split()[:3] == ["1", "2023", "0"]
     assert lines[1].split()[-1] == "1,521,280"  # step 0 excludes nobody: the column is empty
     assert lines[2].split()[-2:] == ["1,521,280", "0"]
+
+
+# --- The profile of the excluded records against the attrition: no database ----------------------
+
+#: Two years of one definition: step 2 is of kind validity, step 1 of another kind.
+PROFILED_STEPS = [
+    AttritionStep(1, 2023, 0, None, "files", 10, None),
+    AttritionStep(1, 2023, 1, "data model", "loaded", 9, 1),
+    AttritionStep(1, 2023, 2, VALIDITY, "known", 6, 3),
+    AttritionStep(1, 2022, 0, None, "files", 4, None),
+    AttritionStep(1, 2022, 1, "data model", "loaded", 4, 0),
+    AttritionStep(1, 2022, 2, VALIDITY, "known", 3, 1),
+]
+
+#: The profile of step 2, pooled over both years: 3 + 1 excluded, 6 + 3 retained.
+PROFILE = [
+    ProfileRow(1, 2, "excluded", 4, None, None, None),
+    ProfileRow(1, 2, "retained", 9, None, None, None),
+]
+
+
+def test_a_profile_that_matches_the_attrition_has_no_problems() -> None:
+    assert profile_problems(PROFILE, PROFILED_STEPS) == []
+
+
+@pytest.mark.parametrize(
+    ("profile", "problem"),
+    [
+        (
+            [PROFILE[0], PROFILE[1]._replace(births=8)],
+            "definition 1, step 2, retained: the profile counts 8 births and the attrition 9",
+        ),
+        ([PROFILE[1]], "definition 1, step 2, excluded: the profile has no row"),
+        (
+            [*PROFILE, ProfileRow(1, 1, "excluded", 1, None, None, None)],
+            "definition 1, step 1, excluded: the profile has a row, and the step is not one of "
+            "validity",
+        ),
+    ],
+    ids=["count", "missing-row", "not-validity"],
+)
+def test_each_disagreement_of_the_profile_is_named(profile: list[ProfileRow], problem: str) -> None:
+    assert profile_problems(profile, PROFILED_STEPS) == [problem]
 
 
 # --- The real SQL against the real configuration: no database ---------------------------------

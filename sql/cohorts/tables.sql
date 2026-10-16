@@ -10,6 +10,8 @@
 -- exposure: one row per mother PERSON of the record files of the run, with the declared prenatal
 --   care and measures (a) and (c) (task 1.6.1, docs/protocol.md §The measures). A value the CDM
 --   does not know is NULL; which records are analysed is decided by the cohorts, not here.
+-- excluded_profile: per definition and step of kind validity, the records the step removes and
+--   those it keeps, pooled over the years of the run (excluded_profile.sql, D-121).
 --
 -- scripts/cohorts.py replaces the rows of the definitions it builds, in one transaction.
 CREATE TABLE IF NOT EXISTS @results_schema.cohort (
@@ -41,6 +43,19 @@ CREATE TABLE IF NOT EXISTS @results_schema.exposure (
     visits_level text,
     -- Measure (c): the first visit was in the first trimester.
     first_trimester_start boolean
+);
+
+CREATE TABLE IF NOT EXISTS @results_schema.excluded_profile (
+    cohort_definition_id integer NOT NULL,
+    step integer NOT NULL,
+    -- excluded or retained.
+    subject_group text NOT NULL,
+    births bigint NOT NULL,
+    -- Percentages with two decimals; NULL when no birth of the group has the value.
+    preterm_percent numeric,
+    first_trimester_start_percent numeric,
+    no_prenatal_care_percent numeric,
+    PRIMARY KEY (cohort_definition_id, step, subject_group)
 );
 
 -- The objects of one run, dropped when it commits:

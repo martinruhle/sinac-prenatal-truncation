@@ -8,8 +8,8 @@ held in the `staging` schema. Where each one lands in the OMOP CDM is in
 columns:
 - the items of table 2 of [`source_inventory.md`](source_inventory.md);
 - `RESIDEEXTRANJERO` and `FECHANACIMIENTOMADRE`, which the OMOP mapping reads;
-- `LUGARNACIMIENTO`, which [`protocol.md`](protocol.md#outcome) uses to compare the excluded
-  records with the retained ones.
+- `LUGARNACIMIENTO`, which [`protocol.md`](protocol.md#outcome) uses, as orientation, to compare
+  the excluded records with the retained ones. It is not mapped to the CDM (D-123).
 
 The other 42 columns are staged too and are listed by name at the end. Nothing here covers 2019,
 whose variables are `PENDING` unless 2019 is added (D-050).
@@ -79,7 +79,7 @@ of null are quoted as published, from the descriptor text or from the catalogue 
 | 43 | `PRODUCTOEMBARAZO` | Type of pregnancy by the products delivered: single, twins, three or more | 1-digit code | — | `PRODUCTO_EMBARAZO` | `0` "NO ESPECIFICADO" | Base cohort criteria 4 and 5; `MEASUREMENT` (D-068) |
 | 44 | `ORDENPRODUCTO` | Order of the product in the delivery | 1-digit integer; blank in 1,494,848 records | — | — | none declared; blank | Multiplicity (D-051) |
 | 45 | `TOTALPRODUCTOS` | Total products delivered in the event | 1-digit integer; blank in 1,493,576 records | — | — | none declared; blank | Multiplicity (D-051) |
-| 48 | `LUGARNACIMIENTO` | Place where the birth occurred | 2-digit code, zero-padded | — | `LUGAR_NACIMIENTO` | `00` "NO ESPECIFICADO", `99` "SE IGNORA" | Comparison of excluded and retained records ([`protocol.md`](protocol.md#outcome)) |
+| 48 | `LUGARNACIMIENTO` | Place where the birth occurred | 2-digit code, zero-padded | — | `LUGAR_NACIMIENTO` | `00` "NO ESPECIFICADO", `99` "SE IGNORA" | Comparison of excluded and retained records, as orientation only ([`protocol.md`](protocol.md#outcome)); not in the CDM (D-123) |
 | 49 | `CLUES` | Establishment key (CLUES) of the site where the delivery was attended, as the provider recorded it | 11 characters, 5 letters and 6 digits, or `9998`; blank in 22 records | — | `ESTABLECIMIENTOS_SALUD` [^clues] | `9998` "No tiene CLUES" | Care unit (inventory); `CARE_SITE` is not in v0 |
 | 56 | `ENTIDADFEDERATIVAPARTO` | State where the delivery was attended | 2-digit code, zero-padded | — | `ENTIDADES` | `00` "NO ESPECIFICADO", `88` "NO APLICA", `99` "SE IGNORA" | Place of delivery, descriptive (D-057) |
 | 60 | `CLUESCERTIFICA` | Establishment key (CLUES) of the certifying establishment | as `CLUES`; blank in 591,931 records | — | `ESTABLECIMIENTOS_SALUD` [^clues] | none declared; `9998` occurs [^cluescert] | Care unit (inventory) |
