@@ -13,6 +13,7 @@ import psycopg
 
 import cohorts
 import download
+import estimate
 import etl
 import load_vocab
 import publish
@@ -230,9 +231,30 @@ def run_simulation() -> int:
     return 0
 
 
+def run_estimates() -> int:
+    """Estimate the crude and adjusted odds ratios on the cohorts in the database."""
+    try:
+        conninfo = sql_runner.conninfo_from_env()
+    except sql_runner.MissingEnvironmentError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    schemas = etl.Schemas(cdm=CDM_SCHEMA, staging=STAGING_SCHEMA, results=RESULTS_SCHEMA)
+    try:
+        with psycopg.connect(conninfo) as conn:
+            estimate.run(conn, schemas=schemas)
+    except estimate.EstimateError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+    except psycopg.OperationalError as error:
+        print(f"error: cannot reach the database: {error}", file=sys.stderr)
+        return 2
+    return 0
+
+
 def run_all(*, years: Sequence[int]) -> int:
-    """Rebuild the cohorts and the null simulation from the raw files: every step in order,
-    stopping at the first failure.
+    """Rebuild the cohorts, the null simulation and the odds ratios from the raw files: every
+    step in order, stopping at the first failure.
 
     `db-init` is not a step, because it refuses a schema that already holds tables; neither is
     `publish`, which runs at a milestone only (D-082).
@@ -253,6 +275,7 @@ def run_all(*, years: Sequence[int]) -> int:
         ("cdm", lambda: build_cdm(years=years)),
         ("cohorts", lambda: build_cohorts(years=years)),
         ("simulate", lambda: run_simulation()),
+        ("estimate", lambda: run_estimates()),
     )
     for name, step in steps:
         print(f"== {name}")
@@ -472,16 +495,37 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    subcommands.add_parser(
+        "estimate",
+        help="estimate the crude and adjusted odds ratios of preterm birth for each measure",
+        description=(
+            "Estimates the odds ratios of preterm birth of docs/protocol.md §Model on the "
+            "cohorts that `cohorts` built (D-093). It rebuilds results.aggregated_count, the "
+            "births of the analysis and landmark cohorts per combination of completed weeks, "
+            "first-visit trimester, visits, age group, education, state and year, and checks "
+            "that it holds every birth of each cohort. For each measure, (a), (a) per count, (b) "
+            "and (c) on the analysis cohort and (d) on each landmark cohort, it computes the "
+            "crude odds ratio of each level against the reference and the one adjusted for the "
+            "four covariates, from a binomial GLM on that table, with 95 % Wald intervals. The "
+            "simulated pregnancies of `simulate` add their crude odds ratios. The run replaces "
+            "results.aggregated_count, results.estimate and results.exposure_distribution in "
+            "one transaction. Needs `cohorts` and `simulate` first."
+        ),
+    )
+
     all_parser = subcommands.add_parser(
         "all",
-        help="run download, stage, vocab, validate-concepts, cdm, cohorts and simulate in order",
+        help=(
+            "run download, stage, vocab, validate-concepts, cdm, cohorts, simulate and estimate "
+            "in order"
+        ),
         description=(
-            "Rebuilds the cohorts and the null simulation from the raw files: runs download, "
-            "stage, vocab, validate-concepts, cdm, cohorts and simulate on the years given, in "
-            "that order, and stops at the first step that fails, returning its exit code. Needs "
-            "`db-init` once before and "
-            "the Athena package on disk (see `vocab`). It does not publish: `publish` runs at a "
-            "milestone only (D-014, D-082)."
+            "Rebuilds the cohorts, the null simulation and the odds ratios from the raw files: "
+            "runs download, stage, vocab, validate-concepts, cdm, cohorts, simulate and estimate "
+            "on the years given, in that order, and stops at the first step that fails, "
+            "returning its exit code. Needs `db-init` once before and the Athena package on "
+            "disk (see `vocab`). It does not publish: `publish` runs at a milestone only "
+            "(D-014, D-082)."
         ),
     )
     add_years_option(all_parser, what="years whose record files the steps run on")
@@ -533,6 +577,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return build_cohorts(years=args.years)
     if args.command == "simulate":
         return run_simulation()
+    if args.command == "estimate":
+        return run_estimates()
     if args.command == "all":
         return run_all(years=args.years)
     if args.command == "publish":

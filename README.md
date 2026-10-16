@@ -30,8 +30,9 @@ uv run --env-file .env python scripts/pipeline.py --help
 `db-init` puts the OMOP schema in it.
 
 One file is downloaded by hand before `all`: the Athena vocabulary package (see `vocab` below).
-`all` then runs `download`, `stage`, `vocab`, `validate-concepts`, `cdm`, `cohorts` and `simulate`
-in that order on the years given, and stops at the first step that fails (D-082). Each step is also a
+`all` then runs `download`, `stage`, `vocab`, `validate-concepts`, `cdm`, `cohorts`, `simulate`
+and `estimate` in that order on the years given, and stops at the first step that fails (D-082).
+Each step is also a
 subcommand of its own, described below. `publish` is not a step of `all`: it runs at a milestone
 only. Every milestone is rebuilt this way from a clean clone before it is tagged
 ([`docs/reproducibility.md`](docs/reproducibility.md)).
@@ -44,8 +45,9 @@ defaults of [`compose.yml`](compose.yml):
 
 - **Wall time: 24 min 15 s.** `all` took 21 min 2 s with the four record files already on disk:
   `stage` 2 min 31 s, `vocab` 4 min 56 s, `cdm` 12 min 43 s and `cohorts` 47 s. Downloading the
-  four files took another 3 min 13 s on that connection. `simulate` became a step of `all` after
-  this measurement; on its own, on the same laptop, it took 12.9 s on 15 October 2026.
+  four files took another 3 min 13 s on that connection. `simulate` and `estimate` became steps of
+  `all` after this measurement. On their own, on the same laptop, `simulate` took 12.9 s on
+  15 October 2026 and `estimate` 160 s on 16 October 2026.
 - **Disk: 17.0 GB at the peak.** `data/` holds 2.35 GB: the four ZIPs (0.27 GB), their extracted
   CSVs (1.67 GB), the Parquet copies (0.21 GB) and the Athena package (0.20 GB). The Postgres
   volume holds 11.2 GB once the run ends, 10.1 GB of database and 1.1 GB of write-ahead log. It
@@ -122,6 +124,20 @@ built. It is a world where prenatal care has no effect on preterm birth:
 - **The cross-check.** Each run also computes the exact expectation of each scenario, without
   draws, and records how far the simulated shares are from it (D-115).
 - **Time.** On 2020–2023 the run took 12.9 s, about one of them simulating.
+
+`estimate` computes the odds ratios of preterm birth of
+[`docs/protocol.md`](docs/protocol.md#model) on the cohorts that `cohorts` built:
+- **The aggregated table.** `results.aggregated_count` holds the births of the analysis and
+  landmark cohorts per combination of completed weeks, first-visit trimester, visits, age group,
+  education, state and year. The run checks that it holds every birth of each cohort.
+- **The models.** For each measure and level, the crude odds ratio against the reference, and the
+  one adjusted for age group, education, state and year, from a binomial GLM on that table with
+  95 % Wald intervals (D-093). With every term categorical, it gives the estimates of a logistic
+  regression on the individual records, which a test checks on synthetic records.
+- **The tables.** The run writes `results.estimate`, with the births and preterm births behind each
+  estimate, and `results.exposure_distribution`, in one transaction with the aggregated table. The
+  simulated pregnancies of `simulate` add their crude rows, so `estimate` runs after it.
+- **Time.** On 2020–2023 the run took 160 s, 133 s of them building the aggregated table.
 
 `publish` writes the results a milestone versions under [`results/`](results/) (D-014): the
 attrition of the base cohort, `results/attrition_base.csv`, and `results/manifest.json`, which

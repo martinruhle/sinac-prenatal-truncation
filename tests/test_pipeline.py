@@ -1,5 +1,5 @@
-"""Tests for ``pipeline.py all``, which chains the steps that rebuild the cohorts and the null
-simulation (D-082).
+"""Tests for ``pipeline.py all``, which chains the steps that rebuild the cohorts, the null
+simulation and the odds ratios (D-082).
 
 Every step is replaced by a stub that records its call, so nothing here touches the network, the
 files or the database.
@@ -14,7 +14,16 @@ import pipeline
 from sinac_truncation.period import STUDY_YEARS
 
 #: The steps of `all`, in the order they have to run, by the name of their subcommand.
-STEPS = ("download", "stage", "vocab", "validate-concepts", "cdm", "cohorts", "simulate")
+STEPS = (
+    "download",
+    "stage",
+    "vocab",
+    "validate-concepts",
+    "cdm",
+    "cohorts",
+    "simulate",
+    "estimate",
+)
 
 #: The function of pipeline.py behind each subcommand.
 FUNCTIONS = {
@@ -26,6 +35,7 @@ FUNCTIONS = {
     "cdm": "build_cdm",
     "cohorts": "build_cohorts",
     "simulate": "run_simulation",
+    "estimate": "run_estimates",
     "publish": "publish_results",
 }
 
@@ -67,6 +77,7 @@ def test_all_runs_every_step_in_order_on_the_years_given(monkeypatch: pytest.Mon
         ("cdm", {"years": (2022, 2023)}),
         ("cohorts", {"years": (2022, 2023)}),
         ("simulate", {}),
+        ("estimate", {}),
     ]
 
 

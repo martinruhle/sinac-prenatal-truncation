@@ -9,7 +9,8 @@ and the crude estimates of both (D-097).
 
 Only crude estimates live here. A crude model has the exposure alone, and with one categorical
 exposure the binomial GLM of D-093 has a closed form: the odds ratio of each level against the
-reference, with its Wald interval. There is no I/O here (CLAUDE.md rule 6).
+reference, with its Wald interval. The adjusted models are in :mod:`sinac_truncation.models`.
+There is no I/O here (CLAUDE.md rule 6).
 """
 
 from collections.abc import Iterable, Mapping, Sequence
@@ -38,6 +39,7 @@ __all__ = [
     "format_shares",
     "largest_share_difference",
     "level_counts",
+    "measure_level",
     "ordered_levels",
     "reached",
     "reference_level",
@@ -128,7 +130,9 @@ def _apncu_level(visits: int, trimester: int, weeks: int) -> str:
     return compute_apncu(visits, trimester, weeks).level.value
 
 
-def _level(measure: str, combination: Combination, cuts: VisitCuts) -> str:
+def measure_level(measure: str, combination: Combination, cuts: VisitCuts) -> str:
+    """The level of one combination in one measure. The crude comparison here and the models of
+    :mod:`sinac_truncation.models` both read the levels from it, so they cannot differ."""
     if measure in ("a", "d"):
         return visits_level(combination.visits, cuts)
     if measure == "a_count":
@@ -155,7 +159,7 @@ def level_counts(
     births: dict[str, float] = {}
     preterm: dict[str, float] = {}
     for combination in combinations:
-        level = _level(measure, combination, cuts)
+        level = measure_level(measure, combination, cuts)
         births[level] = births.get(level, 0) + combination.births
         if combination.weeks < preterm_weeks:
             preterm[level] = preterm.get(level, 0) + combination.births

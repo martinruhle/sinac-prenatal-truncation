@@ -15,6 +15,7 @@ dependencies = [
     "psycopg[binary]>=3.3.5",
     "pyyaml>=6.0.3",
     "sqlalchemy>=2.0.54",
+    "statsmodels>=0.15.0",
 ]
 
 [build-system]
@@ -44,6 +45,7 @@ known-first-party = [
     "sinac_truncation",
     "cohorts",
     "download",
+    "estimate",
     "etl",
     "load_vocab",
     "pipeline",
@@ -61,6 +63,12 @@ files = ["src", "scripts", "tests"]
 # scripts/ holds top-level modules, so mypy resolves `import sql_runner` the same way
 # Python does when pipeline.py runs.
 mypy_path = "scripts"
+
+# statsmodels publishes no type information (no py.typed and no stubs), so its names are Any
+# and src/sinac_truncation/models.py converts what it returns to typed values (D-118).
+[[tool.mypy.overrides]]
+module = ["statsmodels", "statsmodels.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
