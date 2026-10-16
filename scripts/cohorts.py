@@ -6,9 +6,9 @@ Every criterion is SQL (rule 5); the invariants the result must meet live in
 
 A run first checks what it needs, before it touches anything: the years of ``--years`` loaded in
 the CDM, and the concepts the SQL reads. It then replaces the cohort and the attrition of each
-definition, and the exposure measures (task 1.6.1), in one transaction, which commits only when
-every invariant of the attrition holds; otherwise the previous cohort stays as it was, as the ETL
-does (D-073).
+definition, the exposure measures (task 1.6.1) and the profile of the excluded records (D-121), in
+one transaction, which commits only when every invariant of the attrition holds and the profile
+agrees with it; otherwise the previous cohort stays as it was, as the ETL does (D-073).
 """
 
 import time
@@ -26,9 +26,11 @@ from sinac_truncation.cohorts import (
     SQL_FILES,
     TRIMESTER_CODES,
     AttritionStep,
+    ProfileRow,
     attrition_problems,
     cited_concept_keys,
     format_attrition,
+    profile_problems,
 )
 from sinac_truncation.period import format_years
 from sinac_truncation.sqltext import render_sql
@@ -132,6 +134,16 @@ def _attrition(cur: Cur, schemas: etl.Schemas) -> list[AttritionStep]:
     return [AttritionStep(*row) for row in cur.fetchall()]
 
 
+def _profile(cur: Cur, schemas: etl.Schemas) -> list[ProfileRow]:
+    cur.execute(
+        sql.SQL(
+            "SELECT cohort_definition_id, step, subject_group, births, preterm_percent, "
+            "first_trimester_start_percent, no_prenatal_care_percent FROM {}"
+        ).format(sql.Identifier(schemas.results, "excluded_profile"))
+    )
+    return [ProfileRow(*row) for row in cur.fetchall()]
+
+
 def _cohort_rows(cur: Cur, schemas: etl.Schemas) -> dict[tuple[int, int], int]:
     """The rows of ``results.cohort`` per definition and year of the subject's record file."""
     cur.execute(
@@ -153,8 +165,8 @@ def load(
     """Replace every cohort and its attrition in one transaction that commits only when consistent.
 
     Raises:
-        CohortError: an invariant of the attrition fails, or the database refuses a row; the
-            previous cohort is kept.
+        CohortError: an invariant of the attrition fails, the profile of the excluded records
+            disagrees with it, or the database refuses a row; the previous cohort is kept.
     """
     try:
         with conn.transaction(), conn.cursor() as cur:
@@ -172,7 +184,9 @@ def load(
                     # the base cohort of 2020-2023 from about 1 to 7 minutes.
                     cur.execute("ANALYZE pg_temp.cohort_years")
                 print(f"  {name:<24}{time.perf_counter() - start:7.1f} s")
-            problems = attrition_problems(_attrition(cur, schemas), _cohort_rows(cur, schemas))
+            steps = _attrition(cur, schemas)
+            problems = attrition_problems(steps, _cohort_rows(cur, schemas))
+            problems += profile_problems(_profile(cur, schemas), steps)
             if problems:
                 listed = "\n  ".join(problems)
                 raise CohortError(
@@ -220,6 +234,7 @@ def run(
         print(line)
     print(
         f"\nevery attrition check holds; built in {time.perf_counter() - start:.1f} s. Rows in "
-        f"{schemas.results}.cohort, {schemas.results}.attrition and {schemas.results}.exposure"
+        f"{schemas.results}.cohort, {schemas.results}.attrition, {schemas.results}.exposure and "
+        f"{schemas.results}.excluded_profile"
     )
     return steps

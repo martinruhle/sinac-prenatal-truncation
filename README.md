@@ -101,10 +101,12 @@ analysis cohort and the landmark cohorts of weeks 28, 32 and 34 of
 SQL of [`sql/cohorts/`](sql/cohorts/), on the record files of the years given in `--years`, which
 `cdm` must have loaded. It writes one row per mother and pregnancy into `results.cohort`, the
 attrition table into `results.attrition` (one row per step, per definition and per year, a step
-that removes nobody included), and exposure measures (a) and (c) of every mother into
-`results.exposure`. The run is one transaction that
+that removes nobody included), exposure measures (a) and (c) of every mother into
+`results.exposure`, and the records each validity step removes against those it keeps into
+`results.excluded_profile` (D-121). The run is one transaction that
 commits only when the attrition is consistent: the counts never grow, each step excludes what it
-removes, and the last step equals the cohort. Running it again gives the same tables.
+removes, the last step equals the cohort, and the profile counts what the attrition counts.
+Running it again gives the same tables.
 
 `simulate` runs the null simulation of
 [`docs/protocol.md`](docs/protocol.md#null-simulation) on the analysis cohort that `cohorts`
@@ -139,13 +141,27 @@ built. It is a world where prenatal care has no effect on preterm birth:
   simulated pregnancies of `simulate` add their crude rows, so `estimate` runs after it.
 - **Time.** On 2020–2023 the run took 160 s, 133 s of them building the aggregated table.
 
-`publish` writes the results a milestone versions under [`results/`](results/) (D-014): the
-attrition of the base cohort, `results/attrition_base.csv`, and `results/manifest.json`, which
-names the commit, the period, the sha256 of each record file and of the vocabulary package, and
-the sha256 of the CSV. It publishes what one commit produces end to end, so it refuses a working
-tree with changes outside `results/` and a CDM that `cdm` did not load from that commit, then
-rebuilds the cohorts and reads the CSV back against the run (D-080). The counts are exact, with no
-small-cell suppression, because the source records are public (D-040).
+`publish` writes the results a milestone versions under [`results/`](results/) (D-014), with the
+columns of [`docs/protocol.md`](docs/protocol.md#output-tables) §Output tables (D-098):
+
+- `attrition.csv`: the attrition of every definition, per year of the record files. It replaces
+  `attrition_base.csv` at the `v0.2-progress` publish.
+- `exposure_distribution.csv` and `estimates.csv`: the births of each level and the odds ratios.
+- `truncation_share.csv`: what truncation alone explains, per level and scenario.
+- `excluded_profile.csv`: the records each validity step removes against those it keeps (D-121).
+- `manifest.json`: the commit, the period, the sha256 of each record file and of the vocabulary
+  package, and the sha256 of each CSV.
+
+It publishes what one commit produces end to end (D-080, D-122):
+
+- It refuses a working tree with changes outside `results/` and a CDM that `cdm` did not load from
+  that commit.
+- It rebuilds the cohorts, the null simulation and the odds ratios, about 3 min more than the
+  cohorts alone on 2020–2023.
+- It reads each CSV back against the run and removes any other CSV of `results/`.
+
+The counts are exact, with no small-cell suppression, because the source records are public
+(D-040).
 
 The tests use synthetic fixtures and download nothing; the ones marked `db` need the compose
 database.
