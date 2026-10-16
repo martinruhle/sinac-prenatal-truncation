@@ -438,8 +438,9 @@ reference table worked out by hand from the program and from the article's worke
 
 **The index contains the outcome.** Its expected visits depend on the completed weeks at delivery,
 so APNCU is derived from gestational age. Its odds ratio measures the artefact of its construction,
-which Koroukian and Rimm (2002) showed. It is never read as an effect and never used as a predictor
-of a model (rule 3), and that is why measure (c) is the comparison free of truncation.
+which Koroukian and Rimm (2002) showed. It is never read as an effect. It is the exposure of its own
+crude and adjusted models only, which show that artefact, and never a covariate of another model
+(rule 3, D-119). That is why measure (c) is the comparison free of truncation.
 
 **Reference schedule.** The main analysis uses the ACOG schedule, as the program does, so the index
 is Kotelchuck's and can be compared with the literature. The ACOG schedule asks for more visits than
@@ -506,6 +507,19 @@ The odds ratios come from one model, specified once (D-093):
 - **What is reported.** 95 % Wald confidence intervals. The coefficients of the covariates are not
   reported: the model is built to estimate the exposure, and those coefficients have no causal
   reading in it.
+- **Implementation** (`pipeline.py estimate`, D-117, D-118).
+  - [`../sql/analysis/aggregated_count.sql`](../sql/analysis/aggregated_count.sql) writes
+    `results.aggregated_count`: per definition, the births per combination of completed weeks,
+    first-visit trimester, visits and the four covariates. The run checks that it holds every
+    birth of each cohort.
+  - The table of each measure is that table collapsed. The level comes from the code of the crude
+    comparison and of the null simulation (D-113), and the outcome from the weeks, so another
+    outcome cut-off only collapses it differently.
+  - statsmodels fits the GLM. The crude odds ratio is its closed form, the one
+    `truncation_share.csv` also reports.
+  - A level whose births are all preterm or all term has no estimate. A covariate level like that
+    leaves the adjusted model, which changes no other estimate. A level that the design cannot
+    tell apart from others has no estimate either. The cohorts of 2020–2023 have no such level.
 
 ### Covariates
 
@@ -585,8 +599,13 @@ The output tables are defined here, before anything runs (D-098).
 - **What they cover.** All of them cover 2020–2023 pooled, with the year as a covariate. The
   attrition is per year.
 - **Where they go.** `pipeline.py publish` writes them to `results/` at a milestone (D-014, D-080).
-- **What is not versioned.** The aggregated table of counts stays in the `results` schema of the
-  database.
+  Until then they live in the `results` schema: `estimate` and `exposure_distribution`, written by
+  `pipeline.py estimate`, and `truncation_share`, written by `pipeline.py simulate`. Writing the
+  five files is issue #59 (D-119).
+- **What is not versioned.** The aggregated table of counts, `results.aggregated_count`, stays in
+  the database.
+- **The simulated sources.** The simulation has no covariates, so `sim_e1` and `sim_e2` have crude
+  rows only.
 
 | File | One row per | Columns |
 |---|---|---|
@@ -605,7 +624,48 @@ The columns take these values:
 | variant | `acog_midpoint` for (b), and `nom007_midpoint` in `v1.0`; empty for the other measures |
 | model | `crude`, `adjusted` |
 | stratum variable | empty, `state` or `insurance` |
+| outcome | `preterm`, `term` |
+| births, preterm births | those of the level, in `estimates.csv` |
+| odds ratio and its limits | empty for a level without an estimate ([§Model](#model)) |
 | % preterm | empty for the records that leave for an unknown gestational age |
+
+### What the models show
+
+Measured as orientation, on 2020–2023, in two runs with the same estimates. The table of record is
+`estimates.csv`, published at `v0.2-progress`.
+
+- The aggregated table has 640,855 rows for definition 2, and 567,705 to 628,058 for the landmark
+  cohorts.
+- The second run took 160 s, 133 s of them building that table. The first took 193 s.
+- No level of any measure was left without an estimate.
+
+| Measure | Level, against the reference | Crude OR (95 % CI) | Adjusted OR (95 % CI) |
+|---|---|---|---|
+| (a) | 0 visits, against 8 or more | 1.943 (1.911–1.976) | 2.458 (2.415–2.501) |
+| (a) | 1–4 visits | 1.704 (1.689–1.719) | 2.030 (2.011–2.049) |
+| (a) | 5–7 visits | 1.362 (1.353–1.372) | 1.529 (1.518–1.540) |
+| (d) week 28 | 5–7 visits | 1.342 (1.333–1.352) | 1.499 (1.489–1.510) |
+| (d) week 32 | 5–7 visits | 1.294 (1.285–1.304) | 1.435 (1.424–1.446) |
+| (d) week 34 | 5–7 visits | 1.232 (1.223–1.242) | 1.357 (1.346–1.368) |
+| (b) | Inadequate, against Adequate | 0.635 (0.629–0.640) | 0.575 (0.570–0.581) |
+| (b) | Intermediate | 0.495 (0.490–0.499) | 0.466 (0.462–0.470) |
+| (b) | Adequate Plus | 4.919 (4.873–4.966) | 5.076 (5.028–5.125) |
+| (c) | trimester 0, 2 or 3, against trimester 1 | 1.000 (0.993–1.008) | 1.065 (1.057–1.073) |
+
+- **Adjusting moves every odds ratio of (a) and (d) away from 1.** The covariates pull the crude
+  odds ratios towards 1. The odds ratios of (d) still fall as the landmark rises, adjusted or not.
+- **(a) per count.** The adjusted curve falls from 2.162 at 0 visits to 0.712 at 9, against 8, and
+  rises again to 1.819 at 30.
+- **(b).** The inversion of [§APNCU](#apncu-measure-b) survives the adjustment, so the covariates
+  do not explain it.
+- **(c) has no crude association and a small adjusted one.** Fitted with one covariate at a time,
+  the odds ratio becomes 1.023 with age, 1.022 with education, 1.033 with state and 1.002 with
+  year, and 1.039 with age and education together.
+  - Younger mothers start later and have fewer preterm births. At 15–19, 32.5 % start after the
+    first trimester and 6.60 % deliver preterm, against 17.4 % and 9.33 % at 35–39.
+  - Mixed, the two groups cancel out in the crude odds ratio.
+  - The share of what truncation alone explains is unchanged, because it compares crude odds
+    ratios by design ([§What truncation alone explains](#what-truncation-alone-explains)).
 
 ## Null simulation
 
