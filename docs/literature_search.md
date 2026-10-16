@@ -1,8 +1,9 @@
 # Literature search
 
 **Status:** protocol v2, approved by the author on 2026-10-15 after the review recorded under
-[Approval](#approval) (issue #58). The search runs after that approval; the sections marked
-PENDING are written once it ends.
+[Approval](#approval) (issue #58). The search ran on 2026-10-15 and 2026-10-16, after that
+approval; its results are under [Results](#results). The author's blind re-screen of 20
+exclusions is PENDING.
 
 ## Purpose
 
@@ -459,8 +460,55 @@ them:
 
 ### PRISMA 2020 flow counts
 
-PENDING. The counts follow the boxes of the PRISMA 2020 flow diagram (Page et al. 2021, Fig 1)
-for databases and for other methods.
+The counts follow the boxes of the PRISMA 2020 flow diagram (Page et al. 2021, Fig 1). Every
+count comes from [`literature_search/records.csv`](literature_search/records.csv) and
+[`literature_search/queries.csv`](literature_search/queries.csv); the raw responses stay in the
+ignored `data/interim/`.
+
+**Identification of studies via databases**
+
+| Box | n | Detail |
+|---|---:|---|
+| Records identified | 2,314 | PubMed 1,009; OpenAlex in English 1,069; OpenAlex in Spanish and Portuguese 81; LILACS 155 (S1–S3) |
+| Duplicate records removed | 676 | Within and across sources, by DOI, PMID and title |
+| Records removed for other reasons | 0 | One DOI corrected from its source (R1593) and one PMID that does not resolve removed from its record (R0720), both records kept; five records whose DOI does not resolve kept by their OpenAlex identifier, which resolves (R1306, R1616, R1624, R1625, R1628) |
+| Records screened | 1,638 | |
+| Records excluded | 1,582 | E1 3, E2 71, E3 59, E4 1,031, E5 239, E6 172, E7 7 |
+| Reports sought for retrieval | 56 | |
+| Reports not retrieved | 20 | Listed under [What was not found](#what-was-not-found) |
+| Reports assessed for eligibility | 36 | 22 on the full text; 11 on the abstract and 3 on the title alone (WIC programme records, E4), because no open full text was found and that was enough to decide |
+| Reports excluded | 22 | E4 9, E6 13 |
+| Studies included | 14 | |
+
+**Identification of studies via other methods**
+
+| Box | Seeds | Round 1 | Round 2 | Round 3 | Total |
+|---|---:|---:|---:|---:|---:|
+| Works chased | — | 16 | 11 | 2 | 29 |
+| Records identified | 3 | 1,179 | 1,355 | 73 | 2,610 |
+| Already found by the databases or an earlier round | 1 | 146 | 307 | 29 | 483 |
+| Duplicates within the round | — | 421 | 452 | 16 | 889 |
+| Removed for other reasons (no title) | — | 49 | 1 | 0 | 50 |
+| Records screened | 2 | 563 | 595 | 28 | 1,188 |
+| Records excluded | 1 | 535 | 580 | 22 | 1,138 |
+| Reports sought for retrieval | 1 | 28 | 15 | 6 | 50 |
+| Reports not retrieved | 0 | 14 | 10 | 3 | 27 |
+| Reports assessed for eligibility | 1 | 14 | 5 | 3 | 23 |
+| Reports excluded | 0 | 3 | 3 | 3 | 9 |
+| Studies included | 1 | 11 | 2 | 0 | 14 |
+
+- Round 1 chased the three seeds and the 13 other studies the databases included; round 2, the 11
+  studies round 1 included; round 3, the two studies round 2 included. Round 3 included none, so
+  chasing stopped.
+- Records excluded at title and abstract, by code: seeds E4 1; round 1 E1 2, E2 59, E3 60, E4 265,
+  E5 78, E6 63, E7 8; round 2 E2 47, E3 96, E4 383, E5 30, E6 24; round 3 E1 1, E2 3, E3 3, E4 11,
+  E5 3, E6 1. Reports excluded on the full text: round 1 E6 3; round 2 E6 2, E7 1; round 3 E4 1,
+  E5 1, E6 1.
+- Round 1 holds 28 records from the reference list of R0760 in PubMed Central, for which OpenAlex
+  and Europe PMC returned no references; two of them were duplicates found at screening (E7).
+
+**Studies included in the review: 28**, each in one report: 14 via databases and 14 via other
+methods.
 
 ## Planned limitations
 
@@ -496,23 +544,212 @@ the single screener with the author's blind re-screen.
 
 ## Results
 
-PENDING: written after the run.
+PubMed and OpenAlex were searched on 2026-10-15 between 21:14 and 21:23 UTC, and LILACS between
+21:23 UTC that day and 00:55 UTC on 2026-10-16. Citation chasing ran on 2026-10-16 in three rounds
+(11:48–12:01, 16:25–16:27 and 16:43 UTC). Screening ended on 2026-10-16 at 16:46 UTC. It used the
+design table under [Purpose](#purpose) and no result of the project.
+
+Of the 28 included studies, 21 answer Q1, four of them also Q2; none answers Q3; seven answer Q4.
+The tables give the extraction and the three closeness axes of
+[Data extraction](#data-extraction). Where none of the six methods fits, the method is written as
+"other" with what the study did. "abstract" in the locator column means the decision rests on the
+abstract, because no open full text was found.
+
+**Q1 and Q2 (21 studies)**
+
+| ID | Study | Data | Bias | Method | Grade | Locator |
+|---|---|---|---|---|---|---|
+| C2-0004 | Shwartz & Vinyard 1965 | other: District of Columbia birth certificates, 1960 | truncation | landmark or time-dependent: modified life table over the gestation intervals under 28, 28–35 and 36 weeks or more, on the women still pregnant and their women-weeks of care | addressed | pp. 237–238, Table 1; p. 248 |
+| C1-0210 | Terris & Glasser 1974 | other: New York City birth certificates, 1961 | truncation | landmark or time-dependent: life table of the month of the first visit, censored at delivery | quantified | p. 870; Table 7, p. 872 |
+| C1-0078 | Gortmaker 1979 | other: New York City birth and infant death records, 1968 | truncation | index adjustment | addressed | p. 654 |
+| R0238 | Showstack et al. 1984 | other: California birth certificates, 1978 | truncation | index adjustment | addressed | p. 1006, footnote; Tables 4–5 |
+| R1637 | Goldberg et al. 1984 | other Latin American: Cali, Colombia, interviews and clinical records, 1981 | truncation | other: visits per month of pregnancy | addressed | p. 157 |
+| C1-0242 | Kramer 1987 | other: review of 895 papers, 1970–1984 | truncation | landmark or time-dependent: life tables recommended | addressed | p. 715 |
+| R0548 | Tyson et al. 1990 | other: 28,838 deliveries at Parkland Memorial Hospital, Dallas | truncation | landmark or time-dependent: cohorts reaching weeks 26, 30, 34, 38 and 42, with care status by that week | addressed | abstract |
+| R0809 | Malloy et al. 1992 | other: Missouri linked birth and death certificates, 1980–1984 | truncation | other: outcome conditioned on the gestational age at delivery | addressed | p. 448; Tables 1–2 |
+| R1167 | Kotelchuck 1994a | other: US 1980 National Natality Survey | related dependence | index adjustment | quantified | pp. 1415–1416, Table 5; p. 1417 |
+| C1-0002 | Kotelchuck 1994b | other: US 1980 National Natality Survey | truncation | index adjustment | mentioned | p. 1487 |
+| C2-0020 | Wise 1994 | other: editorial, no data | related dependence | none | mentioned | p. 1374 |
+| C1-0003 | Alexander & Kotelchuck 1996 | other: South Carolina birth files, 1989–1991 | related dependence | index adjustment: five indices compared by gestational-age group | quantified | p. 413, Figure 2; p. 414 |
+| R0153 | Koroukian & Rimm 2002 | other: Ohio birth certificates, 1993–1996 | truncation | index adjustment, with a gestational age-specific analysis | quantified | abstract |
+| R1366 | Ying 2002 | other: US 1988 National Maternal and Infant Health Survey | truncation | none | mentioned | abstract |
+| C1-0024 | Heaman et al. 2008 | other: Winnipeg linked mother-baby and physician claims, 1991–2000 | related dependence | other: analysis by gestational-age category | addressed | Discussion; Conclusion |
+| R0333 | Bloch et al. 2009 | other: US nested case-control study of preterm births, 367 mothers | truncation | index adjustment: two indices compared among preterm births | mentioned | abstract |
+| C1-0031 | Wehby et al. 2009 | other Latin American: ECLAMC hospital samples, Brazil | truncation | other: preterm birth analysed only with the delay of the first visit | addressed | Methods, study variables |
+| C1-0055 | VanderWeele et al. 2013 | other: US linked birth and infant death cohort, 2003 | related dependence | index adjustment | mentioned | Methods, APNCU categories |
+| R1306 | Balsa & Triunfo 2015 | other Latin American: Pereira Rossell maternity hospital, Montevideo, 1995–2011 | truncation | index adjustment: preterm births rated against the visits due by their week | addressed | §4.1 and note 7; §3 |
+| C1-0041 | Shin & Song 2019 | other: US PRAMS, 2004–2011 | truncation | index adjustment | mentioned | Discussion |
+| R0760 | Coelho et al. 2026 | other Latin American: SINASC live-birth records, Central-West Brazil, 2015–2024 | truncation | other: sensitivity analysis replacing the visit count with first-trimester initiation | addressed | Methods, Sensitivity Analyses; Results |
+
+**Q4 (7 studies)**
+
+| ID | Study | Data | Care measure | Outcome | Truncation | Locator |
+|---|---|---|---|---|---|---|
+| R0114 | Guendelman et al. 2015 | SINAC in other years: 2009, with California certificates | trimester in which care began (covariate) | preterm delivery | not mentioned | Methods, Variables; Table 2 |
+| R0152 | Hamilton & Choi 2015 | SINAC in other years: 2008–2009 | trimester of first care against none (control) | birth weight | not mentioned | §3.4; Tables 2–4 |
+| R0527 | Ancira-Moreno et al. 2021 | SINAC in other years: 2008–2017 | any care; trimester of the first visit | low birth weight | not mentioned | Table 2 |
+| R0542 | Suárez-Idueta et al. 2021 | SINAC in other years: 2017 | trimester of the first contact; number of visits | small for gestational age | not mentioned | Results; table of care by trimester and visits |
+| C1-0265 | Avendaño-Alvarez et al. 2022 | SINAC 2020–2023: 2020 | any care; number of visits | macrosomia (4,000 g or more) | not mentioned | Table 3 |
+| R0625 | Hayer et al. 2024 | SINAC in other years: 2008–2019, mothers aged 10–24 | adequate care | preterm birth and other perinatal outcomes | not assessed (abstract only) | abstract |
+| C1-0268 | Hamilton & Alcay 2025 | SINAC in other years: 2015–2019, with US records | number of visits (covariate) | low birth weight | not mentioned | Tables 2 and 5 |
 
 ### What is known, per question
 
-PENDING.
+**Q1.** The included studies describe, address or quantify the dependence of the care measure on
+the length of gestation from 1965 to 2026, with four groups of means:
+
+- *Exposure time.* Shwartz & Vinyard 1965 (C2-0004) note that only the women still pregnant at
+  the start of each gestation interval can begin care in it, and build a modified life table on
+  them and on their women-weeks of care (pp. 237–238, Table 1). Terris & Glasser 1974 (C1-0210)
+  put the month of the first visit in a life table censored at delivery: the share of premature
+  against mature births without care, 20% against 8% when crude, is 11.0% against 9.6% in the
+  life table by months 8–9 (p. 870; Table 7, p. 872). Kramer 1987 (C1-0242) names the
+  "prematurity artefact" in a methodological assessment of 895 papers and recommends life tables
+  (p. 715). Tyson et al. 1990 (R0548) compare care in cohorts reaching weeks 26, 30, 34, 38 and
+  42 (abstract). Malloy et al. 1992 (R0809) condition the outcome on the gestational age at
+  delivery (p. 448; Tables 1–2).
+- *The index.* Gortmaker 1979 (C1-0078) controls the length of gestation in the construction of the
+  index (p. 654), and Showstack et al. 1984 (R0238) define adequacy relative to it so that the
+  visit count does not stand for the length of gestation (p. 1006, footnote). Kotelchuck 1994a
+  (R1167) shows that the Kessner rating rises with the week of delivery beyond 36 because its
+  requirement stops at nine visits (pp. 1415–1416, Table 5), and bases APNCU on the visits expected
+  for the gestational age at the start of care and at delivery (p. 1417). Alexander & Kotelchuck
+  1996 (C1-0003) compare five indices by gestational-age group: APNCU puts over 40% of births at
+  20–32 and at 33–36 weeks in its intensive category, against under 5% with GINDEX (p. 413, Figure
+  2; p. 414). Koroukian & Rimm 2002 (R0153) report that a shorter gestation lowers the visits APNCU
+  expects, so that 61.2% of preterm and 18.9% of term births are rated Adequate Plus, and advise
+  against APNCU for studies of low birth weight (abstract). Balsa & Triunfo 2015 (R1306) rate
+  preterm births against the visits due by their week (§4.1 and note 7).
+- *Another measure or a stratified analysis.* Goldberg et al. 1984 (R1637) count visits per month
+  of pregnancy to correct for the variation in the duration of gestation (p. 157). Wehby et al.
+  2009 (C1-0031) estimate the effect on preterm birth only for the delay of the first visit,
+  which they describe as less affected by gestational age (Methods). Heaman et al. 2008 (C1-0024)
+  analyse by gestational-age category and report associations of opposite sign with APNCU and
+  R-GINDEX (Discussion). In Coelho et al. 2026 (R0760) the Indigenous odds ratio of preterm birth
+  is 1.540 when care enters as first-trimester initiation and 1.337 when it enters as the visit
+  count, which the authors read as reverse causation (Results).
+- *Statement only.* Kotelchuck 1994b (C1-0002, p. 1487), Wise 1994 (C2-0020, p. 1374), Ying 2002
+  (R1366, abstract), Bloch et al. 2009 (R0333, abstract), VanderWeele et al. 2013 (C1-0055,
+  Methods) and Shin & Song 2019 (C1-0041, Discussion).
+
+Grades: 4 quantified, 11 addressed, 6 mentioned. Four of the 21 rest on the abstract: R0153,
+R0548, R0333 and R1366.
+
+**Q2.** Four Q1 studies use Latin American data: Goldberg et al. 1984 (Cali, Colombia), Wehby et
+al. 2009 (ECLAMC hospitals, Brazil), Balsa & Triunfo 2015 (Montevideo, Uruguay) and Coelho et al.
+2026 (SINASC, Central-West Brazil). None uses Mexican data.
+
+**Q3.** No included study.
+
+**Q4.** Seven studies of Mexican birth certificates, 2008 to 2020, relate a care measure to a
+gestational outcome or birth weight. They measure care as any care, the trimester of the first
+visit or contact, the number of visits, or adequate care, and the outcomes are preterm birth, low
+birth weight, birth weight, small for gestational age and macrosomia. In five of them care is a
+covariate or a descriptive category. None of the six read in full mentions the dependence of the
+care measure on the length of gestation; the seventh, Hayer et al. 2024 (R0625), was assessed on
+its abstract only.
 
 ### What was not found
 
-PENDING.
+- **Q3.** No study meeting Q3 (a simulation of visits under a schedule, or an analytic
+  expectation, of the association that care without effect on gestation would produce, reported
+  as the size of the bias or set against an observed association) was found in PubMed, OpenAlex
+  (English; Spanish and Portuguese) and LILACS, searched on 2026-10-15 and 2026-10-16, or in the
+  three rounds of citation chasing in OpenAlex and Europe PMC on 2026-10-16. Two simulation studies
+  found by citation chasing were excluded as E4 because they simulate no care measure: a
+  left-truncation simulation of smoking and preeclampsia (C2-0387) and a collider-stratification
+  simulation of the birthweight paradox (C2-0388).
+- **Q2, Mexico.** No study meeting Q1 with data collected in Mexico was found in the same sources
+  on the same dates. Three Mexican hospital studies read in full keep term births only, as an
+  inclusion criterion and not as an answer to the dependence (R0008, R1224, R1466; E6).
+- **Q4.** No study of Mexican birth certificates that mentions, addresses or quantifies the
+  dependence was found in the same sources on the same dates, among the six read in full.
+- **Q1 with SINAC.** No study meeting Q1 with SINAC data of any year was found in the same
+  sources on the same dates.
+
+These statements hold for the reports that were read. The 47 reports not retrieved are in
+`records.csv` with the decision "not retrieved" and the reason. Those whose abstract or title
+bears on a question:
+
+- Mexican data (Q2, Q4): R0121 (Mexico City hospital, 1984, visits judged against gestational
+  age), R0589 (Mexican births 2008–2019), R0145, R0349, R1375 and R0023.
+- Care measures adjusted for gestation, or the bias named (Q1): R0330, R0790 and R1355 (letter and
+  reply on Koroukian & Rimm 2002), R0805, C1-0014, C1-0034, C1-0079 (origin of GINDEX), C1-0219,
+  C1-0220, C1-0223, C2-0002 (Terris & Gold 1969), C2-0271, C3-0001 (Shwartz 1962, the method
+  source of C2-0004) and C2-0106.
+- Seven had an open copy behind a publisher security check, a download check or a bot check,
+  which was not bypassed: R0121, R0589, R1159, R1166, C1-0223, C1-0371 and C1-0451; R0625 is
+  included on its abstract for the same reason.
 
 ### Closeness of the closest studies to this project
 
-PENDING.
+On the three axes of [Data extraction](#data-extraction), without judging value:
+
+- **Data.** No Q1 study uses SINAC or other Mexican data; four use other Latin American data and
+  17 other data. Among the Q4 studies, one uses SINAC 2020 (C1-0265) and six SINAC in other
+  years, and none is graded above "not mentioned".
+- **Bias.** 16 of the 21 Q1 studies describe the truncation of the visit measure itself; five
+  describe a related dependence, the rating that an index gives a birth according to its
+  gestational age (R1167, C2-0020, C1-0003, C1-0024, C1-0055).
+- **Method.** Landmark or time-dependent design 4 (C2-0004, C1-0210, C1-0242, R0548); index
+  adjustment 10; other 5 (R1637, R0809, C1-0024, C1-0031, R0760); none 2. No study uses a null
+  simulation on a schedule, another simulation or an analytic expectation.
+- **Two axes at once.** Truncation with a landmark or time-dependent design: C2-0004 and C1-0210
+  (prematurity, 1960 and 1961 certificates), C1-0242 (a review) and R0548 (cohorts by week of
+  gestation, perinatal mortality and morbidity, one hospital). Truncation with Latin American
+  data: R1637, C1-0031, R1306 and R0760; R0760 uses national live-birth records and preterm
+  birth. The bias of APNCU quantified: R0153 (low birth weight) and C1-0003 (by gestational-age
+  group). SINAC data with a care measure and a gestational outcome: the seven Q4 studies, with
+  truncation not mentioned in the six read in full.
+
+### Blind re-screen
+
+The 20 records drawn with `random.Random(58).sample(sorted(ids), 20)` from the 2,751 excluded
+records are R1262, C2-0282, C2-0317, R1518, C2-0298, C1-0182, C2-0262, R0714, R0530, R0312,
+R0035, C2-0541, R0717, R1409, R0588, R0017, R1258, C1-0453, C1-0062 and R0885. PENDING: the
+author's decisions, then every disagreement.
+
+### Deviations from the protocol
+
+- **R0760's references.** OpenAlex and Europe PMC returned no references for R0760, so its
+  reference list was read in PubMed Central and the 28 references with a DOI or PMID were looked
+  up in OpenAlex (round 1).
+- **LILACS** records were screened at title and abstract while they were read in the portal, on
+  2026-10-15 and 2026-10-16, and each decision was carried to the de-duplicated record. No record
+  received two different decisions.
+- **Chasing candidates without a title** (50) were removed before screening, as records that are
+  not reports (E2's definition).
+- **Letters.** Four letters of round 2 were first coded E2 and then recoded by their topic (E3 1,
+  E4 3), because the protocol keeps letters; no other letter, comment or editorial was coded E2.
+- **Q4 grade.** R0625 is graded "not assessed", a value the protocol does not list, because its
+  full text was not retrieved.
+- **Method axis.** "other", with what the study did, was added for the five studies that none of
+  the six methods describes.
+- **Metadata.** C1-0003 is dated 1996, from PubMed, instead of the 2020 that OpenAlex gives its
+  repository copy.
 
 ## Limitations
 
-PENDING: the planned limitations above, updated with what happened during the run.
+- **Sources not covered.** Europe PMC as a search source, SciELO, Scopus, Web of Science, Embase
+  and Google Scholar. The two earliest included studies were found by citation chasing, not by
+  the database searches.
+- **Journal publications only.** Preprints, theses and conference material were not eligible.
+- **Languages.** English, Spanish and Portuguese only; six records were excluded for language
+  (E1).
+- **One screener.** The AI assistant screened every record; the author's blind re-screen of 20
+  exclusions is pending.
+- **Abstract-level signals.** A study that names the bias only in its full text passes title and
+  abstract screening only through other signals, so "mentioned" is undercounted.
+- **Full text.** 47 of the 106 reports sought were not retrieved, 29 of them published before
+  2000. Four Q1 inclusions and one Q4 inclusion rest on the abstract, among them Koroukian & Rimm
+  2002, the closest study known before the search. Scanned articles were
+  read as page images from PubMed Central.
+- **Programmes.** The literature on prenatal WIC participation that names a "gestational age
+  bias" and handles it by gestational-age strata or the length of gestation (R0077, R0863, R0864,
+  R0965) was excluded as E4, because a programme is not a measure of care use under the
+  protocol.
+- **Interfaces.** OpenAlex dated one repository copy wrongly (C1-0003) and listed some reference
+  entries without identifiers; the BVS portal was read through a browser.
 
 ## References
 
@@ -522,3 +759,38 @@ PENDING: the planned limitations above, updated with what happened during the ru
   for Reporting Literature Searches in Systematic Reviews. *Syst Rev.* 2021;10:39.
   doi:10.1186/s13643-020-01542-z
 - The seeds are listed under [Seeds](#seeds).
+
+### Included studies
+
+Authors, journal, volume and pages from PubMed `esummary`, or from OpenAlex for the three records
+without a PMID. Every PMID resolves in PubMed and every DOI in Crossref or the DOI handle service,
+except that of R1306, which is kept by its OpenAlex identifier (W1554081760).
+
+- **C2-0004** · Shwartz S, Vinyard JH Jr. Prenatal Care and Prematurity. *Public Health Rep.* 1965;80(3):237-48. PMID 14265437; doi:10.2307/4592391
+- **C1-0210** · Terris M, Glasser M. A life table analysis of the relation of prenatal care to prematurity. *Am J Public Health.* 1974;64(9):869-75. PMID 4420443; doi:10.2105/ajph.64.9.869
+- **C1-0078** · Gortmaker SL. The effects of prenatal care upon the health of the newborn. *Am J Public Health.* 1979;69(7):653-60. PMID 453391; doi:10.2105/ajph.69.7.653
+- **R1637** · Goldberg MB, Guerrero R, Muñoz Á. Mortalidad neonatal temprana en Cali. Un estudio de casos y controles. *Colombia Médica.* 1984;15(4):156–160. doi:10.25100/cm.v15i.4.2500
+- **R0238** · Showstack JA, Budetti PP, Minkler D. Factors associated with birthweight: an exploration of the roles of prenatal care and length of gestation. *Am J Public Health.* 1984;74(9):1003-8. PMID 6465400; doi:10.2105/ajph.74.9.1003
+- **C1-0242** · Kramer MS. Determinants of low birth weight: methodological assessment and meta-analysis. *Bull World Health Organ.* 1987;65(5):663-737. PMID 3322602
+- **R0548** · Tyson J, Guzick D, Rosenfeld CR, et al. Prenatal care evaluation and cohort analyses. *Pediatrics.* 1990;85(2):195-204. PMID 2296507; doi:10.1542/peds.85.2.195
+- **R0809** · Malloy MH, Kao TC, Lee YJ. Analyzing the effect of prenatal care on pregnancy outcome: a conditional approach. *Am J Public Health.* 1992;82(3):448-50. PMID 1536367; doi:10.2105/ajph.82.3.448
+- **R1167** · Kotelchuck M. An evaluation of the Kessner Adequacy of Prenatal Care Index and a proposed Adequacy of Prenatal Care Utilization Index. *Am J Public Health.* 1994;84(9):1414-20. PMID 8092364; doi:10.2105/ajph.84.9.1414
+- **C1-0002** · Kotelchuck M. The Adequacy of Prenatal Care Utilization Index: its US distribution and association with low birthweight. *Am J Public Health.* 1994;84(9):1486-9. PMID 8092377; doi:10.2105/ajph.84.9.1486
+- **C2-0020** · Wise PH. What you measure is what you get: prenatal care and women's health. *Am J Public Health.* 1994;84(9):1374-5. PMID 8092356; doi:10.2105/ajph.84.9.1374
+- **C1-0003** · Alexander GR, Kotelchuck M. Quantifying the adequacy of prenatal care: a comparison of indices. *Public Health Rep.* 1996;111(5):408-18; discussion 419. PMID 8837629
+- **R0153** · Koroukian SM, Rimm AA. The "Adequacy of Prenatal Care Utilization" (APNCU) index to study low birth weight: is the index biased? *J Clin Epidemiol.* 2002;55(3):296-305. PMID 11864801; doi:10.1016/s0895-4356(01)00471-1
+- **R1366** · Ying JC. Content of Prenatal Care and Spontaneous Preterm Birth. *PanPacific Management Review.* 2002;5(2):143–153. doi:10.30166/ppmr.200207.0003
+- **C1-0024** · Heaman MI, Newburn-Cook CV, Green CG, et al. Inadequate prenatal care and its association with adverse pregnancy outcomes: A comparison of indices. *BMC Pregnancy Childbirth.* 2008;8:15. PMID 18452623; doi:10.1186/1471-2393-8-15
+- **R0333** · Bloch JR, Dawley K, Suplee PD. Application of the Kessner and Kotelchuck prenatal care adequacy indices in a preterm birth population. *Public Health Nurs.* 2009;26(5):449-59. PMID 19706128; doi:10.1111/j.1525-1446.2009.00803.x
+- **C1-0031** · Wehby GL, Murray JC, Castilla EE, et al. Prenatal care effectiveness and utilization in Brazil. *Health Policy Plan.* 2009;24(3):175-88. PMID 19282483; doi:10.1093/heapol/czp005
+- **C1-0055** · VanderWeele TJ, Lauderdale DS, Lantos JD. Medically induced preterm birth and the associations between prenatal care and infant mortality. *Ann Epidemiol.* 2013;23(7):435-40. PMID 23726822; doi:10.1016/j.annepidem.2013.04.010
+- **R1306** · Balsa AI, Triunfo P. THE EFFECTIVENESS OF PRENATAL CARE IN URUGUAY’S LOW-INCOME POPULATION: A PANEL DATA APPROACH. *Latin American Journal of Economics.* 2015;52(2):149–183. doi:10.7764/laje.52.2.149
+- **R0114** · Guendelman S, Thornton D, Perez-Cuevas R, et al. Preterm delivery among first-time Mexico-born mothers: a binational population-based comparison of deliveries in California and Mexico. *J Epidemiol Community Health.* 2015;69(1):35-40. PMID 25210076; doi:10.1136/jech-2014-204020
+- **R0152** · Hamilton ER, Choi KH. The mixed effects of migration: community-level migration and birthweight in Mexico. *Soc Sci Med.* 2015;132:278-86. PMID 25174770; doi:10.1016/j.socscimed.2014.08.031
+- **C1-0041** · Shin D, Song WO. Influence of the Adequacy of the Prenatal Care Utilization Index on Small-For-Gestational-Age Infants and Preterm Births in the United States. *J Clin Med.* 2019;8(6):838. PMID 31212823; doi:10.3390/jcm8060838
+- **R0527** · Ancira-Moreno M, Monterrubio-Flores E, Hernández-Cordero S, et al. Incidence of low birth weight in Mexico: A descriptive retrospective study from 2008-2017. *PLoS One.* 2021;16(9):e0256518. PMID 34506506; doi:10.1371/journal.pone.0256518
+- **R0542** · Suárez-Idueta L, Bedford HE, Ohuma EO, et al. Maternal Risk Factors for Small-for-Gestational-Age Newborns in Mexico: Analysis of a Nationwide Representative Cohort. *Front Public Health.* 2021;9:707078. PMID 35004559; doi:10.3389/fpubh.2021.707078
+- **C1-0265** · Avendaño-Alvarez F, Monterrubio-Flores E, Omaña-Guzmán I, et al. Incidence of macrosomia in Mexico: National and subnational estimations. *PLoS One.* 2022;17(12):e0276518. PMID 36459523; doi:10.1371/journal.pone.0276518
+- **R0625** · Hayer S, Fuentes-Rivera E, Schiavon R, et al. Prenatal care utilization and perinatal outcomes among pregnant adolescents in Mexico, 2008-2019. *Int J Gynaecol Obstet.* 2024;165(3):1047-1055. PMID 38180117; doi:10.1002/ijgo.15303
+- **C1-0268** · Hamilton ER, Alcay S. Immigrant Health Advantage? The Birth Outcomes of U.S.-Born Women in Mexico and Mexican-Origin Women in the United States. *J Health Soc Behav.* 2025;66(4):452-469. PMID 40590346; doi:10.1177/00221465251343322
+- **R0760** · Coelho G, Charles CM, Pacagnella RC, et al. Racial inequalities in preterm birth in Central-West Brazil, 2015-2024: a population-based cross-sectional study. *Rev Saude Publica.* 2026;60:e44. PMID 42848685; doi:10.11606/s1518-8787.2026060007625
