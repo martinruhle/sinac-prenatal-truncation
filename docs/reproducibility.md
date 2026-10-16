@@ -23,8 +23,8 @@ The procedure is D-083.
      declares. It is the one file downloaded by hand.
    - The record files are downloaded again from DGIS and checked against their sha256.
 4. Check that `pytest` reports no skipped test, so that the database tests ran.
-5. Run `pipeline.py publish` on the same years. The run passes when `results/attrition_base.csv`
-   keeps the sha256 of the committed manifest. `git diff --stat` then lists
+5. Run `pipeline.py publish` on the same years. The run passes when every CSV of `results/`
+   keeps the sha256 the committed manifest gives it. `git diff --stat` then lists
    `results/manifest.json` only, which now names the clone's commit and time.
 6. Run `docker compose down -v` from the clone's folder, to remove the clone's database, then
    delete the folder.

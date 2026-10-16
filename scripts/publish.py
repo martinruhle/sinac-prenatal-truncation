@@ -1,13 +1,14 @@
-"""Publishing the results of a run under ``results/`` (task 1.5.2).
+"""Publishing the results of a run under ``results/`` (task 1.5.2, issue #59).
 
 The I/O of publishing lives here (rule 6): git, the manifest of sources, Postgres and the files of
 ``results/``. The text of each file comes from :mod:`sinac_truncation.publish`.
 
-A run publishes what one commit produces end to end (D-080). It refuses to start when the working
-tree has changes outside ``results/``, or when the CDM was loaded from another commit or another
-vocabulary. It then rebuilds the cohorts at this commit, writes the attrition of the base cohort,
-reads the file back against the run, and writes the manifest last. Every count is published as the
-run gives it (D-040).
+A run publishes what one commit produces end to end (D-080, D-122). It refuses to start when the
+working tree has changes outside ``results/``, or when the CDM was loaded from another commit or
+another vocabulary. It then rebuilds the cohorts, the null simulation and the odds ratios at this
+commit, writes the five output files of D-098, reads each back against the run, removes any other
+CSV of ``results/``, and writes the manifest last. Every count is published as the run gives it
+(D-040).
 """
 
 import subprocess
@@ -20,19 +21,25 @@ from psycopg import sql
 
 import cohorts
 import download
+import estimate
 import etl
 import load_vocab
+import simulate
 import sql_runner
 import validate_concepts
 from sinac_truncation.etl import etl_reference, repository_url
 from sinac_truncation.integrity import digest_chunks
 from sinac_truncation.publish import (
+    OUTPUT_TABLES,
     Code,
+    OutputTable,
     PublishedFile,
     PublishedSource,
-    attrition_csv,
+    Value,
     manifest_json,
-    read_attrition_csv,
+    read_table_csv,
+    sorted_rows,
+    table_csv,
 )
 from sinac_truncation.vocabulary import VocabularyPackage
 
@@ -41,9 +48,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 RESULTS_DIR = REPO_ROOT / "results"
 
-#: The base cohort: the number of ``sql/cohorts/01_base.sql`` (D-077).
-BASE_DEFINITION = 1
-ATTRITION_FILE = "attrition_base.csv"
 MANIFEST_FILE = "manifest.json"
 
 
@@ -138,6 +142,35 @@ def check_database(
         )
 
 
+def read_table(
+    conn: sql_runner.Connection, schemas: etl.Schemas, table: OutputTable
+) -> list[tuple[Value, ...]]:
+    """Every row of the table an output file copies, with the columns of the file."""
+    query = sql.SQL("SELECT {} FROM {}").format(
+        sql.SQL(", ").join(sql.Identifier(column.name) for column in table.columns),
+        sql.Identifier(schemas.results, table.table),
+    )
+    with conn.transaction(), conn.cursor() as cur:
+        cur.execute(query)
+        return [tuple(row) for row in cur.fetchall()]
+
+
+def rebuild(conn: sql_runner.Connection, years: Sequence[int], schemas: etl.Schemas) -> None:
+    """Rebuild every table the output files copy, at this commit: the cohorts, the null
+    simulation and the odds ratios, in the order of `pipeline.py all` (D-122)."""
+    try:
+        steps = cohorts.run(conn, years, schemas=schemas)
+        built = sorted({step.source_year for step in steps})
+        if built != sorted(years):
+            raise PublishError(f"the cohorts were built for {built}, not for {sorted(years)}")
+        print()
+        simulate.run(conn, schemas=schemas)
+        print()
+        estimate.run(conn, schemas=schemas)
+    except (cohorts.CohortError, simulate.SimulateError, estimate.EstimateError) as error:
+        raise PublishError(str(error)) from error
+
+
 def run(
     conn: sql_runner.Connection,
     years: Sequence[int],
@@ -148,7 +181,7 @@ def run(
     sources_path: Path = download.SOURCES_PATH,
     now: datetime | None = None,
 ) -> Path:
-    """Rebuild the cohorts and publish the attrition of the base cohort with its manifest.
+    """Rebuild the results at this commit and publish the five output files with their manifest.
 
     See ``pipeline.py publish --help``.
 
@@ -157,27 +190,31 @@ def run(
 
     Raises:
         PublishError: anything the user has to act on; nothing is written when it is raised
-            before the cohorts are rebuilt.
+            before the results are rebuilt.
     """
     sources, package = read_sources(years, sources_path)
     check_database(conn, years, schemas, code, package)
-    try:
-        steps = cohorts.run(conn, years, schemas=schemas)
-    except cohorts.CohortError as error:
-        raise PublishError(str(error)) from error
+    rebuild(conn, years, schemas)
 
-    base = [step for step in steps if step.cohort_definition_id == BASE_DEFINITION]
-    built = sorted({step.source_year for step in base})
-    if built != sorted(years):
-        raise PublishError(f"the base cohort was built for {built}, not for {sorted(years)}")
-
-    text = attrition_csv(base)
     results_dir.mkdir(parents=True, exist_ok=True)
-    attrition_path = results_dir / ATTRITION_FILE
-    attrition_path.write_bytes(text.encode("utf-8"))
-    written = attrition_path.read_bytes()
-    if read_attrition_csv(written.decode("utf-8")) != base:
-        raise PublishError(f"{attrition_path} does not read back as the attrition of the run")
+    published: list[PublishedFile] = []
+    lines: list[str] = []
+    for table in OUTPUT_TABLES:
+        rows = sorted_rows(table, read_table(conn, schemas, table))
+        path = results_dir / table.file
+        path.write_bytes(table_csv(table, rows).encode("utf-8"))
+        written = path.read_bytes()
+        if read_table_csv(table, written.decode("utf-8")) != rows:
+            raise PublishError(f"{path} does not read back as {schemas.results}.{table.table}")
+        published.append(PublishedFile(name=table.file, sha256=digest_chunks([written]).sha256))
+        lines.append(f"  {table.file:<28}{len(rows):>8,} rows")
+
+    # results/ holds what one run publishes and nothing else (D-014): a CSV of an earlier layout,
+    # such as attrition_base.csv before v0.2-progress, would outlive the manifest that names it.
+    names = {table.file for table in OUTPUT_TABLES}
+    for stale in sorted(path for path in results_dir.glob("*.csv") if path.name not in names):
+        stale.unlink()
+        lines.append(f"  removed {stale.name}, which this run does not write")
 
     manifest = manifest_json(
         generated_at=(now or datetime.now(UTC)).replace(microsecond=0),
@@ -186,12 +223,12 @@ def run(
         sources=sources,
         vocabulary_version=package.vocabulary_version,
         vocabulary_sha256=package.sha256,
-        files=[PublishedFile(name=ATTRITION_FILE, sha256=digest_chunks([written]).sha256)],
+        files=published,
     )
     manifest_path = results_dir / MANIFEST_FILE
     manifest_path.write_bytes(manifest.encode("utf-8"))
-    print(
-        f"\npublished {len(base)} steps of the base cohort to {attrition_path.name} and the "
-        f"manifest to {manifest_path.name}, from commit {code.commit[:12]}"
-    )
+    print(f"\npublished to {results_dir.name}/, from commit {code.commit[:12]}:")
+    for line in lines:
+        print(line)
+    print(f"  {MANIFEST_FILE}")
     return manifest_path

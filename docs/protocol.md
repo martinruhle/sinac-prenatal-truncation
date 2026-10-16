@@ -225,8 +225,10 @@ Especificado" as the only value the descriptor declares to be a sentinel.
   a birth at home, in the street or elsewhere against 2.5 %. They are 0.074 % of the files, and
   that fraction is what bounds the bias they can introduce; the size of the registry is not an
   argument for excluding anything. **The comparison of the excluded records against the retained
-  ones is published next to the attrition table** for the two validity steps, as RECORD and STROBE
-  ask.
+  ones is published next to the attrition table**, for every validity step, as RECORD and STROBE
+  ask: `excluded_profile.csv` ([§Output tables](#output-tables), D-121).
+  - The place of birth (`LUGARNACIMIENTO` codes 10 to 12) stays as orientation and is not
+    published, because the CDM does not hold it (D-123).
 
 ## Attrition
 
@@ -249,9 +251,9 @@ The two count columns are orientation for the decisions taken here, measured onc
 record files of 2020–2023 with a throwaway query (the practice of D-047). On 2023 alone, step 1
 removes nothing. The table of record is the one the cohort SQL produces, per year and per
 definition (rule 5 of [`../CLAUDE.md`](../CLAUDE.md)): [`../sql/cohorts/`](../sql/cohorts/) writes
-it into `results.attrition` with `pipeline.py cohorts` (D-078), and `pipeline.py publish` writes the
-base cohort's to [`../results/attrition_base.csv`](../results/attrition_base.csv), with a manifest
-that names the commit and the source files (D-080). Step 0 counts the staged records
+it into `results.attrition` with `pipeline.py cohorts` (D-078), and `pipeline.py publish` writes
+every definition's to `results/attrition.csv`, with a manifest that names the commit and the
+source files (D-080, D-122). Step 0 counts the staged records
 and step 1 the ones the ETL could not load, so the table starts from the files and not from the
 CDM. Both are rows of `results.etl_counts`, per year: `staging` `rows` and `person`
 `not_loaded:no_year_of_birth` (D-073).
@@ -599,9 +601,15 @@ The output tables are defined here, before anything runs (D-098).
 - **What they cover.** All of them cover 2020–2023 pooled, with the year as a covariate. The
   attrition is per year.
 - **Where they go.** `pipeline.py publish` writes them to `results/` at a milestone (D-014, D-080).
-  Until then they live in the `results` schema: `estimate` and `exposure_distribution`, written by
-  `pipeline.py estimate`, and `truncation_share`, written by `pipeline.py simulate`. Writing the
-  five files is issue #59 (D-119).
+  Until then they live in the `results` schema, under the name of each file without `.csv`, except
+  `estimate`. `pipeline.py cohorts` writes `attrition` and `excluded_profile`, `simulate` writes
+  `truncation_share`, and `estimate` writes the other two.
+- **How they are written** (D-122).
+  - `publish` first rebuilds the cohorts, the simulation and the estimates at its commit.
+  - Each file keeps the column names of its table, with its rows sorted by the columns that
+    identify them.
+  - A float is written as the shortest text that reads back to it, and each file is read back
+    against its table.
 - **What is not versioned.** The aggregated table of counts, `results.aggregated_count`, stays in
   the database.
 - **The simulated sources.** The simulation has no covariates, so `sim_e1` and `sim_e2` have crude
@@ -609,11 +617,11 @@ The output tables are defined here, before anything runs (D-098).
 
 | File | One row per | Columns |
 |---|---|---|
-| `attrition.csv` | definition, year of the record files, step | those of `attrition_base.csv`, which it replaces at the `v0.2-progress` publish |
+| `attrition.csv` | definition, year of the record files, step | those of `attrition_base.csv`, which it replaces at the `v0.2-progress` publish, for every definition |
 | `exposure_distribution.csv` | source, definition, period, outcome cut-off, measure, variant, level, outcome | births |
 | `estimates.csv` | estimate | source, definition, period, outcome cut-off, measure, variant, level, reference, model, stratum variable, stratum value, births, preterm births, odds ratio, lower and upper limits of the 95 % interval |
 | `truncation_share.csv` | definition, measure, variant, level, scenario | reference, observed crude odds ratio with the lower and upper limits of its 95 % interval, simulated odds ratio, observed and simulated risk differences, share (D-112) |
-| `excluded_profile.csv` | definition, step, group (retained, excluded) | births, % preterm, % first-trimester start, % no prenatal care, % born outside a health facility |
+| `excluded_profile.csv` | definition, validity step, group (excluded, retained) | births, % preterm, % first-trimester start, % no prenatal care (D-121, D-123) |
 
 The columns take these values:
 
@@ -627,7 +635,9 @@ The columns take these values:
 | outcome | `preterm`, `term` |
 | births, preterm births | those of the level, in `estimates.csv` |
 | odds ratio and its limits | empty for a level without an estimate ([§Model](#model)) |
-| % preterm | empty for the records that leave for an unknown gestational age |
+| group | `excluded`: the records the step removes; `retained`: those that remain after it, the `remaining` of the attrition |
+| % preterm | of the births at 22 completed weeks or more, with two decimals; empty for the records that leave for an unknown gestational age |
+| % first-trimester start, % no prenatal care | trimester 1 and trimester 0 "NO RECIBIÓ", of the births with a known trimester, with two decimals; empty when no birth of the group has one |
 
 ### What the models show
 
