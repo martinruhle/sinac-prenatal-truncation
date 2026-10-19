@@ -21,9 +21,16 @@ import estimate as script
 import etl
 import simulate
 import sql_runner
-from sinac_truncation.cohorts import LANDMARK_WEEKS
-from sinac_truncation.measures import LATER_OR_NO_CARE
-from sinac_truncation.models import ADJUSTED, CRUDE, OBSERVED, summed
+from sinac_truncation.cohorts import LANDMARK_WEEKS, MULTIPLES_DEFINITION
+from sinac_truncation.measures import FIRST_TRIMESTER, LATER_OR_NO_CARE, PRETERM_WEEKS
+from sinac_truncation.models import (
+    ADJUSTED,
+    CRUDE,
+    OBSERVED,
+    DistributionRow,
+    EstimateRow,
+    summed,
+)
 from synthetic import (
     JUNIOR_HIGH,
     RECORDS_2023,
@@ -36,13 +43,20 @@ from synthetic import (
 
 
 def record(
-    age: int, *, weeks: int = 39, visits: int = 8, trimester: int = 1, state: str = "09"
+    age: int,
+    *,
+    weeks: int = 39,
+    visits: int = 8,
+    trimester: int = 1,
+    state: str = "09",
+    plurality: int = 1,
 ) -> tuple[str | None, ...]:
     """Record 1 of ``tests/synthetic.py``, the normal case, with another declared age, weeks,
-    visits, first-visit trimester or state. The fields are in the order of SOURCE_COLUMNS."""
+    visits, first-visit trimester, state or plurality. The fields are in the order of
+    SOURCE_COLUMNS."""
     return (
-        "15/03/2023", "02/05/1995", str(age), "2", state, str(weeks), "1", str(visits),
-        str(trimester), "51", "1", "3200",
+        "15/03/2023", "02/05/1995", str(age), "2", state, str(weeks), str(plurality),
+        str(visits), str(trimester), "51", "1", "3200",
     )  # fmt: skip
 
 
@@ -190,8 +204,13 @@ def test_a_run_estimates_the_crude_and_adjusted_odds_ratios_of_the_records(
     assert tables(source) == first
 
     assert run.period == "2023"
+    # The main analysis; the alternative definitions are tested below.
     observed = {
-        (row.measure, row.level, row.model): row for row in run.estimates if row.source == OBSERVED
+        (row.measure, row.level, row.model): row
+        for row in run.estimates
+        if row.source == OBSERVED
+        and row.definition != MULTIPLES_DEFINITION
+        and row.outcome_cutoff == PRETERM_WEEKS
     }
     # Measure (c): 6 preterm of 10 later starts against 3 of 8 first-trimester starts.
     crude = observed["c", LATER_OR_NO_CARE, CRUDE]
@@ -215,27 +234,41 @@ def test_a_run_estimates_the_crude_and_adjusted_odds_ratios_of_the_records(
         ("c", LATER_OR_NO_CARE, CRUDE),
     ]
     assert all(observed[key].odds_ratio is None for key in observed if key[0] == "b")
-    assert run.set_aside == {(2, "b"): 8}
-
-    # The distribution splits the 18 births of each measure and definition by outcome.
-    observed_distribution = [row for row in run.distribution if row.source == OBSERVED]
-    assert {(row.definition, row.measure) for row in observed_distribution} == {
-        (2, "a"),
-        (2, "a_count"),
-        (2, "b"),
-        (2, "c"),
-        (3, "d"),
-        (4, "d"),
-        (5, "d"),
+    # Under 34 and under 32 weeks no birth is preterm, so every level of (a) and (c) is all term.
+    assert run.set_aside == {
+        (2, 37, "b"): 8,
+        **{(2, cutoff, measure): 18 for cutoff in (34, 32) for measure in ("a", "c")},
     }
-    for definition, measure in {(row.definition, row.measure) for row in observed_distribution}:
+
+    # The distribution splits the 18 births of each measure, definition and cut-off by outcome:
+    # 9 births at 35 weeks are preterm under 37 weeks and term under 34 or 32. Every record is a
+    # singleton, so the definition with multiples holds the same births.
+    observed_distribution = [row for row in run.distribution if row.source == OBSERVED]
+    found = {(row.definition, row.outcome_cutoff, row.measure) for row in observed_distribution}
+    assert found == {
+        (2, 37, "a"),
+        (2, 37, "a_count"),
+        (2, 37, "b"),
+        (2, 37, "c"),
+        (3, 37, "d"),
+        (4, 37, "d"),
+        (5, 37, "d"),
+        (2, 34, "a"),
+        (2, 34, "c"),
+        (2, 32, "a"),
+        (2, 32, "c"),
+        (6, 37, "a"),
+        (6, 37, "c"),
+    }
+    for key in found:
         rows = [
             row
             for row in observed_distribution
-            if (row.definition, row.measure) == (definition, measure)
+            if (row.definition, row.outcome_cutoff, row.measure) == key
         ]
         assert sum(row.births for row in rows) == 18
-        assert sum(row.births for row in rows if row.outcome == "preterm") == 9
+        preterm = sum(row.births for row in rows if row.outcome == "preterm")
+        assert preterm == (9 if key[1] == PRETERM_WEEKS else 0)
 
     # Each scenario adds its crude rows, and no adjusted one.
     simulated = {row.source for row in run.estimates if row.source != OBSERVED}
@@ -243,3 +276,62 @@ def test_a_run_estimates_the_crude_and_adjusted_odds_ratios_of_the_records(
     assert {row.model for row in run.estimates if row.source in simulated} == {CRUDE}
     assert len(first["estimate"]) == len(run.estimates)
     assert len(first["exposure_distribution"]) == len(run.distribution)
+
+
+#: Five singletons and one pair of twins, for the alternative definitions of task 1.8.1. The
+#: weeks fall on either side of each cut-off, 37, 34 and 32 (each exclusive):
+#:   later start (trimester 2)    33 weeks: preterm under 37 and 34; 31 weeks: under all three
+#:   first-trimester start        39 weeks twice: term; 35 weeks: preterm under 37 only
+#:   twins, later start           35 weeks each: preterm under 37, and only in definition 6
+ALTERNATIVES = (
+    record(27, weeks=33, trimester=2),
+    record(27, weeks=31, trimester=2),
+    record(27),
+    record(27),
+    record(27, weeks=35),
+    *[record(27, weeks=35, trimester=2, plurality=2)] * 2,
+)
+
+
+@pytest.mark.db
+def test_each_alternative_definition_moves_one_side_of_the_main_analysis(
+    db_connection: sql_runner.Connection, schemas: etl.Schemas, tmp_path: Path
+) -> None:
+    """The cut-offs move only the outcome of the analysis cohort, and the definition with
+    multiples only adds the twins, at 37 weeks (D-054, D-099)."""
+    source = built(staged(db_connection, schemas, tmp_path, ALTERNATIVES))
+    simulate.run(source.connection, schemas=source.schemas)
+    run = script.run(source.connection, schemas=source.schemas)
+
+    observed = [row for row in run.distribution if row.source == OBSERVED and row.measure == "c"]
+    births: dict[tuple[int, int, str], list[int]] = {}
+    for row in observed:
+        count = births.setdefault((row.definition, row.outcome_cutoff, row.level), [0, 0])
+        count[0] += row.births
+        count[1] += row.births if row.outcome == "preterm" else 0
+    assert births == {
+        (2, 37, LATER_OR_NO_CARE): [2, 2],
+        (2, 37, FIRST_TRIMESTER): [3, 1],
+        (2, 34, LATER_OR_NO_CARE): [2, 2],
+        (2, 34, FIRST_TRIMESTER): [3, 0],
+        (2, 32, LATER_OR_NO_CARE): [2, 1],
+        (2, 32, FIRST_TRIMESTER): [3, 0],
+        (6, 37, LATER_OR_NO_CARE): [4, 4],
+        (6, 37, FIRST_TRIMESTER): [3, 1],
+    }
+
+    # Measures (a) and (c) alone; (c) with a crude and an adjusted model. Every record has 8
+    # visits, so (a) has its reference alone and no estimate.
+    def alternative(row: EstimateRow | DistributionRow) -> bool:
+        return row.source == OBSERVED and (
+            row.definition == MULTIPLES_DEFINITION or row.outcome_cutoff != PRETERM_WEEKS
+        )
+
+    assert {row.measure for row in run.distribution if alternative(row)} == {"a", "c"}
+    assert {
+        (row.definition, row.outcome_cutoff, row.model) for row in run.estimates if alternative(row)
+    } == {
+        (definition, cutoff, model)
+        for definition, cutoff in ((2, 34), (2, 32), (6, 37))
+        for model in (CRUDE, ADJUSTED)
+    }

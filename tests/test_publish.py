@@ -356,6 +356,11 @@ PUBLISH_RECORDS_2023 = (
 #: Step 8: record 11 leaves, with no trimester; records 1, 2 and 12 to 15 stay. Preterm: 13, 15.
 #: Step 9: record 12 leaves; records 1, 2 and 13 to 15 stay.
 #: The landmark cohorts, definitions 3 to 5, repeat the four steps of definition 2.
+#: Definition 6, with multiples, repeats steps 4 and 5; record 3 leaves at step 6, of kind design.
+#: Step 7: records 8 (twins of 34 weeks with no visits and a first visit in trimester 1) and 11
+#:   leave, both preterm, with trimester 1 known in record 8 alone; records 1, 2 and 12 to 15
+#:   stay, as at step 8 of definition 2.
+#: Step 8 is step 9 of definition 2.
 PROFILE_1 = [
     "4,excluded,1,,0.00,100.00",
     "4,retained,10,55.56,55.56,22.22",
@@ -369,10 +374,18 @@ PROFILE_2 = [
     "9,excluded,1,0.00,100.00,0.00",
     "9,retained,5,40.00,60.00,20.00",
 ]
+PROFILE_6 = [
+    *PROFILE_1,
+    "7,excluded,2,100.00,100.00,0.00",
+    "7,retained,6,33.33,66.67,16.67",
+    "8,excluded,1,0.00,100.00,0.00",
+    "8,retained,5,40.00,60.00,20.00",
+]
 PROFILE_CSV = [
     ",".join(TABLES["excluded_profile.csv"].header),
     *(f"1,{row}" for row in PROFILE_1),
     *(f"{definition},{row}" for definition in (2, 3, 4, 5) for row in PROFILE_2),
+    *(f"6,{row}" for row in PROFILE_6),
 ]
 
 FILES = (*TABLES, "manifest.json")
@@ -431,7 +444,7 @@ def test_each_file_is_its_table_of_the_run(source: Source, tmp_path: Path) -> No
         assert published == sorted_rows(table, rows), table.file
 
     attrition = read_table_csv(ATTRITION, (results_dir / "attrition.csv").read_text("utf-8"))
-    assert {row[0] for row in attrition} == {1, 2, 3, 4, 5}
+    assert {row[0] for row in attrition} == {1, 2, 3, 4, 5, 6}
 
 
 @pytest.mark.db

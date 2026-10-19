@@ -476,6 +476,7 @@ The first trimester runs to 13 completed weeks, the second from 14 to 27, and th
 | 3 · Landmark 28 | Definition 2, then the step "reached week 28" | 14,117 (423,074 preterm births stay) |
 | 4 · Landmark 32 | Definition 2, then the step "reached week 32" | 50,891 (386,300 preterm births stay) |
 | 5 · Landmark 34 | Definition 2, then the step "reached week 34" | 100,264 (336,927 preterm births stay) |
+| 6 · With multiples | Definition 2 without the step "singleton" ([§Sensitivity of the definition](#sensitivity-of-the-definition)) | 757 under 22 weeks, then 156,007, then 44,656 (6,310,818 stay) |
 
 - **Every definition has its own attrition table** (rule 5 of [`../CLAUDE.md`](../CLAUDE.md)).
   Each sensitivity definition repeats the same tail after its own prefix (D-087).
@@ -487,9 +488,13 @@ The first trimester runs to 13 completed weeks, the second from 14 to 27, and th
   [`04_landmark_32.sql`](../sql/cohorts/04_landmark_32.sql) and
   [`05_landmark_34.sql`](../sql/cohorts/05_landmark_34.sql)**, with step 10 of their attrition, of
   kind design. Each is the same file with another week (D-111).
+- **Definition 6 is [`../sql/cohorts/06_multiples.sql`](../sql/cohorts/06_multiples.sql)**, the
+  other side of the axis "multiple pregnancies". It reads the criteria that the files of
+  definitions 1 and 2 computed, so it differs from definition 2 in the step "singleton" alone.
+  The steps after it move up by one: its steps 7 and 8 are steps 8 and 9 of definition 2 (D-124).
 - **The counts are orientation**, measured once with a throwaway query over an approximation of the
-  base cohort that differs from it by 526 records. The table of record is the one the cohort SQL
-  writes.
+  base cohort that differs from it by 526 records; those of definition 6 come from a run of the
+  cohort SQL on 2020–2023. The table of record is the one the cohort SQL writes.
 - **The records removed at "covariates known" differ a little from the rest.** 7.76 % are preterm
   and 70.7 % started care in the first trimester, against 7.05 % and 77.2 % of the retained ones.
 
@@ -570,11 +575,12 @@ D-099 sets how the alternatives are estimated and reported.
 
 - **Each alternative definition** of [§Sensitivity of the definition](#sensitivity-of-the-definition)
   runs the crude and adjusted models of measures (a) and (c) (D-003).
-  - The cut-offs of 34 and 32 weeks change only the outcome.
+  - The cut-offs of 34 and 32 weeks change only the outcome. They are estimated on definition 2,
+    and their rows carry the cut-off in the column outcome cut-off.
   - The definition with multiples and the period 2022–2023 change the cohort, and each carries its
-    attrition.
-  - `v0.2-progress` carries one or two of them, the cut-off first (D-012), and the others land in
-    `v1.0`.
+    attrition. The definition with multiples is definition 6, estimated at 37 weeks.
+  - `v0.2-progress` carries two of them, the cut-off and the definition with multiples (D-012,
+    D-124). The period 2022–2023 lands in `v1.0`.
 - **In the definition with multiples, each certificate is one unit.** Its confidence intervals
   ignore that the twins of one pregnancy are not independent, because no published variable groups
   them (D-051).
@@ -676,6 +682,27 @@ Measured as orientation, on 2020–2023, in two runs with the same estimates. Th
   - Mixed, the two groups cancel out in the crude odds ratio.
   - The share of what truncation alone explains is unchanged, because it compares crude odds
     ratios by design ([§What truncation alone explains](#what-truncation-alone-explains)).
+
+### What the sensitivity analysis shows
+
+Measured as orientation, on 2020–2023, in the same run as the table above (D-124). The table of
+record is `estimates.csv`, published at `v0.2-progress`.
+
+| Measure, level against the reference | Main analysis | Under 34 weeks | Under 32 weeks | With multiples |
+|---|---|---|---|---|
+| (a) 0 visits, against 8 or more | 2.458 (2.415–2.501) | 5.884 (5.711–6.062) | 7.978 (7.669–8.299) | 2.181 (2.144–2.218) |
+| (a) 1–4 visits | 2.030 (2.011–2.049) | 4.355 (4.276–4.435) | 5.622 (5.481–5.767) | 1.858 (1.841–1.874) |
+| (a) 5–7 visits | 1.529 (1.518–1.540) | 2.396 (2.359–2.434) | 2.671 (2.611–2.733) | 1.433 (1.423–1.443) |
+| (c) trimester 0, 2 or 3, against trimester 1 | 1.065 (1.057–1.073) | 1.186 (1.168–1.204) | 1.199 (1.174–1.224) | 1.018 (1.011–1.025) |
+
+All of them are adjusted odds ratios. The crude ones are in `estimates.csv`.
+
+- **A lower cut-off moves every odds ratio of (a) further from 1.** The step from 37 to 34 weeks
+  moves them more than the step from 34 to 32.
+- **(c) moves less than (a).** It goes from 1.065 to 1.186 and 1.199.
+- **Including multiples moves every odds ratio towards 1.** The definition keeps 107,221 more
+  births than definition 2. The crude odds ratio of (c) becomes 0.940 (0.933–0.946), against
+  1.000 in the main analysis.
 
 ## Null simulation
 
