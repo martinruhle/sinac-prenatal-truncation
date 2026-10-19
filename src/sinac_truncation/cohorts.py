@@ -18,6 +18,7 @@ from sinac_truncation.etl import concept_keys
 __all__ = [
     "LANDMARK_WEEKS",
     "MEXICO_CODE",
+    "MULTIPLES_DEFINITION",
     "PROFILE_GROUPS",
     "SQL_FILES",
     "TRIMESTER_CODES",
@@ -32,7 +33,8 @@ __all__ = [
 
 #: ``tables.sql`` creates the tables; each definition file writes its cohort and the step at which
 #: each subject leaves it; ``exposure.sql`` writes measures (a) and (c) of every subject, which the
-#: analysis cohort reads; the landmark cohorts of measure (d) start from the analysis cohort;
+#: analysis cohort reads; the landmark cohorts of measure (d) start from the analysis cohort, and
+#: the definition with multiples from the criteria of the base and analysis cohorts;
 #: ``attrition.sql`` counts them; ``excluded_profile.sql`` profiles the records each validity step
 #: removes, from the temporary tables of the run. They run in this order.
 SQL_FILES: tuple[str, ...] = (
@@ -43,6 +45,7 @@ SQL_FILES: tuple[str, ...] = (
     "03_landmark_28.sql",
     "04_landmark_32.sql",
     "05_landmark_34.sql",
+    "06_multiples.sql",
     "attrition.sql",
     "excluded_profile.sql",
 )
@@ -51,6 +54,10 @@ SQL_FILES: tuple[str, ...] = (
 #: cohort with ``EDADGESTACIONAL`` at that week or more (D-090, D-111). The null simulation applies
 #: the same filter to its pregnancies, and a test ties each week to its file.
 LANDMARK_WEEKS: Mapping[int, int] = {3: 28, 4: 32, 5: 34}
+
+#: The analysis cohort with multiple pregnancies, ``06_multiples.sql``: the other side of the axis
+#: "multiple pregnancies" (docs/protocol.md §Sensitivity of the definition, D-054).
+MULTIPLES_DEFINITION = 6
 
 #: The source code whose target in ``source_to_concept_map`` criterion 2 reads: RESIDEEXTRANJERO 2,
 #: "NO" (does not reside abroad) in the catalogue SI_NO, mapped to Mexico (docs/omop_mapping.md

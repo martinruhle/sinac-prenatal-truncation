@@ -38,6 +38,7 @@ from statsmodels.tools.sm_exceptions import (
 from sinac_truncation.measures import (
     APNCU_VARIANT,
     PRETERM_WEEKS,
+    SENSITIVITY_CUTOFFS,
     LevelCount,
     VisitCuts,
     crude,
@@ -54,6 +55,7 @@ __all__ = [
     "COVARIATES",
     "CRUDE",
     "OBSERVED",
+    "SENSITIVITY_MEASURES",
     "Adjusted",
     "Cell",
     "DistributionRow",
@@ -67,6 +69,7 @@ __all__ = [
     "format_estimates",
     "model_table",
     "observed_estimates",
+    "sensitivity_models",
     "simulated_estimates",
     "simulated_source",
     "summed",
@@ -86,6 +89,9 @@ TERM = "term"
 
 #: The measures of the analysis cohort. Measure (d) is (a) on each landmark cohort.
 _ANALYSIS_MEASURES: tuple[str, ...] = ("a", "a_count", "b", "c")
+
+#: The measures of every alternative definition of the sensitivity analysis (D-003, D-099).
+SENSITIVITY_MEASURES: tuple[str, ...] = ("a", "c")
 
 
 class Cell(NamedTuple):
@@ -194,6 +200,23 @@ def definition_measures(
     measures = {analysis_definition: _ANALYSIS_MEASURES}
     measures.update({definition: ("d",) for definition in landmarks})
     return measures
+
+
+def sensitivity_models(
+    analysis_definition: int,
+    multiples_definition: int,
+    cutoffs: Iterable[int] = SENSITIVITY_CUTOFFS,
+) -> list[tuple[int, int]]:
+    """The definition and outcome cut-off of each alternative definition, whose measures
+    :data:`SENSITIVITY_MEASURES` get a crude and an adjusted model (D-099).
+
+    Each changes one side of the main analysis alone (D-054): the analysis cohort at each other
+    cut-off, and the definition with multiples at :data:`~sinac_truncation.measures.PRETERM_WEEKS`.
+    """
+    return [
+        *((analysis_definition, cutoff) for cutoff in cutoffs),
+        (multiples_definition, PRETERM_WEEKS),
+    ]
 
 
 def simulated_source(scenario: str) -> str:
@@ -487,21 +510,23 @@ def _ratio(estimate: EstimateRow | None) -> str:
 
 
 def format_estimates(rows: Sequence[EstimateRow]) -> list[str]:
-    """The lines of the report that ``pipeline.py estimate`` prints: one per level, with its
-    births, its preterm births and its crude and adjusted odds ratios."""
+    """The lines of the report that ``pipeline.py estimate`` prints: one per level and outcome
+    cut-off, with its births, its preterm births and its crude and adjusted odds ratios."""
     lines = [
-        f"{'def':<4}{'measure':<9}{'level':<21}{'births':>11}{'preterm':>10}"
+        f"{'def':<4}{'cut':<4}{'measure':<9}{'level':<21}{'births':>11}{'preterm':>10}"
         f"{'crude OR (95 % CI)':>26}{'adjusted OR (95 % CI)':>26}"
     ]
     adjusted_rows = {
-        (row.definition, row.measure, row.level): row for row in rows if row.model == ADJUSTED
+        (row.definition, row.outcome_cutoff, row.measure, row.level): row
+        for row in rows
+        if row.model == ADJUSTED
     }
     for row in rows:
         if row.model != CRUDE:
             continue
-        other = adjusted_rows.get((row.definition, row.measure, row.level))
+        other = adjusted_rows.get((row.definition, row.outcome_cutoff, row.measure, row.level))
         lines.append(
-            f"{row.definition:<4}{row.measure:<9}{row.level:<21}{row.births:>11,}"
-            f"{row.preterm:>10,}{_ratio(row):>26}{_ratio(other):>26}"
+            f"{row.definition:<4}{row.outcome_cutoff:<4}{row.measure:<9}{row.level:<21}"
+            f"{row.births:>11,}{row.preterm:>10,}{_ratio(row):>26}{_ratio(other):>26}"
         )
     return lines

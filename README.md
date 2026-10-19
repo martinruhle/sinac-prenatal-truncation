@@ -47,7 +47,8 @@ defaults of [`compose.yml`](compose.yml):
   `stage` 2 min 31 s, `vocab` 4 min 56 s, `cdm` 12 min 43 s and `cohorts` 47 s. Downloading the
   four files took another 3 min 13 s on that connection. `simulate` and `estimate` became steps of
   `all` after this measurement. On their own, on the same laptop, `simulate` took 12.9 s on
-  15 October 2026 and `estimate` 160 s on 16 October 2026.
+  15 October 2026 and `estimate` 160 s on 16 October 2026, and 273 to 307 s on 19 October 2026
+  with the definition with multiples.
 - **Disk: 17.0 GB at the peak.** `data/` holds 2.35 GB: the four ZIPs (0.27 GB), their extracted
   CSVs (1.67 GB), the Parquet copies (0.21 GB) and the Athena package (0.20 GB). The Postgres
   volume holds 11.2 GB once the run ends, 10.1 GB of database and 1.1 GB of write-ahead log. It
@@ -96,8 +97,8 @@ only when every check counts 0, and running it again gives the same tables (D-07
 the local vocabularies in VOCABULARY, which `vocab` empties, so run `cdm` again after `vocab`.
 
 `cohorts` builds the base cohort of [`docs/protocol.md`](docs/protocol.md#base-cohort), and the
-analysis cohort and the landmark cohorts of weeks 28, 32 and 34 of
-[§Records analysed](docs/protocol.md#records-analysed), from the CDM, with the
+analysis cohort, the landmark cohorts of weeks 28, 32 and 34 and the analysis cohort with multiple
+pregnancies of [§Records analysed](docs/protocol.md#records-analysed), from the CDM, with the
 SQL of [`sql/cohorts/`](sql/cohorts/), on the record files of the years given in `--years`, which
 `cdm` must have loaded. It writes one row per mother and pregnancy into `results.cohort`, the
 attrition table into `results.attrition` (one row per step, per definition and per year, a step
@@ -129,9 +130,12 @@ built. It is a world where prenatal care has no effect on preterm birth:
 
 `estimate` computes the odds ratios of preterm birth of
 [`docs/protocol.md`](docs/protocol.md#model) on the cohorts that `cohorts` built:
-- **The aggregated table.** `results.aggregated_count` holds the births of the analysis and
-  landmark cohorts per combination of completed weeks, first-visit trimester, visits, age group,
-  education, state and year. The run checks that it holds every birth of each cohort.
+- **The aggregated table.** `results.aggregated_count` holds the births of the analysis, landmark
+  and multiples cohorts per combination of completed weeks, first-visit trimester, visits, age
+  group, education, state and year. The run checks that it holds every birth of each cohort.
+- **The sensitivity analysis.** Measures (a) and (c) get the same two models on the analysis
+  cohort with preterm birth under 34 and under 32 weeks, and on the cohort with multiple
+  pregnancies (D-099, D-124).
 - **The models.** For each measure and level, the crude odds ratio against the reference, and the
   one adjusted for age group, education, state and year, from a binomial GLM on that table with
   95 % Wald intervals (D-093). With every term categorical, it gives the estimates of a logistic
@@ -139,7 +143,8 @@ built. It is a world where prenatal care has no effect on preterm birth:
 - **The tables.** The run writes `results.estimate`, with the births and preterm births behind each
   estimate, and `results.exposure_distribution`, in one transaction with the aggregated table. The
   simulated pregnancies of `simulate` add their crude rows, so `estimate` runs after it.
-- **Time.** On 2020–2023 the run took 160 s, 133 s of them building the aggregated table.
+- **Time.** On 2020–2023 the run took 273 to 307 s, 228 to 286 s of them building the aggregated
+  table. Before the definition with multiples it took 160 to 193 s.
 
 `publish` writes the results a milestone versions under [`results/`](results/) (D-014), with the
 columns of [`docs/protocol.md`](docs/protocol.md#output-tables) §Output tables (D-098):
@@ -156,7 +161,7 @@ It publishes what one commit produces end to end (D-080, D-122):
 
 - It refuses a working tree with changes outside `results/` and a CDM that `cdm` did not load from
   that commit.
-- It rebuilds the cohorts, the null simulation and the odds ratios, about 3 min more than the
+- It rebuilds the cohorts, the null simulation and the odds ratios, about 5 min more than the
   cohorts alone on 2020–2023.
 - It reads each CSV back against the run and removes any other CSV of `results/`.
 
