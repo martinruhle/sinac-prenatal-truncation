@@ -28,8 +28,7 @@ subjects AS (
         w.value_as_number::integer AS weeks,
         x.first_visit_trimester,
         x.visits,
-        -- The age groups of docs/protocol.md §Covariates (D-094, FOR APPROVAL), in completed
-        -- years.
+        -- The age groups of docs/protocol.md §Covariates (D-094), in completed years.
         CASE
             WHEN a.value_as_number < 15 THEN 'under 15'
             WHEN a.value_as_number < 20 THEN '15-19'

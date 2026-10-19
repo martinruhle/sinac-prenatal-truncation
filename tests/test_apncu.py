@@ -139,7 +139,7 @@ def test_the_start_month_sets_missed_visits_and_initiation(
 
 
 def test_the_default_rule_is_the_middle_month() -> None:
-    # D-092, FOR APPROVAL. A change here is a change of protocol and needs a decision entry first.
+    # D-092. A change here is a change of protocol and needs a decision entry first.
     assert MIDDLE_MONTH_RULE == (2, 5, 8)
     assert [compute_apncu(1, trimester, 40).start_month for trimester in (1, 2, 3)] == [2, 5, 8]
     assert compute_apncu(0, 0, 40).start_month == 0

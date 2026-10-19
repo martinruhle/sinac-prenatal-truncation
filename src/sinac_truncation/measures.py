@@ -112,7 +112,7 @@ class Share(NamedTuple):
     level: str
     observed: Crude
     simulated: Crude
-    #: Simulated over observed risk difference (D-112, FOR APPROVAL); ``None`` when not reported.
+    #: Simulated over observed risk difference (D-112); ``None`` when not reported.
     share: float | None
 
 

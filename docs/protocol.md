@@ -187,7 +187,7 @@ Each of the following notes is a decision, not a detail:
   two criteria would hide those records inside the count of a design exclusion (D-056).
 - **631 records carry `RESIDEEXTRANJERO` = 88**, a code the `SI_NO` catalogue does not publish (it
   publishes 8 for "NO APLICA"); all of them have `ENTIDADRESIDENCIA` = 00. They are treated as
-  residence unknown and leave with criterion 2. `FOR APPROVAL` (D-057).
+  residence unknown and leave with criterion 2 (D-057).
 - **Residence, not place of delivery, defines the cohort and the state gradient.** Prenatal care
   is received where the mother lives, and 4.9 % of births happen outside the state of residence,
   up to 11.9 % for residents of the state of México. `ENTIDADFEDERATIVAPARTO` describes referral
@@ -414,8 +414,8 @@ the full table that the article summarises in one example (D-091). The algorithm
 
 What SINAC changes in the algorithm:
 
-- **Month from trimester** (D-092, `FOR APPROVAL`). SINAC records the trimester of the first
-  visit, so each trimester takes its middle month: 2, 5 and 8.
+- **Month from trimester** (D-092). SINAC records the trimester of the first visit, so each
+  trimester takes its middle month: 2, 5 and 8.
   - With this rule every start in the second trimester falls after month 4, so it is Inadequate
     whatever its visits. With the first month of each trimester they would all pass the month-4
     bound, and with the last none would.
@@ -456,7 +456,7 @@ how a range of weeks is read and which visits a later start misses, are written 
 ### Trimester boundaries
 
 The first trimester runs to 13 completed weeks, the second from 14 to 27, and the third from 28
-(D-092, `FOR APPROVAL`).
+(D-092).
 
 - **No source defines them.** The descriptor, the catalogue and the 2025 filling guide do not:
   question 13.2 asks only for the trimester. NOM-007-SSA2-2016 §5.2.1.16 places the first-trimester
@@ -534,8 +534,8 @@ D-094 is a `[SCOPE CHANGE]` against proposal v2, and it specifies D-007.
 
 | Covariate | Source | Levels | Reference | Missing |
 |---|---|---|---|---|
-| Maternal age | `EDAD`, completed years | under 15; 15–19; 20–24; 25–29; 30–34; 35–39; 40 and over (`FOR APPROVAL`) | 20–24 | `888`, `999`; neither occurs in the base cohort |
-| Education | `ESCOLARIDAD` | none (1); primary (31, 32); secondary (51, 52, 111, 112); upper secondary (71, 72, 131, 132); higher (81, 82, 101, 102) (`FOR APPROVAL`) | secondary | `0`, `88`, `99`, blank |
+| Maternal age | `EDAD`, completed years | under 15; 15–19; 20–24; 25–29; 30–34; 35–39; 40 and over | 20–24 | `888`, `999`; neither occurs in the base cohort |
+| Education | `ESCOLARIDAD` | none (1); primary (31, 32); secondary (51, 52, 111, 112); upper secondary (71, 72, 131, 132); higher (81, 82, 101, 102) | secondary | `0`, `88`, `99`, blank |
 | State of residence | `ENTIDADRESIDENCIA` | the 32 states | `15` (México) | `00`, `88`, `99`, blank |
 | Year of birth | `FECHANACIMIENTO` | 2020 to 2023, categorical (D-049) | 2023 | none |
 
@@ -721,9 +721,9 @@ calendar. Whatever association appears in that world is the one truncation produ
 - **The first visit is the first one of the calendar in that trimester.** That is visit 1 (week 6)
   for the first trimester, visit 3 (week 16) for the second and visit 5 (week 28) for the third
   ([§Trimester boundaries](#trimester-boundaries)).
-- **A visit happens when the completed weeks at delivery reach its first week** (`FOR APPROVAL`).
-  A range counts from its first week, so a pregnancy delivered at 37 weeks has seven visits at
-  most and one delivered at 38 weeks has eight.
+- **A visit happens when the completed weeks at delivery reach its first week** (D-096). A range
+  counts from its first week, so a pregnancy delivered at 37 weeks has seven visits at most and
+  one delivered at 38 weeks has eight.
 - **A pregnancy that ends before its first visit has no visit.** It is recorded as no care,
   trimester 0.
 
@@ -736,11 +736,11 @@ Two fixed scenarios (D-010, D-096):
 | E1 · Perfect calendar | Every visit of the calendar until delivery |
 | E2 · Calendar with misses | Each visit, independently, with probability p |
 
-- **How p is set** (`FOR APPROVAL`). Take the simulated pregnancies that start in the first
-  trimester and are delivered at 38 weeks or more, the only ones the calendar lets reach eight
-  visits. p makes their share with eight visits equal to the observed share with 8 or more visits
-  among the same births of definition 2. It is computed from definition 2 when the simulation runs
-  and written next to its output, in `results.simulation`.
+- **How p is set** (D-096). Take the simulated pregnancies that start in the first trimester and
+  are delivered at 38 weeks or more, the only ones the calendar lets reach eight visits. p makes
+  their share with eight visits equal to the observed share with 8 or more visits among the same
+  births of definition 2. It is computed from definition 2 when the simulation runs and written
+  next to its output, in `results.simulation`.
   - Each later visit happens with probability p, so a pregnancy of that group has all eight with
     probability p⁷. p is the seventh root of the observed share.
   - On 2020–2023, 60.85 % of those 3,999,436 births had 8 visits or more, so p = 0.9315
@@ -817,7 +817,7 @@ Two fixed scenarios (D-010, D-096):
 ### What truncation alone explains
 
 For each measure, level and scenario, the share is the simulated risk difference ÷ the observed
-risk difference (D-112, `FOR APPROVAL`). The risk difference is the preterm share of the level
+risk difference (D-112). The risk difference is the preterm share of the level
 minus that of the reference. It replaces log(simulated odds ratio) ÷ log(observed crude odds
 ratio) of D-097: the empty cells make that ratio infinite or 0 for every measure but (c).
 

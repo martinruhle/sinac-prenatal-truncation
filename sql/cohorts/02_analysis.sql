@@ -39,7 +39,7 @@ SELECT
         AND x.visits IS NOT NULL
         AND (x.first_visit_trimester = 0) = (x.visits = 0)
         -- 28 completed weeks: the start of the third trimester in docs/protocol.md §Trimester
-        -- boundaries (D-092, FOR APPROVAL).
+        -- boundaries (D-092).
         AND NOT (x.first_visit_trimester = 3 AND b.weeks < 28)
     ) IS TRUE AS prenatal_care_known,
     (

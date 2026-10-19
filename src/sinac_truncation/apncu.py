@@ -20,15 +20,15 @@ from typing import NamedTuple
 
 __all__ = ["MIDDLE_MONTH_RULE", "ApncuInputError", "ApncuLevel", "ApncuResult", "compute_apncu"]
 
-#: The month that trimesters 1, 2 and 3 of the first visit become: the middle month (D-092,
-#: FOR APPROVAL). Trimester 0, "NO RECIBIÓ", becomes month 0, the program's code for no care.
+#: The month that trimesters 1, 2 and 3 of the first visit become: the middle month (D-092).
+#: Trimester 0, "NO RECIBIÓ", becomes month 0, the program's code for no care.
 MIDDLE_MONTH_RULE: tuple[int, int, int] = (2, 5, 8)
 
 #: The range edits of SAS part 3a: 0 to 90 visits and 18 to 50 weeks.
 _VISITS = range(0, 91)
 _WEEKS = range(18, 51)
 
-#: Rule 4 of the common set (D-092, FOR APPROVAL): a first visit in the third trimester needs 28
+#: Rule 4 of the common set (D-092): a first visit in the third trimester needs 28
 #: completed weeks or more at delivery. The step "prenatal care data known and coherent" of the
 #: analysis cohort applies the same bound.
 _THIRD_TRIMESTER_FIRST_WEEK = 28
