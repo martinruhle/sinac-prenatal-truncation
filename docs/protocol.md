@@ -623,7 +623,7 @@ The output tables are defined here, before anything runs (D-098).
 
 | File | One row per | Columns |
 |---|---|---|
-| `attrition.csv` | definition, year of the record files, step | those of `attrition_base.csv`, which it replaces at the `v0.2-progress` publish, for every definition |
+| `attrition.csv` | definition, year of the record files, step | kind, description, remaining, excluded: the columns of `attrition_base.csv`, which it replaced at the `v0.2-progress` publish, for every definition |
 | `exposure_distribution.csv` | source, definition, period, outcome cut-off, measure, variant, level, outcome | births |
 | `estimates.csv` | estimate | source, definition, period, outcome cut-off, measure, variant, level, reference, model, stratum variable, stratum value, births, preterm births, odds ratio, lower and upper limits of the 95 % interval |
 | `truncation_share.csv` | definition, measure, variant, level, scenario | reference, observed crude odds ratio with the lower and upper limits of its 95 % interval, simulated odds ratio, observed and simulated risk differences, share (D-112) |

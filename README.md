@@ -20,7 +20,7 @@ uv run pre-commit install
 cp .env.example .env
 docker compose up -d --wait
 uv run --env-file .env python scripts/pipeline.py db-init
-uv run --env-file .env python scripts/pipeline.py all --years 2023
+uv run --env-file .env python scripts/pipeline.py all --years 2020-2023
 uv run --env-file .env pytest
 uv run --env-file .env python scripts/pipeline.py --help
 ```
@@ -149,8 +149,8 @@ built. It is a world where prenatal care has no effect on preterm birth:
 `publish` writes the results a milestone versions under [`results/`](results/) (D-014), with the
 columns of [`docs/protocol.md`](docs/protocol.md#output-tables) §Output tables (D-098):
 
-- `attrition.csv`: the attrition of every definition, per year of the record files. It replaces
-  `attrition_base.csv` at the `v0.2-progress` publish.
+- `attrition.csv`: the attrition of every definition, per year of the record files. It replaced
+  `attrition_base.csv`, the attrition of the base cohort on 2023 that `v0.1-cohort` published.
 - `exposure_distribution.csv` and `estimates.csv`: the births of each level and the odds ratios.
 - `truncation_share.csv`: what truncation alone explains, per level and scenario.
 - `excluded_profile.csv`: the records each validity step removes against those it keeps (D-121).
@@ -174,20 +174,20 @@ database.
 ## Requirements → evidence
 
 Where the evidence for each minimum requirement of the course lives, and its status at milestone
-`v0.1-cohort`. **Met** means the evidence is in place for this milestone; **Partial** says what is
+`v0.2-progress`. **Met** means the evidence is in place for this milestone; **Partial** says what is
 still missing and when it lands.
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Real commit history | [Pull requests merged into `main`](https://github.com/martinruhle/sinac-prenatal-truncation/pulls?q=is%3Apr+is%3Amerged), each with its checks and its AI assistance section | **Met**: #1, then #18–#31, #33 and #35, one per issue |
+| Real commit history | [Pull requests merged into `main`](https://github.com/martinruhle/sinac-prenatal-truncation/pulls?q=is%3Apr+is%3Amerged), each with its checks and its AI assistance section | **Met**: #1, then #18–#31, #33 and #35 in `v0.1-cohort`, and #49–#57, #60, #62, #63 and #64 in `v0.2-progress`, one per issue |
 | README lets a third party reproduce the work | README §Reproduce, [`docs/reproducibility.md`](docs/reproducibility.md) | **Met**: rebuilt from a clean clone on 2023, with the same attrition sha256; the Athena package is the one file downloaded by hand |
 | Containerized environment | [`compose.yml`](compose.yml) (+ `Dockerfile` from v1.0) | **Met** with `compose.yml`: Postgres 16.15 with a healthcheck, the same file CI starts. The analysis image comes with v1.0 (D-015) |
 | At least one documented cohort definition in SQL on OMOP | [`sql/cohorts/01_base.sql`](sql/cohorts/01_base.sql), [`docs/protocol.md`](docs/protocol.md#base-cohort) §Base cohort, [`results/attrition_base.csv`](results/attrition_base.csv) | **Met**: the base cohort on 2023, 1,490,896 singleton births, with its attrition table |
 | Automated tests with pytest and CI | [`tests/`](tests/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml), CI badge | **Met**: 340 tests on synthetic fixtures, the `db` ones against the compose database. CI runs ruff, the format check, mypy and pytest with an 80 % coverage floor (D-030) |
-| Data dictionary | [`docs/data_dictionary.md`](docs/data_dictionary.md) | **Met** for v0.1: the 22 of 64 published columns the project uses (D-011). It grows with the variables of v0.2 |
-| Honest limitations section | README §Limitations, [`docs/protocol.md`](docs/protocol.md#limitations) §Limitations | **Partial**: the limitations of the source, the design and the data model are written. Those of the exposure measures and the analysis come with them, in v0.2 and v1.0 |
+| Data dictionary | [`docs/data_dictionary.md`](docs/data_dictionary.md) | **Met** for v0.2: the 22 of 64 published columns the project uses (D-011), with the use of each in the analysis. Every variable v0.2 added was already one of them |
+| Honest limitations section | README §Limitations, [`docs/protocol.md`](docs/protocol.md#limitations) §Limitations | **Partial**: eleven limitations are written, those of the source, the design, the data model, the exposure measures, the analysis and the null simulation. The section is completed for v1.0 |
 | AI assistance statement | [`docs/ai_use.md`](docs/ai_use.md), [`CLAUDE.md`](CLAUDE.md) | **Met**: one entry per pull request, taken from its AI assistance section |
-| No credentials, no identifiable data | [`.gitignore`](.gitignore), [`.dockerignore`](.dockerignore), `results/` policy (D-014, D-040), security review notes (v1.0) | **Met** for v0.1: `/data/` and `.env` are ignored, CI generates its database password per run (D-039), `results/` holds aggregate counts only, and the history was checked at the tag ([release notes](https://github.com/martinruhle/sinac-prenatal-truncation/releases/tag/v0.1-cohort)). The security review is part of v1.0 |
+| No credentials, no identifiable data | [`.gitignore`](.gitignore), [`.dockerignore`](.dockerignore), `results/` policy (D-014, D-040), security review notes (v1.0) | **Met** for v0.2: `/data/` and `.env` are ignored, CI generates its database password per run (D-039), `results/` holds aggregate counts only, and the history was checked at each tag ([`v0.1-cohort`](https://github.com/martinruhle/sinac-prenatal-truncation/releases/tag/v0.1-cohort), [`v0.2-progress`](https://github.com/martinruhle/sinac-prenatal-truncation/releases/tag/v0.2-progress)). The security review is part of v1.0 |
 
 ## Changes from the proposal
 
@@ -205,19 +205,26 @@ The changes are stated against proposal v2, which is translated in
   2019 needs a harmonization of its own and has no DGIS descriptor, while the four later years
   are one catalogue period. 2019 is added only under the criterion of D-050.
 - **Scope.** The adjusted odds ratios use a reduced covariate set, and the sensitivity analysis
-  is smaller (D-003 to D-007):
-  - the full sensitivity grid runs for two of the four exposure measures;
-  - one or two landmark weeks are used instead of three;
-  - two sensitivity axes are dropped.
+  is smaller:
+  - the models adjust for maternal age, education, state and year; insurance is not adjusted
+    for and becomes the gradient by insurance of `v1.0` (D-007, D-094);
+  - the full sensitivity grid runs for two of the four exposure measures (D-003);
+  - two sensitivity axes are dropped: the month assigned within the first-visit trimester for
+    APNCU, which uses one rule (D-005), and birth weight under 2,500 g as an alternative outcome
+    (D-006).
 
   A third axis, births before week 22, is dropped too. The exclusion stays in the base cohort,
-  with its count in the attrition table: 701 records in 2020–2023 (D-055). The two conditional
-  extras of the proposal are not started this semester and stay as future work (D-042).
-- **What the proposal left unstated.** The protocol fixes three things the proposal did not
+  with its count in the attrition table: 701 records in 2020–2023 (D-055). The three landmark
+  weeks of the proposal were cut to one or two (D-004) and then restored, once the third proved
+  to cost about half an hour (D-090). The two conditional extras of the proposal are not started
+  this semester and stay as future work (D-042).
+- **What the proposal left unstated.** The protocol fixes four things the proposal did not
   state:
   - the unit of analysis: the live-birth certificate, with singletons only (D-051);
   - the source of the preterm cut-off: NOM-007-SSA2-2016 (D-053);
-  - residence in Mexico as an eligibility criterion (D-057).
+  - residence in Mexico as an eligibility criterion (D-057);
+  - the records the exposure measures use: one set with known and coherent prenatal care data
+    for the four measures (D-086).
 
   The table in [`docs/protocol.md`](docs/protocol.md#changes-from-proposal-v2) sets each one
   against the proposal.
@@ -285,7 +292,8 @@ pipeline fails on purpose. The manifest lists the files the
 
 ## Limitations
 
-PENDING: completed together with `docs/protocol.md`. Four limitations already apply:
+PENDING: completed together with `docs/protocol.md` for `v1.0`. Eleven limitations already apply.
+Four come from the source and the design:
 
 - The DGIS files are served over **HTTP without TLS**. The recorded sha256 detects any later
   change to a file, but it does not authenticate the first download.
@@ -302,6 +310,34 @@ PENDING: completed together with `docs/protocol.md`. Four limitations already ap
   `results/manifest.json` differs. `validate-concepts` checks that every configured concept is
   still valid and standard in it, but the published counts were verified with the package of
   record only (see `vocab` in §Reproduce).
+
+Two come from the data model ([`docs/omop_mapping.md`](docs/omop_mapping.md)):
+
+- **OMOP cannot carry the ethnicity SINAC records.** The race and ethnicity fields of `PERSON`
+  encode US OMB categories. SINAC records whether the mother considers herself indigenous and
+  whether she speaks an indigenous language, so both fields are 0 and the two variables stay out
+  of `PERSON` (D-061). The question they open is future work
+  ([`docs/roadmap.md`](docs/roadmap.md#47-indigenous-mothers)).
+- **The observation period is the delivery day.** SINAC observes nothing of the pregnancy but its
+  end and a declaration made then, so OMOP tools see no prenatal window. That is the premise of
+  the study, written into the data model rather than hidden by it (D-062).
+
+Five come from the exposure measures, the analysis and the null simulation
+([`docs/protocol.md`](docs/protocol.md#limitations)):
+
+- **APNCU is approximated from the trimester**, with a month rule whose sensitivity was cut
+  ([§APNCU](docs/protocol.md#apncu-measure-b), D-005, D-092).
+- **The ACOG schedule of the index is not the Mexican norm**
+  ([§APNCU](docs/protocol.md#apncu-measure-b)).
+- **The bounds of the trimesters have no published source**
+  ([§Trimester boundaries](docs/protocol.md#trimester-boundaries), D-092).
+- **The intervals of the definition with multiples ignore the twins of one pregnancy**
+  ([§Sensitivity analyses and gradients](docs/protocol.md#sensitivity-analyses-and-gradients),
+  D-099).
+- **The simulated calendar cannot produce more than eight visits, nor eight before week 38.** It
+  is stricter than the care mothers receive, so its shares say whether truncation alone can
+  produce the observed association, not how much of it it produces
+  ([§Null simulation](docs/protocol.md#null-simulation)).
 
 ## AI assistance
 
