@@ -1,13 +1,31 @@
 {
-  "generated_at": "2026-09-29T15:31:42Z",
+  "generated_at": "2026-10-19T21:26:31Z",
   "code": {
     "repository": "https://github.com/martinruhle/sinac-prenatal-truncation",
-    "commit": "46587aac1b86dfe80a1b3b0da7d0a2118d5fc766"
+    "commit": "9e82715355f4e2ea8e92af99edc7301b0bfd75c0"
   },
   "period": [
+    2020,
+    2021,
+    2022,
     2023
   ],
   "sources": [
+    {
+      "id": "dgis_sinac_2020",
+      "version": "1.1",
+      "sha256": "e13f0b82ad6a35447008c8890a00f7dd2c5a71e655ccf532ca7bc32c7d2b90b5"
+    },
+    {
+      "id": "dgis_sinac_2021",
+      "version": "1.1",
+      "sha256": "03f30739ba4efcf091d6a1292a112120cf8ee90789c3703b83163bbc46fc83c2"
+    },
+    {
+      "id": "dgis_sinac_2022",
+      "version": "2023.05.23",
+      "sha256": "3ab100466dc4ff046c87f354269e0041697b07a3589c580d696224b52bd0e80b"
+    },
     {
       "id": "dgis_sinac_2023",
       "version": "2024.05.14",
@@ -20,8 +38,24 @@
   },
   "files": [
     {
-      "name": "attrition_base.csv",
-      "sha256": "74c1782ac6846da71174f14ba92c582b3bb692ceda16dbd8a4b4d5e010c203b8"
+      "name": "attrition.csv",
+      "sha256": "c9da90f71b1535cf6ba3d485fe2a2011e4f422441e72e54f20821b696531fc25"
+    },
+    {
+      "name": "exposure_distribution.csv",
+      "sha256": "d83c8dfa3198e54caf6d42734014c75227e04a3d4b03c1901b07861ecefd341d"
+    },
+    {
+      "name": "estimates.csv",
+      "sha256": "eca8c42250d0a5e57dc39a4fce71eadaf6743777c14250c954ff6c5bd74615cb"
+    },
+    {
+      "name": "truncation_share.csv",
+      "sha256": "fdb7a53842714f2df18fc8b006eb56198a33b7149ca07a79d8d1cc9217c9946c"
+    },
+    {
+      "name": "excluded_profile.csv",
+      "sha256": "7cf8961669c0ee2bfb7cb314a71bd444ee782d59c56f1bee3b5f0d78e8a1b012"
     }
   ]
 }

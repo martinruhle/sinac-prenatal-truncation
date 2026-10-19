@@ -1,0 +1,241 @@
+cohort_definition_id,source_year,step,kind,description,remaining,excluded
+1,2020,0,,Records in the files of the study period,1747847,
+1,2020,1,data model,Mother's year of birth known,1747268,579
+1,2020,2,coverage,Born in the study period,1747268,0
+1,2020,3,coverage,Mother resident in Mexico,1746210,1058
+1,2020,4,validity,Gestational age specified,1744334,1876
+1,2020,5,validity,Multiplicity specified,1740722,3612
+1,2020,6,design,Singleton,1712552,28170
+1,2020,7,design,22 completed weeks or more,1712390,162
+1,2021,0,,Records in the files of the study period,1639479,
+1,2021,1,data model,Mother's year of birth known,1639411,68
+1,2021,2,coverage,Born in the study period,1639411,0
+1,2021,3,coverage,Mother resident in Mexico,1638533,878
+1,2021,4,validity,Gestational age specified,1637184,1349
+1,2021,5,validity,Multiplicity specified,1634196,2988
+1,2021,6,design,Singleton,1607409,26787
+1,2021,7,design,22 completed weeks or more,1607218,191
+1,2022,0,,Records in the files of the study period,1622921,
+1,2022,1,data model,Mother's year of birth known,1622898,23
+1,2022,2,coverage,Born in the study period,1622898,0
+1,2022,3,coverage,Mother resident in Mexico,1621955,943
+1,2022,4,validity,Gestational age specified,1620866,1089
+1,2022,5,validity,Multiplicity specified,1618521,2345
+1,2022,6,design,Singleton,1590935,27586
+1,2022,7,design,22 completed weeks or more,1590728,207
+1,2023,0,,Records in the files of the study period,1521280,
+1,2023,1,data model,Mother's year of birth known,1521280,0
+1,2023,2,coverage,Born in the study period,1521280,0
+1,2023,3,coverage,Mother resident in Mexico,1520461,819
+1,2023,4,validity,Gestational age specified,1519969,492
+1,2023,5,validity,Multiplicity specified,1518799,1170
+1,2023,6,design,Singleton,1491037,27762
+1,2023,7,design,22 completed weeks or more,1490896,141
+2,2020,0,,Records in the files of the study period,1747847,
+2,2020,1,data model,Mother's year of birth known,1747268,579
+2,2020,2,coverage,Born in the study period,1747268,0
+2,2020,3,coverage,Mother resident in Mexico,1746210,1058
+2,2020,4,validity,Gestational age specified,1744334,1876
+2,2020,5,validity,Multiplicity specified,1740722,3612
+2,2020,6,design,Singleton,1712552,28170
+2,2020,7,design,22 completed weeks or more,1712390,162
+2,2020,8,validity,Prenatal care data known and coherent,1671377,41013
+2,2020,9,validity,Covariates known,1653840,17537
+2,2021,0,,Records in the files of the study period,1639479,
+2,2021,1,data model,Mother's year of birth known,1639411,68
+2,2021,2,coverage,Born in the study period,1639411,0
+2,2021,3,coverage,Mother resident in Mexico,1638533,878
+2,2021,4,validity,Gestational age specified,1637184,1349
+2,2021,5,validity,Multiplicity specified,1634196,2988
+2,2021,6,design,Singleton,1607409,26787
+2,2021,7,design,22 completed weeks or more,1607218,191
+2,2021,8,validity,Prenatal care data known and coherent,1560165,47053
+2,2021,9,validity,Covariates known,1549187,10978
+2,2022,0,,Records in the files of the study period,1622921,
+2,2022,1,data model,Mother's year of birth known,1622898,23
+2,2022,2,coverage,Born in the study period,1622898,0
+2,2022,3,coverage,Mother resident in Mexico,1621955,943
+2,2022,4,validity,Gestational age specified,1620866,1089
+2,2022,5,validity,Multiplicity specified,1618521,2345
+2,2022,6,design,Singleton,1590935,27586
+2,2022,7,design,22 completed weeks or more,1590728,207
+2,2022,8,validity,Prenatal care data known and coherent,1549038,41690
+2,2022,9,validity,Covariates known,1539748,9290
+2,2023,0,,Records in the files of the study period,1521280,
+2,2023,1,data model,Mother's year of birth known,1521280,0
+2,2023,2,coverage,Born in the study period,1521280,0
+2,2023,3,coverage,Mother resident in Mexico,1520461,819
+2,2023,4,validity,Gestational age specified,1519969,492
+2,2023,5,validity,Multiplicity specified,1518799,1170
+2,2023,6,design,Singleton,1491037,27762
+2,2023,7,design,22 completed weeks or more,1490896,141
+2,2023,8,validity,Prenatal care data known and coherent,1467041,23855
+2,2023,9,validity,Covariates known,1460822,6219
+3,2020,0,,Records in the files of the study period,1747847,
+3,2020,1,data model,Mother's year of birth known,1747268,579
+3,2020,2,coverage,Born in the study period,1747268,0
+3,2020,3,coverage,Mother resident in Mexico,1746210,1058
+3,2020,4,validity,Gestational age specified,1744334,1876
+3,2020,5,validity,Multiplicity specified,1740722,3612
+3,2020,6,design,Singleton,1712552,28170
+3,2020,7,design,22 completed weeks or more,1712390,162
+3,2020,8,validity,Prenatal care data known and coherent,1671377,41013
+3,2020,9,validity,Covariates known,1653840,17537
+3,2020,10,design,Reached week 28,1650367,3473
+3,2021,0,,Records in the files of the study period,1639479,
+3,2021,1,data model,Mother's year of birth known,1639411,68
+3,2021,2,coverage,Born in the study period,1639411,0
+3,2021,3,coverage,Mother resident in Mexico,1638533,878
+3,2021,4,validity,Gestational age specified,1637184,1349
+3,2021,5,validity,Multiplicity specified,1634196,2988
+3,2021,6,design,Singleton,1607409,26787
+3,2021,7,design,22 completed weeks or more,1607218,191
+3,2021,8,validity,Prenatal care data known and coherent,1560165,47053
+3,2021,9,validity,Covariates known,1549187,10978
+3,2021,10,design,Reached week 28,1545577,3610
+3,2022,0,,Records in the files of the study period,1622921,
+3,2022,1,data model,Mother's year of birth known,1622898,23
+3,2022,2,coverage,Born in the study period,1622898,0
+3,2022,3,coverage,Mother resident in Mexico,1621955,943
+3,2022,4,validity,Gestational age specified,1620866,1089
+3,2022,5,validity,Multiplicity specified,1618521,2345
+3,2022,6,design,Singleton,1590935,27586
+3,2022,7,design,22 completed weeks or more,1590728,207
+3,2022,8,validity,Prenatal care data known and coherent,1549038,41690
+3,2022,9,validity,Covariates known,1539748,9290
+3,2022,10,design,Reached week 28,1536208,3540
+3,2023,0,,Records in the files of the study period,1521280,
+3,2023,1,data model,Mother's year of birth known,1521280,0
+3,2023,2,coverage,Born in the study period,1521280,0
+3,2023,3,coverage,Mother resident in Mexico,1520461,819
+3,2023,4,validity,Gestational age specified,1519969,492
+3,2023,5,validity,Multiplicity specified,1518799,1170
+3,2023,6,design,Singleton,1491037,27762
+3,2023,7,design,22 completed weeks or more,1490896,141
+3,2023,8,validity,Prenatal care data known and coherent,1467041,23855
+3,2023,9,validity,Covariates known,1460822,6219
+3,2023,10,design,Reached week 28,1457329,3493
+4,2020,0,,Records in the files of the study period,1747847,
+4,2020,1,data model,Mother's year of birth known,1747268,579
+4,2020,2,coverage,Born in the study period,1747268,0
+4,2020,3,coverage,Mother resident in Mexico,1746210,1058
+4,2020,4,validity,Gestational age specified,1744334,1876
+4,2020,5,validity,Multiplicity specified,1740722,3612
+4,2020,6,design,Singleton,1712552,28170
+4,2020,7,design,22 completed weeks or more,1712390,162
+4,2020,8,validity,Prenatal care data known and coherent,1671377,41013
+4,2020,9,validity,Covariates known,1653840,17537
+4,2020,10,design,Reached week 32,1641313,12527
+4,2021,0,,Records in the files of the study period,1639479,
+4,2021,1,data model,Mother's year of birth known,1639411,68
+4,2021,2,coverage,Born in the study period,1639411,0
+4,2021,3,coverage,Mother resident in Mexico,1638533,878
+4,2021,4,validity,Gestational age specified,1637184,1349
+4,2021,5,validity,Multiplicity specified,1634196,2988
+4,2021,6,design,Singleton,1607409,26787
+4,2021,7,design,22 completed weeks or more,1607218,191
+4,2021,8,validity,Prenatal care data known and coherent,1560165,47053
+4,2021,9,validity,Covariates known,1549187,10978
+4,2021,10,design,Reached week 32,1536085,13102
+4,2022,0,,Records in the files of the study period,1622921,
+4,2022,1,data model,Mother's year of birth known,1622898,23
+4,2022,2,coverage,Born in the study period,1622898,0
+4,2022,3,coverage,Mother resident in Mexico,1621955,943
+4,2022,4,validity,Gestational age specified,1620866,1089
+4,2022,5,validity,Multiplicity specified,1618521,2345
+4,2022,6,design,Singleton,1590935,27586
+4,2022,7,design,22 completed weeks or more,1590728,207
+4,2022,8,validity,Prenatal care data known and coherent,1549038,41690
+4,2022,9,validity,Covariates known,1539748,9290
+4,2022,10,design,Reached week 32,1526795,12953
+4,2023,0,,Records in the files of the study period,1521280,
+4,2023,1,data model,Mother's year of birth known,1521280,0
+4,2023,2,coverage,Born in the study period,1521280,0
+4,2023,3,coverage,Mother resident in Mexico,1520461,819
+4,2023,4,validity,Gestational age specified,1519969,492
+4,2023,5,validity,Multiplicity specified,1518799,1170
+4,2023,6,design,Singleton,1491037,27762
+4,2023,7,design,22 completed weeks or more,1490896,141
+4,2023,8,validity,Prenatal care data known and coherent,1467041,23855
+4,2023,9,validity,Covariates known,1460822,6219
+4,2023,10,design,Reached week 32,1448519,12303
+5,2020,0,,Records in the files of the study period,1747847,
+5,2020,1,data model,Mother's year of birth known,1747268,579
+5,2020,2,coverage,Born in the study period,1747268,0
+5,2020,3,coverage,Mother resident in Mexico,1746210,1058
+5,2020,4,validity,Gestational age specified,1744334,1876
+5,2020,5,validity,Multiplicity specified,1740722,3612
+5,2020,6,design,Singleton,1712552,28170
+5,2020,7,design,22 completed weeks or more,1712390,162
+5,2020,8,validity,Prenatal care data known and coherent,1671377,41013
+5,2020,9,validity,Covariates known,1653840,17537
+5,2020,10,design,Reached week 34,1629361,24479
+5,2021,0,,Records in the files of the study period,1639479,
+5,2021,1,data model,Mother's year of birth known,1639411,68
+5,2021,2,coverage,Born in the study period,1639411,0
+5,2021,3,coverage,Mother resident in Mexico,1638533,878
+5,2021,4,validity,Gestational age specified,1637184,1349
+5,2021,5,validity,Multiplicity specified,1634196,2988
+5,2021,6,design,Singleton,1607409,26787
+5,2021,7,design,22 completed weeks or more,1607218,191
+5,2021,8,validity,Prenatal care data known and coherent,1560165,47053
+5,2021,9,validity,Covariates known,1549187,10978
+5,2021,10,design,Reached week 34,1523580,25607
+5,2022,0,,Records in the files of the study period,1622921,
+5,2022,1,data model,Mother's year of birth known,1622898,23
+5,2022,2,coverage,Born in the study period,1622898,0
+5,2022,3,coverage,Mother resident in Mexico,1621955,943
+5,2022,4,validity,Gestational age specified,1620866,1089
+5,2022,5,validity,Multiplicity specified,1618521,2345
+5,2022,6,design,Singleton,1590935,27586
+5,2022,7,design,22 completed weeks or more,1590728,207
+5,2022,8,validity,Prenatal care data known and coherent,1549038,41690
+5,2022,9,validity,Covariates known,1539748,9290
+5,2022,10,design,Reached week 34,1513928,25820
+5,2023,0,,Records in the files of the study period,1521280,
+5,2023,1,data model,Mother's year of birth known,1521280,0
+5,2023,2,coverage,Born in the study period,1521280,0
+5,2023,3,coverage,Mother resident in Mexico,1520461,819
+5,2023,4,validity,Gestational age specified,1519969,492
+5,2023,5,validity,Multiplicity specified,1518799,1170
+5,2023,6,design,Singleton,1491037,27762
+5,2023,7,design,22 completed weeks or more,1490896,141
+5,2023,8,validity,Prenatal care data known and coherent,1467041,23855
+5,2023,9,validity,Covariates known,1460822,6219
+5,2023,10,design,Reached week 34,1436476,24346
+6,2020,0,,Records in the files of the study period,1747847,
+6,2020,1,data model,Mother's year of birth known,1747268,579
+6,2020,2,coverage,Born in the study period,1747268,0
+6,2020,3,coverage,Mother resident in Mexico,1746210,1058
+6,2020,4,validity,Gestational age specified,1744334,1876
+6,2020,5,validity,Multiplicity specified,1740722,3612
+6,2020,6,design,22 completed weeks or more,1740550,172
+6,2020,7,validity,Prenatal care data known and coherent,1698914,41636
+6,2020,8,validity,Covariates known,1681142,17772
+6,2021,0,,Records in the files of the study period,1639479,
+6,2021,1,data model,Mother's year of birth known,1639411,68
+6,2021,2,coverage,Born in the study period,1639411,0
+6,2021,3,coverage,Mother resident in Mexico,1638533,878
+6,2021,4,validity,Gestational age specified,1637184,1349
+6,2021,5,validity,Multiplicity specified,1634196,2988
+6,2021,6,design,22 completed weeks or more,1633986,210
+6,2021,7,validity,Prenatal care data known and coherent,1586242,47744
+6,2021,8,validity,Covariates known,1575098,11144
+6,2022,0,,Records in the files of the study period,1622921,
+6,2022,1,data model,Mother's year of birth known,1622898,23
+6,2022,2,coverage,Born in the study period,1622898,0
+6,2022,3,coverage,Mother resident in Mexico,1621955,943
+6,2022,4,validity,Gestational age specified,1620866,1089
+6,2022,5,validity,Multiplicity specified,1618521,2345
+6,2022,6,design,22 completed weeks or more,1618304,217
+6,2022,7,validity,Prenatal care data known and coherent,1575868,42436
+6,2022,8,validity,Covariates known,1566449,9419
+6,2023,0,,Records in the files of the study period,1521280,
+6,2023,1,data model,Mother's year of birth known,1521280,0
+6,2023,2,coverage,Born in the study period,1521280,0
+6,2023,3,coverage,Mother resident in Mexico,1520461,819
+6,2023,4,validity,Gestational age specified,1519969,492
+6,2023,5,validity,Multiplicity specified,1518799,1170
+6,2023,6,design,22 completed weeks or more,1518641,158
+6,2023,7,validity,Prenatal care data known and coherent,1494450,24191
+6,2023,8,validity,Covariates known,1488129,6321
