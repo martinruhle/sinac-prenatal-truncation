@@ -220,9 +220,11 @@ Especificado" as the only value the descriptor declares to be a sentinel.
   D-053).
 - **The alternative cut-offs (34 and 32 weeks) are a sensitivity axis on the outcome, not a
   criterion of the cohort**: only the threshold moves, the cohort and its attrition do not.
-- The records that leave for an unspecified gestational age are not like the rest: 8.5 % of them
-  record no prenatal care against 2.6 %, 59.1 % a first-trimester start against 75.8 %, and 21.8 %
-  a birth at home, in the street or elsewhere against 2.5 %. They are 0.074 % of the files, and
+- The records that leave for an unspecified gestational age are not like the rest. Of those with
+  a known trimester, 9.08 % record no prenatal care against 2.61 % of the retained records, and
+  63.49 % a first-trimester start against 77.25 % (`excluded_profile.csv`). Measured once as
+  orientation, 21.8 % were born at home, in the street or elsewhere, against 2.5 % (D-123). They
+  are 0.074 % of the files, and
   that fraction is what bounds the bias they can introduce; the size of the registry is not an
   argument for excluding anything. **The comparison of the excluded records against the retained
   ones is published next to the attrition table**, for every validity step, as RECORD and STROBE
@@ -341,8 +343,8 @@ Why these rules:
 - Rule 4 removes 295 records.
 
 The four rules form the step "prenatal care data known and coherent" of the analysis cohort
-([§Records analysed](#records-analysed)). Measured once as orientation, the step removes 153,707
-records of the base cohort (2.4 %). 7.90 % of them are preterm, against 7.05 % of the retained
+([§Records analysed](#records-analysed)). On 2020–2023 the step removes 153,611 records of the
+base cohort (2.4 %, `attrition.csv`). 7.90 % of them are preterm, against 7.05 % of the retained
 records, and the two groups are compared in `excluded_profile.csv`.
 
 ### The measures
@@ -369,7 +371,7 @@ less care being associated with more preterm birth.
   which the guide counts and which the null calendar cannot produce
   ([§Null simulation](#what-it-computes)).
   - It is reported in the main analysis only.
-  - Counts heap at 10, 12, 15, 20 and 25, and at 30, the largest count recorded. Counts above 20
+  - Counts heap at 10, 12, 15, 18, 20 and 25, and at 30, the largest count recorded. Counts above 20
     are few, so their intervals are wide. No count is grouped, because a grouping threshold would
     have no source.
 - **(c)** A binary measure (D-089). More levels would bring truncation back: a first visit in the
@@ -469,13 +471,13 @@ The first trimester runs to 13 completed weeks, the second from 14 to 27, and th
 
 ### Records analysed
 
-| Definition | Built as | Removed, orientation |
+| Definition | Built as | Removed, 2020–2023 |
 |---|---|---|
 | 1 · Base cohort | [§Base cohort](#base-cohort) | — |
-| 2 · Analysis cohort | Definition 1, then the step "prenatal care data known and coherent", then the step "covariates known" | 153,707, then 44,063 |
-| 3 · Landmark 28 | Definition 2, then the step "reached week 28" | 14,117 (423,074 preterm births stay) |
-| 4 · Landmark 32 | Definition 2, then the step "reached week 32" | 50,891 (386,300 preterm births stay) |
-| 5 · Landmark 34 | Definition 2, then the step "reached week 34" | 100,264 (336,927 preterm births stay) |
+| 2 · Analysis cohort | Definition 1, then the step "prenatal care data known and coherent", then the step "covariates known" | 153,611, then 44,024 |
+| 3 · Landmark 28 | Definition 2, then the step "reached week 28" | 14,116 (423,037 preterm births stay) |
+| 4 · Landmark 32 | Definition 2, then the step "reached week 32" | 50,885 (386,268 preterm births stay) |
+| 5 · Landmark 34 | Definition 2, then the step "reached week 34" | 100,252 (336,901 preterm births stay) |
 | 6 · With multiples | Definition 2 without the step "singleton" ([§Sensitivity of the definition](#sensitivity-of-the-definition)) | 757 under 22 weeks, then 156,007, then 44,656 (6,310,818 stay) |
 
 - **Every definition has its own attrition table** (rule 5 of [`../CLAUDE.md`](../CLAUDE.md)).
@@ -492,9 +494,9 @@ The first trimester runs to 13 completed weeks, the second from 14 to 27, and th
   other side of the axis "multiple pregnancies". It reads the criteria that the files of
   definitions 1 and 2 computed, so it differs from definition 2 in the step "singleton" alone.
   The steps after it move up by one: its steps 7 and 8 are steps 8 and 9 of definition 2 (D-124).
-- **The counts are orientation**, measured once with a throwaway query over an approximation of the
-  base cohort that differs from it by 526 records; those of definition 6 come from a run of the
-  cohort SQL on 2020–2023. The table of record is the one the cohort SQL writes.
+- **The counts are those of the published tables**: the records removed are summed over the four
+  years of `results/attrition.csv`, and the preterm births that stay come from
+  `results/exposure_distribution.csv`.
 - **The records removed at "covariates known" differ a little from the rest.** 7.76 % are preterm
   and 70.7 % started care in the first trimester, against 7.05 % and 77.2 % of the retained ones.
 
@@ -670,8 +672,8 @@ Measured as orientation, on 2020–2023, in two runs with the same estimates. Th
 
 - **Adjusting moves every odds ratio of (a) and (d) away from 1.** The covariates pull the crude
   odds ratios towards 1. The odds ratios of (d) still fall as the landmark rises, adjusted or not.
-- **(a) per count.** The adjusted curve falls from 2.162 at 0 visits to 0.712 at 9, against 8, and
-  rises again to 1.819 at 30.
+- **(a) per count.** Against 8 visits, the adjusted curve falls from 2.162 at 0 visits to between
+  0.688 and 0.888 from 9 to 13 visits, the lowest at 11, and rises again to 1.819 at 30.
 - **(b).** The inversion of [§APNCU](#apncu-measure-b) survives the adjustment, so the covariates
   do not explain it.
 - **(c) has no crude association and a small adjusted one.** Fitted with one covariate at a time,
@@ -700,9 +702,9 @@ All of them are adjusted odds ratios. The crude ones are in `estimates.csv`.
 - **A lower cut-off moves every odds ratio of (a) further from 1.** The step from 37 to 34 weeks
   moves them more than the step from 34 to 32.
 - **(c) moves less than (a).** It goes from 1.065 to 1.186 and 1.199.
-- **Including multiples moves every odds ratio towards 1.** The definition keeps 107,221 more
-  births than definition 2. The crude odds ratio of (c) becomes 0.940 (0.933–0.946), against
-  1.000 in the main analysis.
+- **Including multiples moves every adjusted odds ratio towards 1**, and the crude ones of (a).
+  The definition keeps 107,221 more births than definition 2. The crude odds ratio of (c) moves
+  the other way: it becomes 0.940 (0.933–0.946), against 1.000 in the main analysis.
 
 ## Null simulation
 
@@ -774,7 +776,7 @@ Two fixed scenarios (D-010, D-096):
   - Each run writes, in `results.simulation`, the largest relative difference between a
     simulated share and the exact one.
   - On 2020–2023 the difference is at most 0.61 % in E1 and 1.49 % in E2, the latter for no care
-    in the landmark cohort of week 34 (2.47 against 2.50).
+    in the landmark cohort of week 34 (2.46 against 2.50).
 - **Why a simulation, when a calculation gives the same numbers** (D-115).
   - For E1 and E2 the closed form would have been enough, and the separation of the reference
     follows from the calendar alone.
