@@ -241,7 +241,9 @@ def model_table(
     preterm_weeks: int = PRETERM_WEEKS,
 ) -> list[ModelRow]:
     """The table of the model of one measure: the births and preterm births per level and
-    combination of covariates."""
+    combination of covariates, sorted by both. The database returns the cells in no fixed
+    order, and the fit sums the rows in the order it receives them, so a fixed order gives the
+    same odds ratios to the last bit on every rebuild (D-125)."""
     levels: dict[tuple[int, int, int], str] = {}
     births: dict[tuple[str, Covariates], int] = defaultdict(int)
     preterm: dict[tuple[str, Covariates], int] = defaultdict(int)
@@ -257,7 +259,7 @@ def model_table(
             preterm[key] += cell.births
     return [
         ModelRow(level, covariates, total, preterm[level, covariates])
-        for (level, covariates), total in births.items()
+        for (level, covariates), total in sorted(births.items())
     ]
 
 
