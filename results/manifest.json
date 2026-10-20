@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-19T21:26:31Z",
+  "generated_at": "2026-10-20T02:36:27Z",
   "code": {
     "repository": "https://github.com/martinruhle/sinac-prenatal-truncation",
-    "commit": "9e82715355f4e2ea8e92af99edc7301b0bfd75c0"
+    "commit": "847b5f03d1bd3eec543bbd55b1b7d007f7c81cae"
   },
   "period": [
     2020,
@@ -47,7 +47,7 @@
     },
     {
       "name": "estimates.csv",
-      "sha256": "eca8c42250d0a5e57dc39a4fce71eadaf6743777c14250c954ff6c5bd74615cb"
+      "sha256": "1fc083bb3b2b9262a791a81786ae17d5db8629ee74bce3bd10d6ecdda465a17b"
     },
     {
       "name": "truncation_share.csv",
