@@ -20,11 +20,13 @@ is assembled from the "AI assistance" section that every pull request carries si
   assistant to merge.
 - **Judgment tasks.** For the study period, the protocol and the OMOP mapping (#23, #24, #25) the
   author drafted the answers, the assistant reviewed them against the measured sources and priced
-  each option on the record files, and the author took every decision. From `v0.2-progress` the
-  assistant laid out the open questions of each task, with options measured on the 2020–2023
-  records, priced in hours of the weekly budget where scope was at stake, and a recommendation;
-  the author chose (#49 to #63). For the reference tables of #55 and #57 the author computed some
-  rows blind and approved the others from the assistant's step-by-step trace.
+  each option on the record files, and the author took every decision. From `v0.2-progress`,
+  where a task left questions open, the assistant laid them out with options and a
+  recommendation, measured on the 2020–2023 records where the records bore on them and priced in
+  hours of the weekly budget where scope was at stake; the author chose (#49, #51 to #55, #57,
+  #60, #62). In #56 and #63 it first checked that the protocol and the decisions already settled
+  every choice. For the reference tables of #55 and #57 the author computed some rows blind and
+  approved the others from the assistant's step-by-step trace.
 - **Data.** The assistant read the public DGIS record files and the Athena vocabulary package on
   the author's machine and reported aggregate counts, measured with the pipeline or with throwaway
   scripts kept outside the repository (D-047). No record is in the repository (rule 1 of
@@ -32,14 +34,13 @@ is assembled from the "AI assistance" section that every pull request carries si
   program and the OHDSI conventions, and the author supplied the Kotelchuck (1994) article and the
   2025 DGIS filling guide (#51, #53). For the re-plan of #49 it measured the active time of the
   Claude Code sessions of this repository, as a proxy for the hours worked.
-- **Parallel sessions.** From `v0.2-progress` some issues ran in parallel Claude Code sessions,
-  each on its own branch (#54 and #55 were merged four minutes apart), and from #63 each in a git
-  worktree of its own.
+- **Parallel work.** From `v0.2-progress` some issues were worked on in parallel, each on its own
+  branch: #54 and #55 were merged four minutes apart, and #55 merged `main` to number its
+  decision after those of #54 (D-110). From #63 each ran in a git worktree of its own.
 - **Subagents and workflows.** Up to #63 the assistant worked as a single agent: the session
-  transcripts of the project show no subagent in any earlier pull request. From 15 October 2026 it
-  could also run workflows, scripts that spread a task over several subagents running in
-  parallel. The close of `v0.2-progress` (#64) is the first pull request that used them; its
-  section below says for what.
+  transcripts of the project show no subagent in any earlier pull request. The close of
+  `v0.2-progress` (#64) is the first pull request in which it ran workflows, scripts that spread a
+  task over several subagents running in parallel; its section below says for what.
 - **The author's line.** "What I decided or checked myself" is the author's statement. In #62 and
   #63 the author asked the assistant to write it from what the author had done and decided in the
   session.
@@ -322,7 +323,17 @@ tag, so it is recorded here.
 #### [#64](https://github.com/martinruhle/sinac-prenatal-truncation/pull/64) · Close milestone v0.2-progress (1.9.2)
 
 - Tool / model: Claude Code, Claude Opus 5.5
-- What the assistant did: ASSISTANT_LINE
+- What the assistant did:
+  - audited the milestone with a workflow of four read-only subagents: the `FOR APPROVAL`
+    markers behind the published numbers, with a fourth subagent trying to refute that list; the
+    promises the documentation made for v0.2; and the AI assistance section of each pull request;
+  - removed the markers the author approved, ran `cdm` and `publish` on 2020–2023, and committed
+    `results/`;
+  - assembled this section from the pull requests and the session transcripts, and updated the
+    README, the protocol and the decision log;
+  - compared every number of the documentation with the published tables in a second workflow,
+    with a skeptic re-deriving each disagreement, and reviewed the diff in a third;
+  - ran the clean-clone reproduction and the history scan, and drafted the release notes.
 - What I decided or checked myself: PENDING: copied from the pull request once the author fills
   it in, before the merge.
 

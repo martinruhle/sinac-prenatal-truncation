@@ -224,11 +224,10 @@ Especificado" as the only value the descriptor declares to be a sentinel.
   a known trimester, 9.08 % record no prenatal care against 2.61 % of the retained records, and
   63.49 % a first-trimester start against 77.25 % (`excluded_profile.csv`). Measured once as
   orientation, 21.8 % were born at home, in the street or elsewhere, against 2.5 % (D-123). They
-  are 0.074 % of the files, and
-  that fraction is what bounds the bias they can introduce; the size of the registry is not an
-  argument for excluding anything. **The comparison of the excluded records against the retained
-  ones is published next to the attrition table**, for every validity step, as RECORD and STROBE
-  ask: `excluded_profile.csv` ([§Output tables](#output-tables), D-121).
+  are 0.074 % of the files, and that fraction is what bounds the bias they can introduce; the size
+  of the registry is not an argument for excluding anything. **The comparison of the excluded
+  records against the retained ones is published next to the attrition table**, for every validity
+  step, as RECORD and STROBE ask: `excluded_profile.csv` ([§Output tables](#output-tables), D-121).
   - The place of birth (`LUGARNACIMIENTO` codes 10 to 12) stays as orientation and is not
     published, because the CDM does not hold it (D-123).
 
@@ -819,9 +818,9 @@ Two fixed scenarios (D-010, D-096):
 ### What truncation alone explains
 
 For each measure, level and scenario, the share is the simulated risk difference ÷ the observed
-risk difference (D-112). The risk difference is the preterm share of the level
-minus that of the reference. It replaces log(simulated odds ratio) ÷ log(observed crude odds
-ratio) of D-097: the empty cells make that ratio infinite or 0 for every measure but (c).
+risk difference (D-112). The risk difference is the preterm share of the level minus that of the
+reference. It replaces log(simulated odds ratio) ÷ log(observed crude odds ratio) of D-097: the
+empty cells make that ratio infinite or 0 for every measure but (c).
 
 - **How to read it.**
   - 1: truncation alone reproduces the observed difference in preterm births.
