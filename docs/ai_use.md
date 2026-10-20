@@ -322,22 +322,30 @@ tag, so it is recorded here.
 
 #### [#64](https://github.com/martinruhle/sinac-prenatal-truncation/pull/64) · Close milestone v0.2-progress (1.9.2)
 
-- Tool / model: Claude Code, Claude Opus 5.5
+- Tool / model: Claude Code, Claude Opus 5.5, with workflows of subagents for the audit, the
+  cross-check and the review
 - What the assistant did:
   - audited the milestone with a workflow of four read-only subagents: the `FOR APPROVAL`
     markers behind the published numbers, with a fourth subagent trying to refute that list; the
     promises the documentation made for v0.2; and the AI assistance section of each pull request;
   - removed the markers the author approved, ran `cdm` and `publish` on 2020–2023, and committed
     `results/`;
-  - assembled this section from the pull requests and the session transcripts, and updated the
+  - assembled `docs/ai_use.md` from the pull requests and the session transcripts, and updated the
     README, the protocol and the decision log;
   - compared every number of the documentation with the published tables in a second workflow,
     with a skeptic re-deriving each disagreement, and reviewed the diff in a third;
   - ran the clean-clone reproduction, found and fixed two bugs test-first (D-125 and a test that
     depended on the time zone), republished, ran the clean clone again, ran the history scan, and
     drafted the release notes.
-- What I decided or checked myself: PENDING: copied from the pull request once the author fills
-  it in, before the merge.
+- What I decided or checked myself: Asked before the work started whether the close needed a
+  decision of mine. Approved as written the seven `FOR APPROVAL` choices of D-092, D-094, D-096
+  and D-112 that the published tables rest on. Chose to copy the protocol's limitations into the
+  README rather than move that promise to v1.0. Confirmed that the assistant wrote my line of #62
+  at my request, and asked for it and the workflows to be declared in `docs/ai_use.md`. Kept the
+  tag for Thursday 29 October. Approved D-125 as written. Read the diff of `docs/decisions.md`
+  and `README.md`, checked in `docs/reproducibility.md` that the second clean clone reproduced
+  the sha256 of the five CSVs, and compared two odds ratios of `results/estimates.csv` with the
+  release notes.
 
 [^model]: The merge commits of #22 and #23 carry a `Co-Authored-By: Claude Sonnet 5` trailer,
     which names the model active when the commit was written. According to the author, most of
