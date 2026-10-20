@@ -93,7 +93,7 @@ Not started this semester (D-042); proposal v2 already described it as condition
   start and sociodemographic variables.
 - **Variables excluded from both:** gestational weeks, birth weight and anything derived from
   them (including APNCU), because they contain the outcome.
-- **Explanation:** SHAP on a stratified subsample, because TreeSHAP over 10 million records is
+- **Explanation:** SHAP on a stratified subsample, because TreeSHAP over 6.5 million records is
   neither necessary nor practical.
 - **What it is meant to show:** whether the naive model uses truncation as its main signal. It
   is contrasted with the null simulation.
@@ -108,7 +108,7 @@ Not started this semester (D-042); proposal v2 already described it as condition
 - **What:** an interface to change the cohort definition (preterm cut-off, landmark week,
   exclusions) and see how the estimate of each prenatal care measure moves, APNCU included.
 - **How:** on top of the sensitivity table and pre-aggregated counts, so the estimates are
-  recomputed in real time without querying the 10 million records again.
+  recomputed in real time without querying the 6.5 million records again.
 
 ### 4.3 Definition axes left out of the sensitivity analysis
 

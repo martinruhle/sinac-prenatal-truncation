@@ -362,9 +362,8 @@ attended, complete or not; a technical program counts at the general level it re
 | Higher | 81, 82, 101, 102 | 4076230, SNOMED 224299000 "Received higher education" |
 
 - **The levels are the concepts.** The cohort SQL groups by `value_as_concept_id` with no further
-  configuration, and a change to the grouping, which D-094 leaves `FOR APPROVAL`, is a change of
-  rows in [`../config/source_to_concept_map.csv`](../config/source_to_concept_map.csv), not of
-  SQL.
+  configuration, and a change to the grouping of D-094 is a change of rows in
+  [`../config/source_to_concept_map.csv`](../config/source_to_concept_map.csv), not of SQL.
 - **What the concepts drop stays in the source value.** Complete or incomplete, a technical
   program, and postgraduate against undergraduate studies are all in `value_source_value`.
 - **Junior and senior high name the Mexican cycles.** *Secundaria* is the lower secondary cycle
@@ -413,7 +412,8 @@ One row per distinct pair (`RESIDEEXTRANJERO`, `ENTIDADRESIDENCIA`), referenced 
 | `location_source_value` | optional | both | `'<RESIDEEXTRANJERO>\|<ENTIDADRESIDENCIA>'`, verbatim | Project |
 | every other field | optional | — | NULL | — |
 
-Criterion 2 is `country_concept_id` = `Mexico`. `state` is there for the state gradient of v0.2.
+Criterion 2 is `country_concept_id` = `Mexico`. `state` is the state covariate of the adjusted
+models (D-094) and the state gradient of `v1.0` (D-099).
 
 ### CDM_SOURCE
 
@@ -575,9 +575,9 @@ says the system sets it when the question does not apply, and education applies 
   through `FACT_RELATIONSHIP` (D-106).
 - **1.6.4, odds ratios.** The step "covariates known" (D-095) reads the CDM: `value_as_number` of
   `mother_age_at_delivery` is not NULL, `value_as_concept_id` of `mother_education` is not 0, and
-  `LOCATION.state` is not NULL. The seven age groups are cut from `value_as_number`, with bounds
-  that go to configuration, not SQL (D-094, `FOR APPROVAL`). The education levels are the
-  concepts.
+  `LOCATION.state` is not NULL. The seven age groups are cut from `value_as_number`, as literals of
+  `sql/analysis/aggregated_count.sql` with their source in a comment (D-094, D-117). The
+  education levels are the concepts.
 - **v1.0, insurance.** `AFILIACION` is mapped with the gradient by insurance (D-102). Its
   destination is still open. `PAYER_PLAN_PERIOD` needs start and end dates, which could only be the
   delivery day under D-062 and D-063, and the payer vocabulary of the CDM (SOPT) is a US typology.

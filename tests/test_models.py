@@ -301,6 +301,23 @@ def test_the_model_table_collapses_each_level_and_combination_of_covariates() ->
     )
 
 
+def test_the_model_table_does_not_depend_on_the_order_of_the_cells() -> None:
+    """The database returns the aggregated table in no fixed order (D-125)."""
+    rows = model_table(CELLS, "a", CUTS)
+    assert rows == sorted(rows)
+    assert model_table(list(reversed(CELLS)), "a", CUTS) == rows
+
+
+def test_the_estimates_do_not_depend_on_the_order_of_the_cells() -> None:
+    """The adjusted odds ratios are equal to the last bit whatever the order of the cells, so a
+    rebuild publishes the same estimates.csv, byte for byte (D-080, D-125)."""
+    cells = _cells(_individuals())
+    shuffled = [cells[i] for i in np.random.default_rng(125).permutation(len(cells))]
+    first = observed_estimates(2, ("a", "c"), cells, CUTS, period="2022-2023")
+    second = observed_estimates(2, ("a", "c"), shuffled, CUTS, period="2022-2023")
+    assert second.estimates == first.estimates
+
+
 def test_a_birth_at_the_cut_off_is_term() -> None:
     """Preterm is under 37 completed weeks (NOM-007-SSA2-2016 §3.25): 36 is preterm, 37 is not."""
     cells = [Cell(36, 1, 8, *PLAIN, 3), Cell(37, 1, 8, *PLAIN, 5)]

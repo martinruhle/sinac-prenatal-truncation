@@ -88,8 +88,8 @@ class Calibration(NamedTuple):
 def calendar_first_weeks(schedule: Mapping[str, Any]) -> tuple[int, ...]:
     """The first week of each visit of ``config/nom007_schedule.yml``, in the order of the norm.
 
-    A visit happens when the completed weeks at delivery reach its first week (D-096, FOR
-    APPROVAL), so the first week is the only number of a visit the simulation reads.
+    A visit happens when the completed weeks at delivery reach its first week (D-096), so the
+    first week is the only number of a visit the simulation reads.
 
     Raises:
         SimulationError: the visits are not numbered 1 to n, or their first weeks do not rise.
@@ -139,7 +139,7 @@ def calibrate(
     first_weeks: Sequence[int],
     first_visit: Mapping[int, int],
 ) -> Calibration:
-    """Set p from the observed births of definition 2 (D-096, FOR APPROVAL).
+    """Set p from the observed births of definition 2 (D-096).
 
     A pregnancy that starts in the first trimester and is delivered at the first week of the last
     visit or later can have every visit of the calendar. With each visit after the first one

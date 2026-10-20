@@ -367,6 +367,9 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
         ("SINAC20_TRIMCONS", *catalogues, 0),
     ]
 
+    # cdm_release_date is the database's current_date, which follows the server's time zone
+    # (UTC in the compose database), not the time zone of the machine that runs the tests.
+    [(server_today,)] = fetch(source.connection, "SELECT current_date")
     assert fetch(
         source.connection,
         f"SELECT source_description, source_documentation_reference, cdm_etl_reference, "
@@ -378,7 +381,7 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
             "http://example.test/nacimientos.html",
             "https://example.test/repo at commit synthetic",
             d(2026, 9, 20),
-            datetime.date.today(),
+            server_today,
             "v5.4.3",
             CDM_VERSION,
             VERSION,

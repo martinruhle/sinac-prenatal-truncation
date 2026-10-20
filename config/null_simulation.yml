@@ -17,15 +17,15 @@ scenarios:
     stream: 1
     misses: false
   # The first visit, then each later visit independently with probability p, which the run sets
-  # from definition 2 and writes next to its output (D-096, FOR APPROVAL).
+  # from definition 2 and writes next to its output (D-096).
   - id: e2
     name: Calendar with misses
     stream: 2
     misses: true
 
-# The first completed week of each trimester (docs/protocol.md §Trimester boundaries, D-092,
-# FOR APPROVAL): the first trimester runs to 13 weeks, the second from 14 to 27 and the third
-# from 28. A simulated pregnancy starts at the first visit of the calendar in its trimester.
+# The first completed week of each trimester (docs/protocol.md §Trimester boundaries, D-092):
+# the first trimester runs to 13 weeks, the second from 14 to 27 and the third from 28. A
+# simulated pregnancy starts at the first visit of the calendar in its trimester.
 # Rule 4 of the common set reads the same 28 (sql/cohorts/02_analysis.sql, apncu.py).
 trimester_first_weeks:
   1: 0
