@@ -333,7 +333,9 @@ tag, so it is recorded here.
     README, the protocol and the decision log;
   - compared every number of the documentation with the published tables in a second workflow,
     with a skeptic re-deriving each disagreement, and reviewed the diff in a third;
-  - ran the clean-clone reproduction and the history scan, and drafted the release notes.
+  - ran the clean-clone reproduction, found and fixed two bugs test-first (D-125 and a test that
+    depended on the time zone), republished, ran the clean clone again, ran the history scan, and
+    drafted the release notes.
 - What I decided or checked myself: PENDING: copied from the pull request once the author fills
   it in, before the merge.
 

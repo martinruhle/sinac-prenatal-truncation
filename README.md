@@ -37,22 +37,21 @@ subcommand of its own, described below. `publish` is not a step of `all`: it run
 only. Every milestone is rebuilt this way from a clean clone before it is tagged
 ([`docs/reproducibility.md`](docs/reproducibility.md)).
 
-The commands above rebuild 2023, the year development runs on (D-009). The whole study period is
-`all --years 2020-2023`, which is also what `all` runs without `--years` (D-041). It was measured
-on 2 October 2026 on a laptop with an Intel Core i5-1240P, 16 GB of RAM and an NVMe SSD, under
-Windows 11 Pro with Docker Engine 28.4.0 limited to 6 CPUs and 12.5 GB, keeping the Postgres
-defaults of [`compose.yml`](compose.yml):
+The commands above rebuild the whole study period, 2020–2023, which is also what `all` runs
+without `--years` (D-041). Development runs on 2023 alone, with `--years 2023` (D-009). The clean
+clone of `v0.2-progress` measured them on 19 October 2026, on a laptop with an Intel Core
+i5-1240P, 16 GB of RAM and an NVMe SSD, under Windows 11 Pro with Docker Engine 28.4.0 limited to
+6 CPUs and 12.5 GB, keeping the Postgres defaults of [`compose.yml`](compose.yml)
+([`docs/reproducibility.md`](docs/reproducibility.md)):
 
-- **Wall time: 24 min 15 s.** `all` took 21 min 2 s with the four record files already on disk:
-  `stage` 2 min 31 s, `vocab` 4 min 56 s, `cdm` 12 min 43 s and `cohorts` 47 s. Downloading the
-  four files took another 3 min 13 s on that connection. `simulate` and `estimate` became steps of
-  `all` after this measurement. On their own, on the same laptop, `simulate` took 12.9 s on
-  15 October 2026 and `estimate` 160 s on 16 October 2026, and 273 to 307 s on 19 October 2026
-  with the definition with multiples.
-- **Disk: 17.0 GB at the peak.** `data/` holds 2.35 GB: the four ZIPs (0.27 GB), their extracted
-  CSVs (1.67 GB), the Parquet copies (0.21 GB) and the Athena package (0.20 GB). The Postgres
-  volume holds 11.2 GB once the run ends, 10.1 GB of database and 1.1 GB of write-ahead log. It
-  peaked at 14.6 GB during `cdm`, in samples taken every 30 s.
+- **Wall time: 62 min 24 s for `all`**, with the four record files downloaded again: `download`
+  1 min 38 s, `stage` 5 min 25 s, `vocab` 3 min 49 s, `validate-concepts` 3 s, `cdm` 31 min 19 s,
+  `cohorts` 13 min 52 s, `simulate` 1 min 5 s and `estimate` 5 min 10 s. `pytest` took 1 min 40 s
+  more, and `publish`, at a milestone, 27 min 12 s.
+- **Disk: 29.4 GB at the peak.** `data/` holds 2.35 GB: the four ZIPs (0.27 GB), their extracted
+  CSVs (1.67 GB), the Parquet copies (0.21 GB) and the Athena package (0.20 GB). The Postgres data
+  directory peaked at 27.1 GB while `publish` rebuilt the cohorts, and held 22.5 GB at the end,
+  in samples taken every 30 s.
 
 `download` fetches the record files of the years given in `--years` from
 [`config/sources.yml`](config/sources.yml) into `data/raw/dgis/`. It checks each sha256 against
@@ -126,7 +125,8 @@ built. It is a world where prenatal care has no effect on preterm birth:
   `results.truncation_share` in one transaction, once the built-in check of measure (c) holds.
 - **The cross-check.** Each run also computes the exact expectation of each scenario, without
   draws, and records how far the simulated shares are from it (D-115).
-- **Time.** On 2020–2023 the run took 12.9 s, about one of them simulating.
+- **Time.** On 2020–2023 the run took 12.9 s on 15 October 2026, about one of them simulating,
+  and 1 min 5 s in the clean clone of `v0.2-progress`.
 
 `estimate` computes the odds ratios of preterm birth of
 [`docs/protocol.md`](docs/protocol.md#model) on the cohorts that `cohorts` built:
@@ -143,8 +143,9 @@ built. It is a world where prenatal care has no effect on preterm birth:
 - **The tables.** The run writes `results.estimate`, with the births and preterm births behind each
   estimate, and `results.exposure_distribution`, in one transaction with the aggregated table. The
   simulated pregnancies of `simulate` add their crude rows, so `estimate` runs after it.
-- **Time.** On 2020–2023 the run took 273 to 307 s, 228 to 286 s of them building the aggregated
-  table. Before the definition with multiples it took 160 to 193 s.
+- **Time.** On 2020–2023 the run took 273 to 311 s, 228 to 286 s of them building the aggregated
+  table; 311 s was the clean clone of `v0.2-progress`. Before the definition with multiples it
+  took 160 to 193 s.
 
 `publish` writes the results a milestone versions under [`results/`](results/) (D-014), with the
 columns of [`docs/protocol.md`](docs/protocol.md#output-tables) §Output tables (D-098):
@@ -161,8 +162,8 @@ It publishes what one commit produces end to end (D-080, D-122):
 
 - It refuses a working tree with changes outside `results/` and a CDM that `cdm` did not load from
   that commit.
-- It rebuilds the cohorts, the null simulation and the odds ratios, about 5 min more than the
-  cohorts alone on 2020–2023.
+- It rebuilds the cohorts, the null simulation and the odds ratios: 27 min 12 s on 2020–2023 in
+  the clean clone of `v0.2-progress`.
 - It reads each CSV back against the run and removes any other CSV of `results/`.
 
 The counts are exact, with no small-cell suppression, because the source records are public
@@ -180,10 +181,10 @@ still missing and when it lands.
 | Requirement | Evidence | Status |
 |---|---|---|
 | Real commit history | [Pull requests merged into `main`](https://github.com/martinruhle/sinac-prenatal-truncation/pulls?q=is%3Apr+is%3Amerged), each with its checks and its AI assistance section | **Met**: #1, then #18–#31, #33 and #35 in `v0.1-cohort`, and #49–#57, #60, #62, #63 and #64 in `v0.2-progress`, one per issue |
-| README lets a third party reproduce the work | README §Reproduce, [`docs/reproducibility.md`](docs/reproducibility.md) | **Met**: rebuilt from a clean clone on 2023, with the same attrition sha256; the Athena package is the one file downloaded by hand |
+| README lets a third party reproduce the work | README §Reproduce, [`docs/reproducibility.md`](docs/reproducibility.md) | **Met**: rebuilt from a clean clone on 2020–2023, where `publish` wrote the five CSVs of `results/` with the sha256 of the committed manifest; the Athena package is the one file downloaded by hand |
 | Containerized environment | [`compose.yml`](compose.yml) (+ `Dockerfile` from v1.0) | **Met** with `compose.yml`: Postgres 16.15 with a healthcheck, the same file CI starts. The analysis image comes with v1.0 (D-015) |
 | At least one documented cohort definition in SQL on OMOP | [`sql/cohorts/`](sql/cohorts/) (definitions 1 to 6), [`docs/protocol.md`](docs/protocol.md#base-cohort) §Base cohort and [§Records analysed](docs/protocol.md#records-analysed), [`results/attrition.csv`](results/attrition.csv), [`results/excluded_profile.csv`](results/excluded_profile.csv) | **Met**: six definitions on 2020–2023, each with its attrition per year and the profile of the records its validity steps remove. The base cohort holds 6,401,232 singleton births and the analysis cohort 6,203,597 |
-| Automated tests with pytest and CI | [`tests/`](tests/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml), CI badge | **Met**: 340 tests on synthetic fixtures, the `db` ones against the compose database. CI runs ruff, the format check, mypy and pytest with an 80 % coverage floor (D-030) |
+| Automated tests with pytest and CI | [`tests/`](tests/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml), CI badge | **Met**: 626 tests on synthetic fixtures, the `db` ones against the compose database. CI runs ruff, the format check, mypy and pytest with an 80 % coverage floor (D-030) |
 | Data dictionary | [`docs/data_dictionary.md`](docs/data_dictionary.md) | **Met** for v0.2: the 22 of 64 published columns the project uses (D-011), with the use of each in the analysis. Every variable v0.2 added was already one of them |
 | Honest limitations section | README §Limitations, [`docs/protocol.md`](docs/protocol.md#limitations) §Limitations | **Partial**: eleven limitations are written, those of the source, the design, the data model, the exposure measures, the analysis and the null simulation. The section is completed for v1.0 |
 | AI assistance statement | [`docs/ai_use.md`](docs/ai_use.md), [`CLAUDE.md`](CLAUDE.md) | **Met**: one entry per pull request, taken from its AI assistance section |
