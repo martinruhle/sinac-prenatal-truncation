@@ -29,6 +29,7 @@ from sinac_truncation.models import (
     ADJUSTED,
     CRUDE,
     OBSERVED,
+    SENSITIVITY_MEASURES,
     Cell,
     DistributionRow,
     EstimateRow,
@@ -39,6 +40,7 @@ from sinac_truncation.models import (
     format_estimates,
     model_table,
     observed_estimates,
+    sensitivity_models,
     simulated_estimates,
     simulated_source,
     summed,
@@ -299,6 +301,23 @@ def test_the_model_table_collapses_each_level_and_combination_of_covariates() ->
     )
 
 
+def test_the_model_table_does_not_depend_on_the_order_of_the_cells() -> None:
+    """The database returns the aggregated table in no fixed order (D-125)."""
+    rows = model_table(CELLS, "a", CUTS)
+    assert rows == sorted(rows)
+    assert model_table(list(reversed(CELLS)), "a", CUTS) == rows
+
+
+def test_the_estimates_do_not_depend_on_the_order_of_the_cells() -> None:
+    """The adjusted odds ratios are equal to the last bit whatever the order of the cells, so a
+    rebuild publishes the same estimates.csv, byte for byte (D-080, D-125)."""
+    cells = _cells(_individuals())
+    shuffled = [cells[i] for i in np.random.default_rng(125).permutation(len(cells))]
+    first = observed_estimates(2, ("a", "c"), cells, CUTS, period="2022-2023")
+    second = observed_estimates(2, ("a", "c"), shuffled, CUTS, period="2022-2023")
+    assert second.estimates == first.estimates
+
+
 def test_a_birth_at_the_cut_off_is_term() -> None:
     """Preterm is under 37 completed weeks (NOM-007-SSA2-2016 §3.25): 36 is preterm, 37 is not."""
     cells = [Cell(36, 1, 8, *PLAIN, 3), Cell(37, 1, 8, *PLAIN, 5)]
@@ -349,6 +368,12 @@ def test_the_measures_of_each_definition() -> None:
     }
 
 
+def test_each_alternative_definition_changes_one_side_of_the_main_analysis() -> None:
+    """The analysis cohort at 34 and 32 weeks, and the definition with multiples at 37 (D-054)."""
+    assert sensitivity_models(2, 6) == [(2, 34), (2, 32), (6, 37)]
+    assert SENSITIVITY_MEASURES == ("a", "c")
+
+
 def test_a_scenario_has_crude_rows_only_and_its_landmarks_keep_the_weeks_reached() -> None:
     pregnancies = summed(CELLS)
     found = simulated_estimates(
@@ -385,3 +410,22 @@ def test_the_report_prints_both_models_on_one_line() -> None:
     ]
     no_estimate = row._replace(odds_ratio=None, lower=None, upper=None)
     assert format_estimates([no_estimate])[1].rstrip().endswith("85")
+
+
+def test_the_report_pairs_the_models_of_each_cut_off_apart() -> None:
+    """One level at two cut-offs gives two lines, each with its own adjusted odds ratio."""
+    row = EstimateRow(
+        OBSERVED, 2, "2023", 37, "c", "", LATER_OR_NO_CARE, FIRST_TRIMESTER, CRUDE, "", "",
+        1200, 85, 1.0, 0.9, 1.1,
+    )  # fmt: skip
+    at_34 = row._replace(outcome_cutoff=34, preterm=40)
+    lines = format_estimates(
+        [
+            row,
+            row._replace(model=ADJUSTED, odds_ratio=1.065),
+            at_34,
+            at_34._replace(model=ADJUSTED, odds_ratio=1.2),
+        ]
+    )
+    assert [line.split()[:2] for line in lines[1:]] == [["2", "37"], ["2", "34"]]
+    assert [line.split()[-2] for line in lines[1:]] == ["1.065", "1.200"]

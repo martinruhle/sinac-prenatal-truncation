@@ -28,6 +28,7 @@ __all__ = [
     "LATER_OR_NO_CARE",
     "MEASURES",
     "PRETERM_WEEKS",
+    "SENSITIVITY_CUTOFFS",
     "Crude",
     "LevelCount",
     "Share",
@@ -50,6 +51,11 @@ __all__ = [
 #: A birth under 37 completed weeks is preterm: NOM-007-SSA2-2016 §3.25 (docs/protocol.md
 #: §Outcome, D-053). The cut-offs of 34 and 32 weeks are a sensitivity axis (D-003).
 PRETERM_WEEKS = 37
+
+#: The other side of the axis "preterm cut-off": under 34 and under 32 completed weeks, from
+#: proposal v2 §Sensitivity of the definition (docs/protocol.md §Sensitivity of the definition).
+#: Only the outcome moves; the cohort and its attrition do not.
+SENSITIVITY_CUTOFFS: tuple[int, ...] = (34, 32)
 
 #: The measures of docs/protocol.md §Output tables: (a), (a) per count, (b), (c) and (d).
 MEASURES: tuple[str, ...] = ("a", "a_count", "b", "c", "d")
@@ -106,7 +112,7 @@ class Share(NamedTuple):
     level: str
     observed: Crude
     simulated: Crude
-    #: Simulated over observed risk difference (D-112, FOR APPROVAL); ``None`` when not reported.
+    #: Simulated over observed risk difference (D-112); ``None`` when not reported.
     share: float | None
 
 

@@ -15,14 +15,35 @@ is assembled from the "AI assistance" section that every pull request carries si
 - **Workflow.** For each issue the assistant reads the planning item, explores the repository and
   proposes a plan, which the author approves before any file is edited. The assistant then writes
   the code, tests, SQL and documentation, runs the checks and opens the pull request; the author
-  reviews the diff and merges.
+  reviews the diff and merges. The assistant also drafts the entries of `docs/decisions.md`, which
+  the author approves, or leaves `FOR APPROVAL`, before the merge. In #63 the author asked the
+  assistant to merge.
 - **Judgment tasks.** For the study period, the protocol and the OMOP mapping (#23, #24, #25) the
   author drafted the answers, the assistant reviewed them against the measured sources and priced
-  each option on the record files, and the author took every decision.
+  each option on the record files, and the author took every decision. From `v0.2-progress`,
+  where a task left questions open, the assistant laid them out with options and a
+  recommendation, measured on the 2020–2023 records where the records bore on them and priced in
+  hours of the weekly budget where scope was at stake; the author chose (#49, #51 to #55, #57,
+  #60, #62). In #56 and #63 it first checked that the protocol and the decisions already settled
+  every choice. For the reference tables of #55 and #57 the author computed some rows blind and
+  approved the others from the assistant's step-by-step trace.
 - **Data.** The assistant read the public DGIS record files and the Athena vocabulary package on
   the author's machine and reported aggregate counts, measured with the pipeline or with throwaway
   scripts kept outside the repository (D-047). No record is in the repository (rule 1 of
-  `CLAUDE.md`).
+  `CLAUDE.md`). It also read the NOM-007-SSA2-2016 text published in the DOF, Kotelchuck's SAS
+  program and the OHDSI conventions, and the author supplied the Kotelchuck (1994) article and the
+  2025 DGIS filling guide (#51, #53). For the re-plan of #49 it measured the active time of the
+  Claude Code sessions of this repository, as a proxy for the hours worked.
+- **Parallel work.** From `v0.2-progress` some issues were worked on in parallel, each on its own
+  branch: #54 and #55 were merged four minutes apart, and #55 merged `main` to number its
+  decision after those of #54 (D-110). From #63 each ran in a git worktree of its own.
+- **Subagents and workflows.** Up to #63 the assistant worked as a single agent: the session
+  transcripts of the project show no subagent in any earlier pull request. The close of
+  `v0.2-progress` (#64) is the first pull request in which it ran workflows, scripts that spread a
+  task over several subagents running in parallel; its section below says for what.
+- **The author's line.** "What I decided or checked myself" is the author's statement. In #62 and
+  #63 the author asked the assistant to write it from what the author had done and decided in the
+  session.
 - **Attribution.** The commit that merged each pull request, except #18, carries a
   `Co-Authored-By: Claude …` trailer naming the model active when the commit was written, and each
   pull request description since #1 ends with a "Generated with Claude Code" line.
@@ -195,6 +216,139 @@ author's voice.
 - What the assistant did: traced 10,117 to the v0 table of #24 through git history, checked which years the CDM holds, compared the raw and sequential multiplicity counts on 2023, edited the one number, opened #34 and this PR.
 - What I decided or checked myself: not filled in before the merge.
 
+### Milestone `v0.2-progress`
+
+The three lines under each pull request are copied from its "AI assistance" section, in the
+author's voice. #49 closed the last issue of `v0.1-cohort` (1.12.1), but it was merged after that
+tag, so it is recorded here.
+
+#### [#49](https://github.com/martinruhle/sinac-prenatal-truncation/pull/49) · Re-plan at milestone 18 (1.12.1)
+
+- Tool / model: Claude Code (Claude Opus 5.5)
+- What the assistant did:
+  - Measured the hour proxy from the session transcripts with a throwaway script, and read the issues, PRs, milestones and decisions.
+  - Found the mismatch between the mapping docs and the plan on the newborn.
+  - Proposed the week-by-week plan and the checkpoint, wrote D-084 and D-085, and created the issues and labels.
+- What I decided or checked myself:
+  - Accepted the proxy and kept the 6 h a week budget.
+  - Chose to start v0.2 in week 41 with the week gained as buffer, and to load the newborn in v0.2.
+  - Chose to run 1.2.5 this weekend, and confirmed 2.0 h for 1.4.5 and the checkpoint of 16 October.
+
+#### [#50](https://github.com/martinruhle/sinac-prenatal-truncation/pull/50) · Load the study period 2020-2023 (1.2.5)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: ran `all --years 2020-2023` in the working database with a timestamped log and a disk sampler on the Postgres data directory; timed a separate download of the four files; wrote and ran the independent check against the inventory and the protocol; ran the gates; wrote the README paragraph and this PR.
+- What I decided or checked myself: kept the Postgres defaults of `compose.yml`, since the measured run needed no change; kept `all --years 2023` as the command of §Reproduce until the milestone publishes the full period, so that it still matches `results/`; read the README paragraph in the diff.
+
+#### [#51](https://github.com/martinruhle/sinac-prenatal-truncation/pull/51) · Protocol v1: exposures, analysis, null simulation and sensitivity plan (1.3.2)
+
+- Tool / model: Claude Code (Claude Opus 5.5)
+- What the assistant did:
+  - Measured each option on the 2020–2023 records with throwaway queries: the visit and trimester distributions, landmark sizes, missing covariates, APNCU under three month rules and on the NOM-007 calendar, and insurance by year.
+  - Found Kotelchuck's SAS program v3. Verified the NOM-007 calendar against the raw DOF HTML, and the WHO and NICHD bounds.
+  - Checked the 2025 DGIS filling guide, which does not define trimester weeks.
+  - Proposed every option with its cost, and wrote the protocol, the decisions, the roadmap, the config and its test.
+- What I decided or checked myself:
+  - Accepted the common set of records and its rules, the measures and their references, and the three landmark weeks.
+  - Chose APNCU with the ACOG schedule and the middle-month rule, the NOM-007 variant for v1.0, and the aggregated model.
+  - Chose the covariate set and complete case, the two simulation scenarios, and the output tables.
+  - Supplied the Kotelchuck 1994 article and the 2025 filling guide.
+
+#### [#52](https://github.com/martinruhle/sinac-prenatal-truncation/pull/52) · OMOP mapping v1 and covariate ETL (1.4.5)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did:
+  - laid out the questions of 1.4.5 with options priced on the 2020–2023 records (age groups that change under each age source, missing education codes);
+  - searched the Athena bundle for the concepts;
+  - wrote the SQL, configuration, tests and docs;
+  - ran the full load.
+- What I decided or checked myself: deferring insurance to v1.0, the declared age as a `MEASUREMENT`, and SNOMED levels for education.
+
+#### [#53](https://github.com/martinruhle/sinac-prenatal-truncation/pull/53) · Newborn PERSON, FACT_RELATIONSHIP and birth weight (1.4.6)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did:
+  - laid out the four questions of 1.4.6, and a fifth it found (newborns entering the cohort), with options measured on the 2020–2023 records (`SEXO` 0/9, `PESO` 9999 by gestational age, weight extremes);
+  - checked every candidate concept in the loaded Athena bundle and the OHDSI conventions;
+  - wrote the SQL, configuration, tests and docs;
+  - ran the full load and the cohorts.
+- What I decided or checked myself: approved the recommendations of the review (Mother/Child in both directions, concept 0 for unknown sex, 9999 as a NULL row, no range, a one-day period for the newborn, mothers found through the link). I also approved the switch from concept 56 to 1147314, which came up during the work.
+
+#### [#54](https://github.com/martinruhle/sinac-prenatal-truncation/pull/54) · Measures (a) and (c) in SQL, with tests (1.6.1)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: laid out the open questions of 1.6.1 with options and a recommendation; wrote the SQL, the runner check, the tests and the docs; ran the cohorts on 2020–2023 and recounted step 8 from the raw values.
+- What I decided or checked myself: chose the four recommended options (build definition 2 here; a table per mother; the trimester through `source_to_concept_map`; literal thresholds with their source).
+
+#### [#55](https://github.com/martinruhle/sinac-prenatal-truncation/pull/55) · compute_apncu() as a pure function, with reference tests (1.6.2)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: proposed the reference table and the design, wrote the function, the tests and the docs, and cross-checked the function against a transcription of the SAS program and on the real records.
+- What I decided or checked myself: accepted the eleven records and the design (one record per call, invalid records refused, every step returned); worked out rows 3 and 5 by hand from the program and approved the other nine from their trace.
+
+#### [#56](https://github.com/martinruhle/sinac-prenatal-truncation/pull/56) · Landmark cohorts (measure d) with their attrition (1.6.3)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: checked that protocol v1 and D-087, D-090 and D-107 settle every choice of 1.6.3; wrote the three SQL files, the tests and the docs; ran the cohorts on 2020–2023 and recounted step 10 from the CDM.
+- What I decided or checked myself: accepted D-111 (one file per landmark, kept equal by a test) over a single file built from a list of weeks. Read `03_landmark_28.sql`, checked that `04` and `05` differ only in the definition and the week, and compared the step-10 counts with the orientation figures of protocol §Records analysed.
+
+#### [#57](https://github.com/martinruhle/sinac-prenatal-truncation/pull/57) · Null simulation v1 (1.7.1)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did:
+  - prototyped the simulation on the real definition-2 counts and found that the reference levels hold one outcome only;
+  - priced three ways out, A, B and C (C prototyped with three rates of extra visits), and explained them;
+  - wrote the modules, script, SQL, tests and docs;
+  - ran `compute()` on the 2020–2023 counts and checked the tests by mutation.
+- What I decided or checked myself: chose option B, the share on the risk-difference scale (D-112), over keeping the log odds-ratio share and over adding visits off the calendar. Computed two rows of `E1_VISITS` blind: one matched, the other missed the visit of the delivery week. I then approved the inclusive reading of D-096 and the other 18 rows from their trace. Asked for the exact cross-check. Read and accepted D-113, including computing the observed crude odds ratios here before 1.6.4, D-114 and D-115. Ran `pipeline.py simulate` on 2020–2023 and checked p, the built-in check, the cross-check and one share by hand (5–7 against 8+ in E2: 10.38 ÷ 1.93 = 5.4).
+
+#### [#60](https://github.com/martinruhle/sinac-prenatal-truncation/pull/60) · Crude and adjusted odds ratios on an aggregated table (1.6.4)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: measured the options on the real records, proposed the two choices the author approved (statsmodels; CSV files in a separate issue), wrote the SQL, module, script, tests and docs, ran them on 2020–2023, and opened #59.
+- What I decided or checked myself: Chose statsmodels and moving the CSV files to #59 (option A) in review; read and approved D-117 to D-119, including the reading of rule 3 for measure (b). Computed by hand the crude OR of 0 visits against 8 or more from the counts (1.943) and ran the new tests locally.
+
+#### [#62](https://github.com/martinruhle/sinac-prenatal-truncation/pull/62) · Publish the five output tables of D-098 (no planning ID, split from 1.6.4)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: priced mapping `LUGARNACIMIENTO` against dropping the column on the 2020–2023 records and the weekly budget, found the candidate OMOP concepts in the Athena bundle, then wrote the SQL, modules, script, tests and docs once option (b) was approved.
+- What I decided or checked myself:[^author] Chose dropping the place-of-birth column (option (b)) after the assistant priced both options on the 2020–2023 records and explained them in plain language, and left an urban/rural covariate out of scope. Reviewed this PR and approved D-121 to D-123, including D-123 without the `[SCOPE CHANGE]` tag.
+
+#### [#63](https://github.com/martinruhle/sinac-prenatal-truncation/pull/63) · Sensitivity v1: preterm cut-off and multiples, measures (a) and (c) (1.8.1)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: checked the guide, the protocol and the decisions for anything left for the author to decide, worked in a separate worktree, wrote the SQL of definition 6, the changes to the models and the script, the tests and the docs, ran the pipeline on 2020–2023 for the counts and the orientation estimates, checked by mutation that the new tests fail, and logged D-124.
+- What I decided or checked myself: Asked before the work started whether the task needed a decision of mine. Approved D-124 as written: the two axes, definition 6 with its steps moved up by one, and no cut-off on definition 6. Asked the assistant to fill this section and to merge once everything was ready.
+
+#### [#64](https://github.com/martinruhle/sinac-prenatal-truncation/pull/64) · Close milestone v0.2-progress (1.9.2)
+
+- Tool / model: Claude Code, Claude Opus 5.5, with workflows of subagents for the audit, the
+  cross-check and the review
+- What the assistant did:
+  - audited the milestone with a workflow of four read-only subagents: the `FOR APPROVAL`
+    markers behind the published numbers, with a fourth subagent trying to refute that list; the
+    promises the documentation made for v0.2; and the AI assistance section of each pull request;
+  - removed the markers the author approved, ran `cdm` and `publish` on 2020–2023, and committed
+    `results/`;
+  - assembled `docs/ai_use.md` from the pull requests and the session transcripts, and updated the
+    README, the protocol and the decision log;
+  - compared every number of the documentation with the published tables in a second workflow,
+    with a skeptic re-deriving each disagreement, and reviewed the diff in a third;
+  - ran the clean-clone reproduction, found and fixed two bugs test-first (D-125 and a test that
+    depended on the time zone), republished, ran the clean clone again, ran the history scan, and
+    drafted the release notes.
+- What I decided or checked myself: Asked before the work started whether the close needed a
+  decision of mine. Approved as written the seven `FOR APPROVAL` choices of D-092, D-094, D-096
+  and D-112 that the published tables rest on. Chose to copy the protocol's limitations into the
+  README rather than move that promise to v1.0. Confirmed that the assistant wrote my line of #62
+  at my request, and asked for it and the workflows to be declared in `docs/ai_use.md`. Kept the
+  tag for Thursday 29 October. Approved D-125 as written. Read the diff of `docs/decisions.md`
+  and `README.md`, checked in `docs/reproducibility.md` that the second clean clone reproduced
+  the sha256 of the five CSVs, and compared two odds ratios of `results/estimates.csv` with the
+  release notes.
+
 [^model]: The merge commits of #22 and #23 carry a `Co-Authored-By: Claude Sonnet 5` trailer,
     which names the model active when the commit was written. According to the author, most of
     the work of both pull requests was done with Claude Opus 5, as their sections state.
+[^author]: The author asked the assistant to write this line from what the author had done and
+    decided in the session, as in #63. The author confirmed it when this milestone closed.
