@@ -105,17 +105,3 @@ From [`roadmap.md` §3](roadmap.md#3-milestones-of-the-semester):
 - **After this review.** The feedback goes into the re-planning of the remaining weeks (issue #48),
   before the presentation of 24 November.
 
-## 6. Questions for the teacher
-
-1. **Null simulation.** The NOM-007 calendar cannot produce more than eight visits, nor a preterm
-   birth with eight, so the shares answer *whether* truncation alone can produce the association,
-   not *how much* of it it produces. Is that framing enough for the final report, or would you
-   expect a scenario with visits off the calendar, knowing that no source gives their rate?
-2. **APNCU (b).** The protocol keeps it only as a demonstration of the artefact of its
-   construction, never read as an effect. Is that how you would present it, or would you leave it
-   out of the main results, and with it the NOM-007 variant planned for `v1.0`?
-3. **Insurance gradient.** The groups merge "none", Seguro Popular / INSABI and IMSS Bienestar into
-   one group, because records moved between those codes inside the period
-   ([`protocol.md`](protocol.md#sensitivity-analyses-and-gradients)). Is that grouping reasonable?
-4. **Priorities.** If the remaining three weeks force a cut, which part of §5 matters most for the
-   course: the gradients, APNCU on NOM-007, the period axis, or the analysis image and DOI?
