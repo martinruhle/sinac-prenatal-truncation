@@ -105,13 +105,14 @@ Year of birth enters the analysis in two ways, which answer different questions 
 
 ### Reversal criterion
 
-The decision is reversed only by adding 2019, and only under D-050:
+The decision could be reversed only by adding 2019, and only under D-050:
 
 - `v0.2-progress` has been tagged with all of its committed content.
 - 2019 then gets a timebox of one week of the budget (6 hours) before work on `v1.0` starts.
 - If it does not close within the timebox, 2019 moves to future work.
 
-To keep that cost to the harmonisation itself, the ETL reads each catalogue period through its
+The tag came on 2 November, and the hours left before `v1.0` did not hold that week, so 2019 is
+future work (D-126). To keep its cost to the harmonisation itself, the ETL reads each catalogue period through its
 own adapter, which maps source column names to canonical names. It also registers each period's
 codes as a source vocabulary of its own in `source_to_concept_map`. Adding 2019 then means an
 adapter, mapping rows and the 2019 part of the data dictionary, and no change to cohort or
@@ -422,8 +423,8 @@ What SINAC changes in the algorithm:
     bound, and with the last none would.
   - The article groups initiation by pairs of months because a trimester is too broad, and SINAC
     records exactly that coarser category.
-  - The sensitivity to the rule was cut (D-005, [`roadmap.md`](roadmap.md#43-definition-axes-left-out-of-the-sensitivity-analysis)).
-    The function takes the rule as a parameter.
+  - The sensitivity to the rule, cut by D-005, comes back in `v1.0` with the first and the last
+    month of each trimester (D-127). The function takes the rule as a parameter.
 - **The program's consistency check is applied to the trimester.** Part 3a of the program sets a
   start month above weeks ÷ 4 to missing. Applied to an imputed month 8, it would remove 967 births
   that started care in the third trimester and were delivered at 28 to 31 weeks, all of them
@@ -901,7 +902,7 @@ allow (§Data source). Two more come from the data model
 
 The exposure measures, the analysis and the simulation add five more, stated where they arise:
 
-- APNCU is approximated from the trimester, with a month rule whose sensitivity was cut
+- APNCU is approximated from the trimester, with a month rule whose sensitivity comes in `v1.0`
   (§APNCU).
 - The ACOG schedule of the index is not the Mexican norm (§APNCU).
 - The bounds of the trimesters have no published source (§Trimester boundaries).
@@ -919,14 +920,14 @@ The ones the proposal already anticipated are in
 | What proposal v2 says | What this protocol does | Where |
 |---|---|---|
 | SINAC in the INSP standardized version | SSA/DGIS open data | D-001, D-002 |
-| Period 2019–2023 | 2020–2023 | D-041, §Data source |
+| Period 2019–2023 | 2020–2023; 2019 is future work | D-041, D-126, §Data source |
 | "Births" as the unit, without stating it | The live-birth certificate, which the restriction to singletons makes a pregnancy, with one mother `PERSON` per certificate | D-051, §Design |
 | Preterm cut-offs 37, 34 and 32 with no source | 37 weeks from NOM-007-SSA2-2016 §3.25, over a cohort that starts at 22 weeks (§3.45) | D-053, §Outcome |
 | Inclusion or exclusion of births before week 22 as a sensitivity axis | A base exclusion with its count in the attrition table; the axis is dropped | **D-055 `[SCOPE CHANGE]`** |
 | Nothing about the mother's residence | Residence in Mexico is an eligibility criterion; residence abroad becomes future work, with the signal that motivates it | D-057, [`roadmap.md`](roadmap.md#46-prenatal-care-of-mothers-resident-abroad) |
 | Nothing about missing prenatal care data | The four measures on one set of records with known and coherent prenatal care data | D-086, §Exposure measures |
 | Landmark cohorts at weeks 28, 32 or 34 | The three weeks. D-004 had cut them to one or two, and D-090 restores them | D-090, §Exposure measures |
-| APNCU, with the sensitivity to the month assigned within the trimester | Kotelchuck's program, with one rule: the middle month of the trimester | **D-005 `[SCOPE CHANGE]`**, D-091, D-092 |
+| APNCU, with the sensitivity to the month assigned within the trimester | Kotelchuck's program with the middle month of the trimester; the first and the last month as a sensitivity axis in `v1.0` | D-091, D-092, D-127, which reverses D-005 |
 | Odds ratios adjusted for maternal age and education, insurance, state and year | Adjusted for age, education, state and year; insurance becomes a gradient | **D-007, D-094 `[SCOPE CHANGE]`**, §Analysis |
 | The full sensitivity of the definition for every measure | The full grid for measures (a) and (c) | **D-003 `[SCOPE CHANGE]`**, §Analysis |
 | Visits generated with variation in adherence | Two fixed scenarios, the perfect calendar and a calendar with misses | D-010, D-096, §Null simulation |

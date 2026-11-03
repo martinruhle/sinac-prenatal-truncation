@@ -12,7 +12,7 @@ columns:
   the excluded records with the retained ones. It is not mapped to the CDM (D-123).
 
 The other 42 columns are staged too and are listed by name at the end. Nothing here covers 2019,
-whose variables are `PENDING` unless 2019 is added (D-050).
+whose variables stay `PENDING`: 2019 is future work (D-126).
 
 ## Sources
 
