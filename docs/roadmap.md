@@ -21,7 +21,7 @@ download; **the repository contains no data**, only the code that loads and tran
 | Simulation | The association that truncation produces on its own, under the null hypothesis (NOM-007-SSA2-2016 calendar, [`../config/nom007_schedule.yml`](../config/nom007_schedule.yml)), with two fixed adherence scenarios, compared with the observed records on the risk-difference scale (D-010, D-096, D-097, D-112) |
 | Sensitivity | Preterm cut-off (37/34/32), multiple pregnancies, the years 2020–2021 (2020–2023 against 2022–2023, D-049); gradient by state and by insurance (D-099). Births before week 22 are a base exclusion and no longer an axis (D-055). The full grid runs for measures (a) and (c) only (D-003) |
 | Engineering | `compose.yml`, pytest, CI on GitHub Actions, a single entry point (`scripts/pipeline.py`), and a data dictionary covering the variables actually used (D-011) |
-| Documentation | Reproducible README, limitations, AI-assistance statement, decision log |
+| Documentation | Reproducible README, limitations, AI-assistance statement, decision log, documented literature search ([`literature_search.md`](literature_search.md), D-116) |
 
 ### Planned OMOP mapping decisions
 
