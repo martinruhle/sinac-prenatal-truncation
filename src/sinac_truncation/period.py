@@ -10,7 +10,7 @@ from collections.abc import Sequence
 __all__ = ["STUDY_YEARS", "PeriodError", "format_years", "parse_years"]
 
 #: The study period (D-041): 2020-2023, one catalogue period with identical headers. Development
-#: runs on 2023 alone by passing ``--years 2023`` (D-009); 2019 is a conditional extension (D-050).
+#: runs on 2023 alone by passing ``--years 2023`` (D-009); 2019 is future work (D-126).
 STUDY_YEARS: tuple[int, ...] = (2020, 2021, 2022, 2023)
 
 #: One item of ``--years``: a year, or an inclusive range of years. ``[0-9]`` rather than ``\d``,

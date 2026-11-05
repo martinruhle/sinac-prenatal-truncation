@@ -14,7 +14,7 @@
 #
 # Only the files the project actually uses are listed: the files the source inventory measured to
 # decide the study period. That is the 2020-2023 records of the study period (D-041) and the 2019
-# records, kept because 2019 is a conditional extension (D-050). It also includes the two
+# records, kept for 2019 as future work (D-126). It also includes the two
 # descriptors consulted for them (no descriptor is published for 2015-2019) and the catalogues of
 # both catalogue periods.
 # The 2024 and 2025 files are deliberately not listed (D-048). URLs, versions and the announced

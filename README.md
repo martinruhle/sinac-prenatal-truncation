@@ -204,15 +204,15 @@ The changes are stated against proposal v2, which is translated in
   ([`docs/source_inventory.md`](docs/source_inventory.md)).
 - **Study period.** 2020–2023 replaces 2019–2023 (D-041). The source inventory measured the cost:
   2019 needs a harmonization of its own and has no DGIS descriptor, while the four later years
-  are one catalogue period. 2019 is added only under the criterion of D-050.
+  are one catalogue period. 2019 is future work (D-050, D-126).
 - **Scope.** The adjusted odds ratios use a reduced covariate set, and the sensitivity analysis
   is smaller:
   - the models adjust for maternal age, education, state and year; insurance is not adjusted
     for and becomes the gradient by insurance of `v1.0` (D-007, D-094);
   - the full sensitivity grid runs for two of the four exposure measures (D-003);
-  - two sensitivity axes are dropped: the month assigned within the first-visit trimester for
-    APNCU, which uses one rule (D-005), and birth weight under 2,500 g as an alternative outcome
-    (D-006).
+  - birth weight under 2,500 g as an alternative outcome is dropped as a sensitivity axis
+    (D-006). The month assigned within the first-visit trimester for APNCU was dropped too
+    (D-005), and comes back in `v1.0` (D-127).
 
   A third axis, births before week 22, is dropped too. The exclusion stays in the base cohort,
   with its count in the attrition table: 701 records in 2020–2023 (D-055). The three landmark
@@ -288,7 +288,7 @@ pipeline fails on purpose. The manifest lists the files the
 [source inventory](docs/source_inventory.md) measured:
 
 - the 2020–2023 records of the study period;
-- the 2019 records, kept because 2019 is a conditional extension (D-050);
+- the 2019 records, kept for 2019 as future work (D-126);
 - the descriptors and catalogues of both catalogue periods.
 
 ## Limitations
@@ -326,8 +326,8 @@ Two come from the data model ([`docs/omop_mapping.md`](docs/omop_mapping.md)):
 Five come from the exposure measures, the analysis and the null simulation
 ([`docs/protocol.md`](docs/protocol.md#limitations)):
 
-- **APNCU is approximated from the trimester**, with a month rule whose sensitivity was cut
-  ([§APNCU](docs/protocol.md#apncu-measure-b), D-005, D-092).
+- **APNCU is approximated from the trimester**, with a month rule whose sensitivity comes in
+  `v1.0` ([§APNCU](docs/protocol.md#apncu-measure-b), D-092, D-127).
 - **The ACOG schedule of the index is not the Mexican norm**
   ([§APNCU](docs/protocol.md#apncu-measure-b)).
 - **The bounds of the trimesters have no published source**
