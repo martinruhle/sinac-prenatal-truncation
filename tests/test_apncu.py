@@ -1,17 +1,26 @@
-"""Tests for measure (b), the APNCU index of Kotelchuck's SAS program (D-091, D-092)."""
+"""Tests for measure (b), the APNCU index of Kotelchuck's SAS program (D-091, D-092).
+
+Two reference tables: the ACOG schedule of the program, the calendar of the main analysis, and
+the NOM-007 calendar of the variant, whose two rules are the author's criteria (D-128, D-129).
+"""
 
 import pytest
 
 from sinac_truncation.apncu import (
+    ACOG_MIDPOINT,
+    FIRST_MONTH_RULE,
+    LAST_MONTH_RULE,
     MIDDLE_MONTH_RULE,
     ApncuInputError,
     ApncuLevel,
+    apncu_variants,
     compute_apncu,
 )
 
-#: The first month of each trimester. Not a rule of the study (D-005): it is the rule that turns
-#: trimester 2 into month 4, the start month of the article's worked example.
-FIRST_MONTH_RULE: tuple[int, int, int] = (1, 4, 7)
+#: The first week of each visit of NOM-007-SSA2-2016 §5.2.1.15, as `config/nom007_schedule.yml`
+#: copies them. A range of weeks is read by its first week (D-128), so these are the weeks the
+#: variant reads; `tests/test_nom007_schedule.py` ties this tuple to the file.
+NOM007_CALENDAR: tuple[int, ...] = (6, 10, 16, 22, 28, 32, 36, 38)
 
 
 @pytest.mark.parametrize(
@@ -47,7 +56,8 @@ FIRST_MONTH_RULE: tuple[int, int, int] = (1, 4, 7)
         # SAS
         pytest.param(10, 1, 34, MIDDLE_MONTH_RULE, 9, 8, 125.0, ApncuLevel.ADEQUATE_PLUS,
                      id="34w-t1-10-week-34"),
-        # Article + SAS
+        # Article + SAS. FIRST_MONTH_RULE is the rule that turns trimester 2 into month 4, the
+        # start month of the article's worked example; it is also one side of the axis of D-127.
         pytest.param(11, 2, 40, FIRST_MONTH_RULE, 14, 11, 100.0, ApncuLevel.ADEQUATE,
                      id="40w-t2-11-article-example"),
     ],
@@ -196,3 +206,177 @@ def test_records_the_common_set_removes_are_refused(
 def test_a_month_rule_outside_its_trimesters_is_refused(rule: tuple[int, int, int]) -> None:
     with pytest.raises(ApncuInputError, match="trimester"):
         compute_apncu(1, 1, 40, month_rule=rule)
+
+
+@pytest.mark.parametrize(
+    ("visits", "trimester", "weeks", "recommended", "expected", "ratio", "level"),
+    [
+        # Worked row, worked out in this docstring.
+        pytest.param(8, 1, 40, 8, 8, 100.0, ApncuLevel.ADEQUATE,
+                     id="nom-40w-t1-8-the-full-calendar-at-term"),
+        # Trace: the seventh visit is the last one a birth at 37 weeks reached (week 36), and
+        # month 2 deducts nothing, so eight visits are more than expected.
+        pytest.param(8, 1, 37, 7, 7, 114.29, ApncuLevel.ADEQUATE_PLUS,
+                     id="nom-37w-t1-8-above-the-seven-visits-reached"),
+        # Blind row (D-128): the eighth visit, between 38 and 41 weeks, enters at 38.
+        pytest.param(8, 1, 38, 8, 8, 100.0, ApncuLevel.ADEQUATE,
+                     id="nom-38w-t1-8-the-eighth-visit-enters"),
+        # Trace: month 5 deducts the visits of weeks 6 and 10, so six visits meet the six
+        # expected; care began after month 4, which SAS part 7 rates Inadequate whatever the
+        # ratio.
+        pytest.param(6, 2, 40, 8, 6, 100.0, ApncuLevel.INADEQUATE,
+                     id="nom-40w-t2-6-start-after-month-4"),
+        # Blind row (D-129): the visits a second-trimester start misses, on a preterm birth.
+        pytest.param(5, 2, 32, 6, 4, 125.0, ApncuLevel.INADEQUATE,
+                     id="nom-32w-t2-5-missed-visits-of-a-later-start"),
+        # Trace: at 28 weeks the calendar reached five visits and month 8 deducts four, which is
+        # the floor of one of SAS part 6 reached exactly.
+        pytest.param(1, 3, 28, 5, 1, 100.0, ApncuLevel.INADEQUATE,
+                     id="nom-28w-t3-1-floor-of-one"),
+        # Trace: no care deducts nothing (month 0) and gives a ratio of 0.
+        pytest.param(0, 0, 39, 8, 8, 0.0, ApncuLevel.INADEQUATE,
+                     id="nom-39w-t0-0-no-care"),
+        # Trace: the lowest week of the cohort reached the four visits of weeks 6 to 22.
+        pytest.param(4, 1, 22, 4, 4, 100.0, ApncuLevel.ADEQUATE,
+                     id="nom-22w-t1-4-lowest-week-of-the-cohort"),
+        # Trace: the calendar ends at eight visits, so a higher count raises the ratio alone.
+        pytest.param(20, 1, 39, 8, 8, 250.0, ApncuLevel.ADEQUATE_PLUS,
+                     id="nom-39w-t1-20-above-the-calendar"),
+        # Trace: the calendar has no visit after week 38, so 45 weeks expects the same eight.
+        # On the ACOG schedule the same record is Inadequate (19 recommended, 44.44 %).
+        pytest.param(8, 1, 45, 8, 8, 100.0, ApncuLevel.ADEQUATE,
+                     id="nom-45w-t1-8-highest-week-of-the-data"),
+        # Trace: at 34 weeks the calendar reached six visits (weeks 6 to 32).
+        pytest.param(6, 1, 34, 6, 6, 100.0, ApncuLevel.ADEQUATE,
+                     id="nom-34w-t1-6-week-34"),
+    ],
+)  # fmt: skip
+def test_the_nom007_reference_table(
+    visits: int,
+    trimester: int,
+    weeks: int,
+    recommended: int,
+    expected: int,
+    ratio: float,
+    level: ApncuLevel,
+) -> None:
+    """Eleven records of the NOM-007 variant, one step of the algorithm per column.
+
+    The columns are those of the ACOG table above, with the expected visits taken from
+    :data:`NOM007_CALENDAR` instead of the program's table. The variant is ``nom007_midpoint``,
+    so the month rule is the middle month of D-092 (D-130).
+
+    The recipe. Every row follows from the calendar and the two rules of docs/protocol.md
+    §APNCU:
+
+    1. **Recommended** (D-128): the visits of the calendar whose first week the pregnancy
+       reached, that is how many of 6, 10, 16, 22, 28, 32, 36 and 38 are at most the weeks at
+       delivery.
+    2. **Expected** (D-129): recommended minus the visits that fall before the month care began,
+       a month being four completed weeks. The middle months 2, 5 and 8 begin at weeks 4, 16 and
+       28, so they deduct 0, 2 and 4 visits; no care deducts nothing. The floor is one visit.
+    3. **Ratio**: observed over expected, in percent, rounded here to two decimals.
+    4. **Level**: SAS parts 5 to 7, which the calendar does not change. Care begun after month 4
+       is Inadequate whatever the ratio, so every second and third trimester start is Inadequate.
+
+    The worked row, 8 visits, first trimester, 40 weeks. The pregnancy reached all eight visits
+    of the calendar (38 <= 40), so eight are recommended. The middle month of the first trimester
+    is month 2, which begins at week 4 (4 x (2 - 1)); no visit of the calendar falls before week
+    4, so nothing is deducted and eight are expected. The ratio is 8 / 8 = 100 %, which SAS part
+    6 rates Adequate (above 79.99 and not above 109.99). Month 2 is Adequate Plus initiation, so
+    part 7 keeps the level of received services: Adequate. The same record on the ACOG schedule
+    is Intermediate: 14 recommended, 13 expected after month 2, a ratio of 61.54 %.
+
+    Two rows are blind: the author worked them out from the recipe alone, one for each of the two
+    rules. The rest carry the trace above each row (issue #66).
+    """
+    result = compute_apncu(
+        visits, trimester, weeks, month_rule=MIDDLE_MONTH_RULE, calendar=NOM007_CALENDAR
+    )
+    assert result.recommended_visits == recommended
+    assert result.expected_visits == expected
+    assert result.ratio_percent == pytest.approx(ratio, abs=0.01)
+    assert result.level is level
+
+
+@pytest.mark.parametrize(
+    ("weeks", "recommended"),
+    [
+        (18, 3), (21, 3), (22, 4), (27, 4), (28, 5), (31, 5), (32, 6), (35, 6),
+        (36, 7), (37, 7), (38, 8), (41, 8), (50, 8),
+    ],
+)  # fmt: skip
+def test_recommended_visits_follow_the_nom007_calendar(weeks: int, recommended: int) -> None:
+    """Each bound of the calendar read by the first week of every visit (D-128).
+
+    The eighth visit enters at 38 weeks, the first week of its range of 38 to 41, and the
+    calendar asks for nothing after it: a post-term birth expects the same eight visits.
+    """
+    result = compute_apncu(0, 0, weeks, calendar=NOM007_CALENDAR)
+    assert result.recommended_visits == recommended
+    assert result.expected_visits == recommended
+
+
+@pytest.mark.parametrize(
+    ("month", "expected"),
+    [(1, 8), (2, 8), (3, 7), (4, 6), (5, 6), (6, 5), (7, 4), (8, 4), (9, 3)],
+)
+def test_the_start_month_deducts_the_calendar_visits_before_it(month: int, expected: int) -> None:
+    """At 40 weeks the calendar recommends eight visits, and a start in month m deducts those
+    before week 4 (m - 1): 0, 0, 1, 2, 2, 3, 4, 4 and 5 visits for months 1 to 9 (D-129).
+
+    Each month is reached through a rule that places it in its own trimester, as the ACOG test
+    above does.
+    """
+    trimester = (month - 1) // 3 + 1
+    rule = list(FIRST_MONTH_RULE)
+    rule[trimester - 1] = month
+    result = compute_apncu(
+        1, trimester, 40, month_rule=(rule[0], rule[1], rule[2]), calendar=NOM007_CALENDAR
+    )
+    assert result.start_month == month
+    assert result.expected_visits == expected
+
+
+def test_the_middle_month_deducts_what_the_trimester_boundaries_would() -> None:
+    """The rejected alternative of D-129 deducts the visits before the first week of the
+    trimester: before weeks 0, 14 and 28 of D-092, that is 0, 2 and 4 visits.
+
+    Those are the three counts the middle month gives, so the variant of the main analysis does
+    not depend on which of the two rules was chosen. The axis of D-127 does: the last month of
+    each trimester deducts 1, 3 and 5 instead.
+    """
+    boundaries = [sum(1 for week in NOM007_CALENDAR if week < start) for start in (0, 14, 28)]
+    middle = [
+        compute_apncu(1, trimester, 40, calendar=NOM007_CALENDAR).expected_visits
+        for trimester in (1, 2, 3)
+    ]
+    assert boundaries == [0, 2, 4]
+    assert middle == [8 - 0, 8 - 2, 8 - 4]
+
+
+def test_the_four_variants_are_the_two_calendars_and_the_month_rules() -> None:
+    """D-130: the month rule varies on the ACOG schedule alone, and the NOM-007 variant keeps
+    the middle month. The names are the values of the column variant of D-098.
+    """
+    variants = apncu_variants(NOM007_CALENDAR)
+    assert [variant.name for variant in variants] == [
+        "acog_midpoint",
+        "acog_first",
+        "acog_last",
+        "nom007_midpoint",
+    ]
+    assert variants[0] == ACOG_MIDPOINT
+    assert [variant.calendar for variant in variants] == [None, None, None, NOM007_CALENDAR]
+    assert [variant.month_rule for variant in variants] == [
+        MIDDLE_MONTH_RULE,
+        FIRST_MONTH_RULE,
+        LAST_MONTH_RULE,
+        MIDDLE_MONTH_RULE,
+    ]
+
+
+@pytest.mark.parametrize("calendar", [(), (6, 10, 10), (10, 6)])
+def test_a_calendar_without_rising_weeks_is_refused(calendar: tuple[int, ...]) -> None:
+    with pytest.raises(ApncuInputError, match="calendar"):
+        compute_apncu(1, 1, 40, calendar=calendar)

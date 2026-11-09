@@ -212,7 +212,7 @@ The changes are stated against proposal v2, which is translated in
   - the full sensitivity grid runs for two of the four exposure measures (D-003);
   - birth weight under 2,500 g as an alternative outcome is dropped as a sensitivity axis
     (D-006). The month assigned within the first-visit trimester for APNCU was dropped too
-    (D-005), and comes back in `v1.0` (D-127).
+    (D-005) and came back in `v1.0` as two of the four variants of measure (b) (D-127, D-130).
 
   A third axis, births before week 22, is dropped too. The exclusion stays in the base cohort,
   with its count in the attrition table: 701 records in 2020–2023 (D-055). The three landmark
@@ -326,10 +326,13 @@ Two come from the data model ([`docs/omop_mapping.md`](docs/omop_mapping.md)):
 Five come from the exposure measures, the analysis and the null simulation
 ([`docs/protocol.md`](docs/protocol.md#limitations)):
 
-- **APNCU is approximated from the trimester**, with a month rule whose sensitivity comes in
-  `v1.0` ([§APNCU](docs/protocol.md#apncu-measure-b), D-092, D-127).
-- **The ACOG schedule of the index is not the Mexican norm**
-  ([§APNCU](docs/protocol.md#apncu-measure-b)).
+- **APNCU is approximated from the trimester**, with a month rule whose sensitivity is now
+  reported: the first and the last month of each trimester against the middle month
+  ([§APNCU](docs/protocol.md#apncu-measure-b), D-092, D-127, D-130).
+- **The ACOG schedule of the index is not the Mexican norm.** The index keeps it, so it can be
+  compared with the literature, and a variant on the NOM-007 calendar is reported beside it; the
+  two rules that variant needs are the author's criteria
+  ([§APNCU](docs/protocol.md#apncu-measure-b), D-128, D-129).
 - **The bounds of the trimesters have no published source**
   ([§Trimester boundaries](docs/protocol.md#trimester-boundaries), D-092).
 - **The intervals of the definition with multiples ignore the twins of one pregnancy**

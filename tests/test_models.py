@@ -15,6 +15,7 @@ import pytest
 import statsmodels.api as sm
 from statsmodels.tools.sm_exceptions import ConvergenceWarning
 
+from sinac_truncation.apncu import apncu_variants
 from sinac_truncation.measures import (
     APNCU_VARIANT,
     FIRST_TRIMESTER,
@@ -429,3 +430,77 @@ def test_the_report_pairs_the_models_of_each_cut_off_apart() -> None:
     )
     assert [line.split()[:2] for line in lines[1:]] == [["2", "37"], ["2", "34"]]
     assert [line.split()[-2] for line in lines[1:]] == ["1.065", "1.200"]
+
+
+# --- The variants of measure (b) ----------------------------------------------------------------
+
+VARIANTS = apncu_variants((6, 10, 16, 22, 28, 32, 36, 38))
+
+
+@pytest.mark.filterwarnings("ignore:Perfect separation", "ignore:divide by zero")
+def test_measure_b_is_estimated_once_per_variant() -> None:
+    """D-130: the four variants each get their own crude and adjusted model, and the other
+    measures keep an empty variant. The rows of `acog_midpoint` are those of the main analysis,
+    which is the default when no variant is passed."""
+    cells = _cells(_individuals())
+    found = observed_estimates(2, ("b", "c"), cells, CUTS, period="2022-2023", variants=VARIANTS)
+    names = [variant.name for variant in VARIANTS]
+    assert {row.variant for row in found.estimates if row.measure == "b"} == set(names)
+    assert {row.variant for row in found.estimates if row.measure == "c"} == {""}
+    assert {row.variant for row in found.distribution if row.measure == "b"} == set(names)
+    for name in names:
+        rows = [row for row in found.estimates if row.variant == name]
+        assert {row.model for row in rows} == {CRUDE, ADJUSTED}
+
+    main = observed_estimates(2, ("b",), cells, CUTS, period="2022-2023")
+    assert [row for row in found.estimates if row.variant == APNCU_VARIANT] == main.estimates
+    assert [row for row in found.distribution if row.variant == APNCU_VARIANT] == main.distribution
+
+
+@pytest.mark.filterwarnings("ignore:Perfect separation", "ignore:divide by zero")
+def test_the_variants_do_not_rate_the_same_births_the_same_way() -> None:
+    """The variants are only worth estimating if they move the index: the month rule changes the
+    expected visits of a first-trimester start, and the NOM-007 calendar expects eight visits
+    where the ACOG schedule expects thirteen at 39 weeks (D-128)."""
+    combinations = summed(_cells(_individuals()))
+    counted = {
+        variant.name: level_counts(combinations, "b", CUTS, apncu=variant) for variant in VARIANTS
+    }
+    assert counted["acog_midpoint"] != counted["acog_first"]
+    assert counted["acog_midpoint"] != counted["acog_last"]
+    assert counted["acog_midpoint"] != counted["nom007_midpoint"]
+
+
+def test_the_simulated_rows_carry_the_variants_too() -> None:
+    """The simulation has crude rows only (D-098), one set per variant."""
+    pregnancies = [Combination(39, 1, 9, 400), Combination(35, 1, 4, 100)]
+    found = simulated_estimates(
+        "e1",
+        pregnancies,
+        CUTS,
+        analysis_definition=2,
+        landmarks={},
+        period="2022-2023",
+        variants=VARIANTS,
+    )
+    assert {row.variant for row in found.estimates if row.measure == "b"} == {
+        variant.name for variant in VARIANTS
+    }
+    assert {row.model for row in found.estimates} == {CRUDE}
+
+
+def test_the_report_tells_the_variants_apart() -> None:
+    """``pipeline.py estimate`` prints one line per level of each variant, so the line has to
+    name it."""
+    cells = _cells(_individuals())
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        found = observed_estimates(2, ("b",), cells, CUTS, period="2022-2023", variants=VARIANTS)
+    lines = format_estimates(found.estimates)
+    assert lines[0].split() == [
+        "def", "cut", "measure", "variant", "level", "births", "preterm", "crude", "OR",
+        "(95", "%", "CI)", "adjusted", "OR", "(95", "%", "CI)",
+    ]  # fmt: skip
+    assert len(lines) == 1 + len([row for row in found.estimates if row.model == CRUDE])
+    for variant in VARIANTS:
+        assert any(variant.name in line for line in lines[1:])
