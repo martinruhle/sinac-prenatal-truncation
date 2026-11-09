@@ -206,65 +206,91 @@ def test_a_run_estimates_the_crude_and_adjusted_odds_ratios_of_the_records(
     assert run.period == "2023"
     # The main analysis; the alternative definitions are tested below.
     observed = {
-        (row.measure, row.level, row.model): row
+        (row.measure, row.variant, row.level, row.model): row
         for row in run.estimates
         if row.source == OBSERVED
         and row.definition != MULTIPLES_DEFINITION
         and row.outcome_cutoff == PRETERM_WEEKS
     }
     # Measure (c): 6 preterm of 10 later starts against 3 of 8 first-trimester starts.
-    crude = observed["c", LATER_OR_NO_CARE, CRUDE]
+    crude = observed["c", "", LATER_OR_NO_CARE, CRUDE]
     margin = 1.959964 * sqrt(1 / 6 + 1 / 4 + 1 / 3 + 1 / 5)
     assert (crude.births, crude.preterm) == (10, 6)
     assert (crude.odds_ratio, crude.lower, crude.upper) == pytest.approx(
         (2.5, exp(log(2.5) - margin), exp(log(2.5) + margin)), rel=1e-6
     )
-    assert observed["c", LATER_OR_NO_CARE, ADJUSTED].odds_ratio == pytest.approx(2.0, rel=1e-8)
+    assert observed["c", "", LATER_OR_NO_CARE, ADJUSTED].odds_ratio == pytest.approx(2.0, rel=1e-8)
 
-    # Every record has 8 visits, so (a), (a) per count and (d) have the reference alone. In (b)
-    # the reference, Adequate, holds the 3 preterm first-trimester starts at 35 weeks and no term
-    # birth, so no level has an estimate, and the adjusted model sets aside Adequate and
-    # Intermediate, the 5 term first-trimester starts.
+    # Every record has 8 visits, so (a), (a) per count and (d) have the reference alone. Measure
+    # (b) has one set of rows per variant (D-130), and the four rate these 18 births differently:
+    # the 3 preterm first-trimester starts at 35 weeks are Adequate on acog_midpoint and
+    # acog_first, the reference, and Adequate Plus on acog_last and nom007_midpoint, whose
+    # expected counts are lower. No level of (b) has an estimate: in every variant the reference
+    # holds births of one outcome only, or none at all.
     assert sorted(observed) == [
-        ("b", "Inadequate", ADJUSTED),
-        ("b", "Inadequate", CRUDE),
-        ("b", "Intermediate", ADJUSTED),
-        ("b", "Intermediate", CRUDE),
-        ("c", LATER_OR_NO_CARE, ADJUSTED),
-        ("c", LATER_OR_NO_CARE, CRUDE),
+        ("b", "acog_first", "Adequate Plus", ADJUSTED),
+        ("b", "acog_first", "Adequate Plus", CRUDE),
+        ("b", "acog_first", "Intermediate", ADJUSTED),
+        ("b", "acog_first", "Intermediate", CRUDE),
+        ("b", "acog_last", "Adequate Plus", ADJUSTED),
+        ("b", "acog_last", "Adequate Plus", CRUDE),
+        ("b", "acog_last", "Inadequate", ADJUSTED),
+        ("b", "acog_last", "Inadequate", CRUDE),
+        ("b", "acog_last", "Intermediate", ADJUSTED),
+        ("b", "acog_last", "Intermediate", CRUDE),
+        ("b", "acog_midpoint", "Inadequate", ADJUSTED),
+        ("b", "acog_midpoint", "Inadequate", CRUDE),
+        ("b", "acog_midpoint", "Intermediate", ADJUSTED),
+        ("b", "acog_midpoint", "Intermediate", CRUDE),
+        ("b", "nom007_midpoint", "Adequate Plus", ADJUSTED),
+        ("b", "nom007_midpoint", "Adequate Plus", CRUDE),
+        ("b", "nom007_midpoint", "Inadequate", ADJUSTED),
+        ("b", "nom007_midpoint", "Inadequate", CRUDE),
+        ("c", "", LATER_OR_NO_CARE, ADJUSTED),
+        ("c", "", LATER_OR_NO_CARE, CRUDE),
     ]
     assert all(observed[key].odds_ratio is None for key in observed if key[0] == "b")
-    # Under 34 and under 32 weeks no birth is preterm, so every level of (a) and (c) is all term.
+    # The adjusted model of each variant sets aside the levels whose births are all preterm or
+    # all term: the 3 preterm and the 5 term first-trimester starts, except on acog_first, where
+    # the 6 preterm later starts are Adequate Plus and the 5 term first-trimester starts
+    # Intermediate. Under 34 and under 32 weeks no birth is preterm, so every level of (a) and
+    # (c) is all term.
     assert run.set_aside == {
-        (2, 37, "b"): 8,
+        (2, 37, "b (acog_midpoint)"): 8,
+        (2, 37, "b (acog_first)"): 11,
+        (2, 37, "b (acog_last)"): 8,
+        (2, 37, "b (nom007_midpoint)"): 8,
         **{(2, cutoff, measure): 18 for cutoff in (34, 32) for measure in ("a", "c")},
     }
 
-    # The distribution splits the 18 births of each measure, definition and cut-off by outcome:
-    # 9 births at 35 weeks are preterm under 37 weeks and term under 34 or 32. Every record is a
-    # singleton, so the definition with multiples holds the same births.
+    # The distribution splits the 18 births of each measure, variant, definition and cut-off by
+    # outcome: 9 births at 35 weeks are preterm under 37 weeks and term under 34 or 32. Every
+    # record is a singleton, so the definition with multiples holds the same births.
     observed_distribution = [row for row in run.distribution if row.source == OBSERVED]
-    found = {(row.definition, row.outcome_cutoff, row.measure) for row in observed_distribution}
+    found = {
+        (row.definition, row.outcome_cutoff, row.measure, row.variant)
+        for row in observed_distribution
+    }
     assert found == {
-        (2, 37, "a"),
-        (2, 37, "a_count"),
-        (2, 37, "b"),
-        (2, 37, "c"),
-        (3, 37, "d"),
-        (4, 37, "d"),
-        (5, 37, "d"),
-        (2, 34, "a"),
-        (2, 34, "c"),
-        (2, 32, "a"),
-        (2, 32, "c"),
-        (6, 37, "a"),
-        (6, 37, "c"),
+        (2, 37, "a", ""),
+        (2, 37, "a_count", ""),
+        *((2, 37, "b", variant.name) for variant in script.read_variants()),
+        (2, 37, "c", ""),
+        (3, 37, "d", ""),
+        (4, 37, "d", ""),
+        (5, 37, "d", ""),
+        (2, 34, "a", ""),
+        (2, 34, "c", ""),
+        (2, 32, "a", ""),
+        (2, 32, "c", ""),
+        (6, 37, "a", ""),
+        (6, 37, "c", ""),
     }
     for key in found:
         rows = [
             row
             for row in observed_distribution
-            if (row.definition, row.outcome_cutoff, row.measure) == key
+            if (row.definition, row.outcome_cutoff, row.measure, row.variant) == key
         ]
         assert sum(row.births for row in rows) == 18
         preterm = sum(row.births for row in rows if row.outcome == "preterm")

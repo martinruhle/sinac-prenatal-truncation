@@ -287,8 +287,9 @@ def test_the_nom007_reference_table(
     part 7 keeps the level of received services: Adequate. The same record on the ACOG schedule
     is Intermediate: 14 recommended, 13 expected after month 2, a ratio of 61.54 %.
 
-    Two rows are blind: the author worked them out from the recipe alone, one for each of the two
-    rules. The rest carry the trace above each row (issue #66).
+    Two rows are blind, one for each rule: ``nom-38w-t1-8-the-eighth-visit-enters`` for D-128 and
+    ``nom-32w-t2-5-missed-visits-of-a-later-start`` for D-129. The rest carry the trace above each
+    row. PENDING: the author's independent check of the two blind rows (issue #66).
     """
     result = compute_apncu(
         visits, trimester, weeks, month_rule=MIDDLE_MONTH_RULE, calendar=NOM007_CALENDAR
