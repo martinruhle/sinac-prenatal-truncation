@@ -289,7 +289,19 @@ def test_the_nom007_reference_table(
 
     Two rows are blind, one for each rule: ``nom-38w-t1-8-the-eighth-visit-enters`` for D-128 and
     ``nom-32w-t2-5-missed-visits-of-a-later-start`` for D-129. The rest carry the trace above each
-    row. PENDING: the author's independent check of the two blind rows (issue #66).
+    row.
+
+    The author's blind computation agreed on what each of the two rows tests, the eighth visit
+    entering at 38 weeks and the two visits a month 5 start misses, and differed twice after
+    that. The trace settled both and the table stands (issue #66):
+
+    - It deducted one visit for month 2, the deduction of the ACOG table. On this calendar month
+      2 deducts nothing: the first visit of NOM-007 falls between weeks 6 and 8, inside month 2,
+      so a start there misses no visit. That the ACOG table does not carry over is why D-129
+      exists.
+    - It read a ratio of 125 % at a month 5 start as Adequate Plus, which is the level of
+      received services. The summary index of SAS part 7 is Inadequate whenever care began after
+      month 4, whatever the ratio.
     """
     result = compute_apncu(
         visits, trimester, weeks, month_rule=MIDDLE_MONTH_RULE, calendar=NOM007_CALENDAR
