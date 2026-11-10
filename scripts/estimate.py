@@ -27,6 +27,7 @@ from psycopg import sql
 
 import etl
 import sql_runner
+from sinac_truncation.apncu import ApncuVariant, apncu_variants
 from sinac_truncation.cohorts import LANDMARK_WEEKS, MULTIPLES_DEFINITION
 from sinac_truncation.measures import PRETERM_WEEKS, VisitCuts
 from sinac_truncation.models import (
@@ -44,7 +45,7 @@ from sinac_truncation.models import (
     simulated_estimates,
 )
 from sinac_truncation.period import format_years
-from sinac_truncation.simulation import Combination
+from sinac_truncation.simulation import Combination, SimulationError, calendar_first_weeks
 from sinac_truncation.sqltext import render_sql
 
 #: Repository root, reached from this file so no absolute path is written down (rule 12).
@@ -92,6 +93,19 @@ def read_cuts(schedule: Path = SCHEDULE) -> VisitCuts:
         return VisitCuts.from_schedule(document)
     except (OSError, yaml.YAMLError, KeyError, TypeError, ValueError) as error:
         raise EstimateError(f"cannot read the cut points of {schedule.name}: {error}") from error
+
+
+def read_variants(schedule: Path = SCHEDULE) -> tuple[ApncuVariant, ...]:
+    """The variants of measure (b), the NOM-007 one on the calendar of the file (D-130).
+
+    Raises:
+        EstimateError: the file is missing or malformed.
+    """
+    try:
+        document = yaml.safe_load(schedule.read_text(encoding="utf-8"))
+        return apncu_variants(calendar_first_weeks(document))
+    except (OSError, yaml.YAMLError, KeyError, TypeError, SimulationError) as error:
+        raise EstimateError(f"cannot read the calendar of {schedule.name}: {error}") from error
 
 
 def read_sql(sql_dir: Path = SQL_DIR) -> dict[str, str]:
@@ -236,6 +250,7 @@ def run(
     """
     start = time.perf_counter()
     cuts = read_cuts(schedule)
+    variants = read_variants(schedule)
     sql_texts = read_sql(sql_dir)
     # Per definition, its models as (measures, cut-off): the main analysis, then each alternative
     # definition of the sensitivity analysis.
@@ -254,7 +269,13 @@ def run(
             for names, cutoff in fits:
                 try:
                     found = observed_estimates(
-                        definition, names, cells, cuts, period=result.period, preterm_weeks=cutoff
+                        definition,
+                        names,
+                        cells,
+                        cuts,
+                        period=result.period,
+                        preterm_weeks=cutoff,
+                        variants=variants,
                     )
                 except ModelError as error:
                     raise EstimateError(
@@ -269,6 +290,7 @@ def run(
                 analysis_definition=ANALYSIS_DEFINITION,
                 landmarks=LANDMARK_WEEKS,
                 period=result.period,
+                variants=variants,
             )
             result.add(found, ANALYSIS_DEFINITION, PRETERM_WEEKS)
         write(cur, schemas, result)

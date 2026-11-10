@@ -45,7 +45,8 @@ CREATE TABLE @results_schema.simulated_combination (
 CREATE TABLE @results_schema.truncation_share (
     cohort_definition_id integer NOT NULL,
     measure text NOT NULL,
-    -- acog_midpoint for (b), empty for the other measures (docs/protocol.md §Output tables).
+    -- One of the four variants of (b), empty for the other measures (docs/protocol.md §Output
+    -- tables, §APNCU, D-130).
     variant text NOT NULL,
     level text NOT NULL,
     scenario text NOT NULL,

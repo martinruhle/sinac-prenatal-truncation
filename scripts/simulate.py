@@ -26,6 +26,7 @@ from psycopg import sql
 
 import etl
 import sql_runner
+from sinac_truncation.apncu import apncu_variants
 from sinac_truncation.cohorts import LANDMARK_WEEKS
 from sinac_truncation.measures import (
     FIRST_TRIMESTER,
@@ -211,12 +212,14 @@ def compute(settings: Settings, observed: Mapping[int, Sequence[Combination]]) -
         )
         for scenario in settings.scenarios
     }
+    variants = apncu_variants(settings.first_weeks)
     rows = compare(
         observed,
         simulated,
         settings.cuts,
         analysis_definition=ANALYSIS_DEFINITION,
         landmarks=LANDMARK_WEEKS,
+        variants=variants,
     )
     for row in rows:
         if row.measure == "c" and excludes_one(row.share.simulated):
@@ -243,6 +246,7 @@ def compute(settings: Settings, observed: Mapping[int, Sequence[Combination]]) -
         settings.cuts,
         analysis_definition=ANALYSIS_DEFINITION,
         landmarks=LANDMARK_WEEKS,
+        variants=variants,
     )
     return Run(calibration, simulated, rows, largest_share_difference(rows, exact_rows))
 

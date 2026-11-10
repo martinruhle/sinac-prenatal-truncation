@@ -35,8 +35,8 @@ from statsmodels.tools.sm_exceptions import (
     SingularMatrixWarning,
 )
 
+from sinac_truncation.apncu import ACOG_MIDPOINT, ApncuVariant
 from sinac_truncation.measures import (
-    APNCU_VARIANT,
     PRETERM_WEEKS,
     SENSITIVITY_CUTOFFS,
     LevelCount,
@@ -47,6 +47,7 @@ from sinac_truncation.measures import (
     ordered_levels,
     reached,
     reference_level,
+    variant_of,
 )
 from sinac_truncation.simulation import Combination
 
@@ -188,8 +189,16 @@ class Estimates:
 
     estimates: list[EstimateRow] = field(default_factory=list)
     distribution: list[DistributionRow] = field(default_factory=list)
-    #: Per measure, the births the adjusted model set aside; only measures where it set some.
+    #: Per measure, with its variant for (b) (:func:`_set_aside_key`), the births the adjusted
+    #: model set aside; only the measures where it set some.
     set_aside: dict[str, int] = field(default_factory=dict)
+
+
+def _set_aside_key(measure: str, apncu: ApncuVariant) -> str:
+    """The name of one measure in the report of the births an adjusted model set aside: the
+    measure with its variant for (b), so the variants are told apart (D-118, D-130)."""
+    variant = variant_of(measure, apncu)
+    return f"{measure} ({variant})" if variant else measure
 
 
 def definition_measures(
@@ -239,6 +248,7 @@ def model_table(
     cuts: VisitCuts,
     *,
     preterm_weeks: int = PRETERM_WEEKS,
+    apncu: ApncuVariant = ACOG_MIDPOINT,
 ) -> list[ModelRow]:
     """The table of the model of one measure: the births and preterm births per level and
     combination of covariates, sorted by both. The database returns the cells in no fixed
@@ -251,7 +261,9 @@ def model_table(
         combination = (cell.weeks, cell.trimester, cell.visits)
         level = levels.get(combination)
         if level is None:
-            level = measure_level(measure, Combination(*combination, cell.births), cuts)
+            level = measure_level(
+                measure, Combination(*combination, cell.births), cuts, apncu=apncu
+            )
             levels[combination] = level
         key = (level, (cell.age_group, cell.education, cell.state, cell.year))
         births[key] += cell.births
@@ -394,8 +406,9 @@ def _distribution(
     measure: str,
     counts: Mapping[str, LevelCount],
     cuts: VisitCuts,
+    apncu: ApncuVariant,
 ) -> list[DistributionRow]:
-    variant = APNCU_VARIANT if measure == "b" else ""
+    variant = variant_of(measure, apncu)
     rows = []
     for level in ordered_levels(measure, counts, cuts):
         count = counts[level]
@@ -417,11 +430,12 @@ def _estimate_rows(
     measure: str,
     counts: Mapping[str, LevelCount],
     cuts: VisitCuts,
+    apncu: ApncuVariant,
     odds_ratios: Mapping[str, Mapping[str, OddsRatio]],
 ) -> list[EstimateRow]:
     """One row per level but the reference and per model, in the order of the levels."""
     reference = reference_level(measure, cuts)
-    variant = APNCU_VARIANT if measure == "b" else ""
+    variant = variant_of(measure, apncu)
     rows = []
     for level in ordered_levels(measure, set(counts) - {reference}, cuts):
         count = counts[level]
@@ -452,9 +466,13 @@ def observed_estimates(
     *,
     period: str,
     preterm_weeks: int = PRETERM_WEEKS,
+    variants: Sequence[ApncuVariant] = (ACOG_MIDPOINT,),
 ) -> Estimates:
     """The crude and adjusted estimates and the exposure distribution of the measures of one
     observed definition, from its aggregated table.
+
+    Measure (b) is estimated once per variant of ``variants``, each with its own crude and
+    adjusted model (D-130); the other measures have one definition each.
 
     Raises:
         ModelError: an adjusted model cannot be fitted.
@@ -462,16 +480,20 @@ def observed_estimates(
     combinations = summed(cells)
     result = Estimates()
     for measure in measures:
-        counts = level_counts(combinations, measure, cuts, preterm_weeks=preterm_weeks)
-        reference = reference_level(measure, cuts)
-        fit = adjusted(model_table(cells, measure, cuts, preterm_weeks=preterm_weeks), reference)
-        if fit.set_aside:
-            result.set_aside[measure] = fit.set_aside
-        args = (OBSERVED, definition, period, preterm_weeks, measure, counts, cuts)
-        result.estimates += _estimate_rows(
-            *args, {CRUDE: _crude(counts, reference), ADJUSTED: fit.odds_ratios}
-        )
-        result.distribution += _distribution(*args)
+        for apncu in variants if measure == "b" else (ACOG_MIDPOINT,):
+            counts = level_counts(
+                combinations, measure, cuts, preterm_weeks=preterm_weeks, apncu=apncu
+            )
+            reference = reference_level(measure, cuts)
+            table = model_table(cells, measure, cuts, preterm_weeks=preterm_weeks, apncu=apncu)
+            fit = adjusted(table, reference)
+            if fit.set_aside:
+                result.set_aside[_set_aside_key(measure, apncu)] = fit.set_aside
+            args = (OBSERVED, definition, period, preterm_weeks, measure, counts, cuts, apncu)
+            result.estimates += _estimate_rows(
+                *args, {CRUDE: _crude(counts, reference), ADJUSTED: fit.odds_ratios}
+            )
+            result.distribution += _distribution(*args)
     return result
 
 
@@ -484,12 +506,13 @@ def simulated_estimates(
     landmarks: Mapping[int, int],
     period: str,
     preterm_weeks: int = PRETERM_WEEKS,
+    variants: Sequence[ApncuVariant] = (ACOG_MIDPOINT,),
 ) -> Estimates:
     """The crude estimates and the exposure distribution of one scenario of the null simulation.
 
     The simulation has no covariates, so it has no adjusted model. Measure (d) takes the
     pregnancies that reached the week of each landmark, as :func:`~sinac_truncation.measures.
-    compare` does (D-113).
+    compare` does (D-113), and measure (b) has one row per variant of ``variants`` (D-130).
     """
     source = simulated_source(scenario)
     result = Estimates()
@@ -497,11 +520,14 @@ def simulated_estimates(
         week = landmarks.get(definition)
         selected = pregnancies if week is None else reached(pregnancies, week)
         for measure in measures:
-            counts = level_counts(selected, measure, cuts, preterm_weeks=preterm_weeks)
-            reference = reference_level(measure, cuts)
-            args = (source, definition, period, preterm_weeks, measure, counts, cuts)
-            result.estimates += _estimate_rows(*args, {CRUDE: _crude(counts, reference)})
-            result.distribution += _distribution(*args)
+            for apncu in variants if measure == "b" else (ACOG_MIDPOINT,):
+                counts = level_counts(
+                    selected, measure, cuts, preterm_weeks=preterm_weeks, apncu=apncu
+                )
+                reference = reference_level(measure, cuts)
+                args = (source, definition, period, preterm_weeks, measure, counts, cuts, apncu)
+                result.estimates += _estimate_rows(*args, {CRUDE: _crude(counts, reference)})
+                result.distribution += _distribution(*args)
     return result
 
 
@@ -515,20 +541,23 @@ def format_estimates(rows: Sequence[EstimateRow]) -> list[str]:
     """The lines of the report that ``pipeline.py estimate`` prints: one per level and outcome
     cut-off, with its births, its preterm births and its crude and adjusted odds ratios."""
     lines = [
-        f"{'def':<4}{'cut':<4}{'measure':<9}{'level':<21}{'births':>11}{'preterm':>10}"
-        f"{'crude OR (95 % CI)':>26}{'adjusted OR (95 % CI)':>26}"
+        f"{'def':<4}{'cut':<4}{'measure':<9}{'variant':<17}{'level':<21}{'births':>11}"
+        f"{'preterm':>10}{'crude OR (95 % CI)':>26}{'adjusted OR (95 % CI)':>26}"
     ]
     adjusted_rows = {
-        (row.definition, row.outcome_cutoff, row.measure, row.level): row
+        (row.definition, row.outcome_cutoff, row.measure, row.variant, row.level): row
         for row in rows
         if row.model == ADJUSTED
     }
     for row in rows:
         if row.model != CRUDE:
             continue
-        other = adjusted_rows.get((row.definition, row.outcome_cutoff, row.measure, row.level))
+        other = adjusted_rows.get(
+            (row.definition, row.outcome_cutoff, row.measure, row.variant, row.level)
+        )
         lines.append(
-            f"{row.definition:<4}{row.outcome_cutoff:<4}{row.measure:<9}{row.level:<21}"
-            f"{row.births:>11,}{row.preterm:>10,}{_ratio(row):>26}{_ratio(other):>26}"
+            f"{row.definition:<4}{row.outcome_cutoff:<4}{row.measure:<9}{row.variant:<17}"
+            f"{row.level:<21}{row.births:>11,}{row.preterm:>10,}"
+            f"{_ratio(row):>26}{_ratio(other):>26}"
         )
     return lines

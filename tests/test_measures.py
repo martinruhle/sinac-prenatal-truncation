@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 import simulate as script
-from sinac_truncation.apncu import compute_apncu
+from sinac_truncation.apncu import apncu_variants, compute_apncu
 from sinac_truncation.measures import (
     APNCU_VARIANT,
     FIRST_TRIMESTER,
@@ -285,8 +285,8 @@ def test_the_report_has_one_line_per_row_and_blanks_what_does_not_exist() -> Non
     lines = format_shares(rows)
     assert len(lines) == len(rows) + 1
     assert lines[0].split() == [
-        "def", "measure", "level", "scenario", "OR", "obs", "OR", "sim", "RD", "obs", "pp", "RD",
-        "sim", "pp", "share",
+        "def", "measure", "variant", "level", "scenario", "OR", "obs", "OR", "sim", "RD", "obs",
+        "pp", "RD", "sim", "pp", "share",
     ]  # fmt: skip
     [line] = [
         line
@@ -307,3 +307,29 @@ def test_the_largest_share_difference_is_relative_and_per_scenario() -> None:
     simulated = [row("e1", "0", 2.5), row("e1", "1-4", 4.0), row("e2", "0", None)]
     exact = [row("e1", "0", 2.0), row("e1", "1-4", 4.0), row("e2", "0", 1.5)]
     assert largest_share_difference(simulated, exact) == {"e1": pytest.approx(0.25), "e2": None}
+
+
+def test_the_comparison_has_one_set_of_rows_per_variant_of_measure_b() -> None:
+    """D-130: ``truncation_share.csv`` carries measure (b) once per variant, and the rows of
+    `acog_midpoint` are the ones the default call gives."""
+    variants = apncu_variants((6, 10, 16, 22, 28, 32, 36, 38))
+    rows = compare(
+        {2: ANALYSIS, 3: LANDMARK},
+        {"e1": PREGNANCIES},
+        CUTS,
+        analysis_definition=2,
+        landmarks={3: 37},
+        variants=variants,
+    )
+    assert {row.variant for row in rows if row.measure == "b"} == {
+        variant.name for variant in variants
+    }
+    assert {row.variant for row in rows if row.measure != "b"} == {""}
+    main = compare(
+        {2: ANALYSIS, 3: LANDMARK},
+        {"e1": PREGNANCIES},
+        CUTS,
+        analysis_definition=2,
+        landmarks={3: 37},
+    )
+    assert [row for row in rows if row.variant in ("", APNCU_VARIANT)] == main

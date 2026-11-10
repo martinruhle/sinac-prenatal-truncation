@@ -424,7 +424,8 @@ What SINAC changes in the algorithm:
   - The article groups initiation by pairs of months because a trimester is too broad, and SINAC
     records exactly that coarser category.
   - The sensitivity to the rule, cut by D-005, comes back in `v1.0` with the first and the last
-    month of each trimester (D-127). The function takes the rule as a parameter.
+    month of each trimester (D-127): the variants `acog_first` and `acog_last` below. The
+    function takes the rule as a parameter.
 - **The program's consistency check is applied to the trimester.** Part 3a of the program sets a
   start month above weeks ÷ 4 to missing. Applied to an imputed month 8, it would remove 967 births
   that started care in the third trimester and were delivered at 28 to 31 weeks, all of them
@@ -437,8 +438,9 @@ What SINAC changes in the algorithm:
 
 **Implementation.** `compute_apncu()` computes the index of one record and returns every step of
 the program, and the analysis calls it once per combination of count, trimester and weeks
-(D-110). A record that the common set removes is refused, not set to missing. Its tests hold a
-reference table worked out by hand from the program and from the article's worked example.
+(D-110). A record that the common set removes is refused, not set to missing. Its tests hold two
+reference tables: the ACOG one, worked out by hand from the program and from the article's worked
+example, and the NOM-007 one, worked out from the calendar and the two rules below.
 
 **The index contains the outcome.** Its expected visits depend on the completed weeks at delivery,
 so APNCU is derived from gestational age. Its odds ratio measures the artefact of its construction,
@@ -450,10 +452,42 @@ crude and adjusted models only, which show that artefact, and never a covariate 
 is Kotelchuck's and can be compared with the literature. The ACOG schedule asks for more visits than
 NOM-007, so more mothers fall in the lower levels than the Mexican norm would place there.
 
-A variant on the NOM-007 calendar is planned for `v1.0`. It is the same algorithm, with the expected
-visits taken from [`../config/nom007_schedule.yml`](../config/nom007_schedule.yml). Its own rules,
-how a range of weeks is read and which visits a later start misses, are written with it and are
-`FOR APPROVAL`.
+**The four variants.** Measure (b) is reported once per variant, each a value of the column
+variant of the output tables. Each one gets its own crude and adjusted model, so a variant is
+read against the main analysis at the same model (D-130, D-119).
+
+| Variant | Expected visits from | Month of the trimester |
+|---|---|---|
+| `acog_midpoint` | the ACOG schedule of the program | the middle month: 2, 5, 8 (D-092) |
+| `acog_first` | the ACOG schedule of the program | the first month: 1, 4, 7 (D-127) |
+| `acog_last` | the ACOG schedule of the program | the last month: 3, 6, 9 (D-127) |
+| `nom007_midpoint` | the NOM-007 calendar | the middle month: 2, 5, 8 |
+
+The month rule varies on the ACOG schedule alone, the schedule of the main analysis the
+sensitivity of D-127 is about; the NOM-007 variant keeps the middle month.
+
+**The two rules of the NOM-007 variant.** The algorithm is the one above, with the expected visits
+taken from [`../config/nom007_schedule.yml`](../config/nom007_schedule.yml) instead of the
+program's table. The norm gives ranges of weeks and no count of visits per completed week, so two
+rules are needed and both are the author's criterion, `FOR APPROVAL`:
+
+1. **A range of weeks is read by its first week** (D-128): a pregnancy is expected to have had a
+   visit once it reaches the first week of its range, so the calendar expects 4 visits at 22 to 27
+   completed weeks, 5 at 28 to 31, 6 at 32 to 35, 7 at 36 to 37 and 8 from 38 on. It is the
+   reading D-096 already gives the same calendar in the null simulation. In the cohort it changes
+   one visit, the eighth of weeks 38 to 41: reading the last week instead would expect it only
+   from week 41, which moves term births between the upper three levels and cannot change the
+   level of any preterm birth.
+2. **A later start misses the visits that fall before the month care began** (D-129), a month
+   being four completed weeks, as part 3a of the program reads them when it checks the start month
+   against weeks ÷ 4. The middle months 2, 5 and 8 begin at weeks 4, 16 and 28, so they deduct 0,
+   2 and 4 visits; no care deducts nothing, as the program's table does. Deducting the visits
+   before the first week of the trimester (D-092) gives the same three counts, so the variant does
+   not depend on which of the two readings was taken.
+
+The NOM-007 calendar asks for 8 visits where the ACOG schedule asks for 14 at 40 weeks, so the
+same record reaches a higher level under the norm: 8 visits from a first-trimester start are
+Adequate on the NOM-007 calendar and Intermediate on the ACOG schedule.
 
 ### Trimester boundaries
 
@@ -583,6 +617,10 @@ D-099 sets how the alternatives are estimated and reported.
     attrition. The definition with multiples is definition 6, estimated at 37 weeks.
   - `v0.2-progress` carries two of them, the cut-off and the definition with multiples (D-012,
     D-124). The period 2022–2023 lands in `v1.0`.
+- **The variants of measure (b) are not an axis of the definition.** They change how the index
+  rates the same records, not which records enter, so they carry no attrition of their own and
+  live in [§APNCU](#apncu-measure-b) with their own crude and adjusted models (D-130). They run
+  at the cut-off of the main analysis only.
 - **In the definition with multiples, each certificate is one unit.** Its confidence intervals
   ignore that the twins of one pregnancy are not independent, because no published variable groups
   them (D-051).
@@ -637,7 +675,7 @@ The columns take these values:
 |---|---|
 | source | `observed`, `sim_e1`, `sim_e2` |
 | measure | `a`, `a_count`, `b`, `c`, `d` |
-| variant | `acog_midpoint` for (b), and `nom007_midpoint` in `v1.0`; empty for the other measures |
+| variant | for (b), one of `acog_midpoint`, `acog_first`, `acog_last` and `nom007_midpoint` ([§APNCU](#apncu-measure-b), D-130); empty for the other measures |
 | model | `crude`, `adjusted` |
 | stratum variable | empty, `state` or `insurance` |
 | outcome | `preterm`, `term` |
