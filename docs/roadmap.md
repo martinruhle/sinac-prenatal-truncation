@@ -136,7 +136,17 @@ Two cuts came back once their cost was known, as D-084 left it to the re-plannin
 ### 4.4 Engineering left for later
 
 The analysis image (`Dockerfile`) is built after milestone `v0.1-cohort` within a two-hour
-timebox; whatever does not fit in that timebox is future work as well (D-015).
+timebox; whatever does not fit in that timebox is future work as well (D-015). The image of
+`v1.0` runs the test suite without the database (D-131). Left out of the timebox:
+
+- **Building the image in CI.** CI runs the suite with `uv` on the runner; it does not build the
+  image, so a change that breaks the build is found only when the image is built by hand.
+- **The pipeline inside the container.** The image starts no database, and `compose.yml` has no
+  service for it: `scripts/` runs on the host with `uv run`, so the `db` tests skip in the image.
+- **A runtime image without the dev tools.** One image carries ruff, mypy and pytest because it
+  runs the tests; a multi-stage build would keep them out of the image that runs the analysis.
+- **The base images pinned by digest.** They are pinned by tag (`python:3.12.14-slim-trixie`,
+  `uv:0.12.15`), as Postgres is (D-031); a digest would also fix a tag that is pushed again.
 
 ### 4.5 The year 2019
 

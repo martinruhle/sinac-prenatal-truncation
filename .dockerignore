@@ -1,21 +1,24 @@
-# Data and secrets: never in a build context
-data/
-.env
+# An allowlist: everything stays out of the build context except what the analysis image needs
+# (rule 1, D-131). A path not listed here never reaches Docker, so data/, .env, .venv/,
+# .planning/ and any copy of the repository under .claude/ stay out, at any depth.
+*
 
-# Version control and local environment
-.git/
-.github/
-.venv/
-__pycache__/
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.coverage
-htmlcov/
+# Dependencies and project metadata (pyproject.toml names README.md as the package readme)
+!pyproject.toml
+!uv.lock
+!.python-version
+!README.md
 
-# Outputs and local context
-results/
-notebooks/
-.planning/
-CLAUDE.md
-CLAUDE.local.md
+# Code, SQL, configuration and the synthetic tests
+!src/
+!scripts/
+!sql/
+!config/
+!tests/
+
+# Re-excluded inside the allowed folders
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/*.pyc
