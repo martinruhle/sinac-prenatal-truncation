@@ -58,6 +58,7 @@ WITH parsed AS (
         visits_code.source_code IS NOT NULL AS visits_is_code,
         trimester_code.target_concept_id AS trimester_target,
         education_code.target_concept_id AS education_target,
+        insurance_code.target_concept_id AS insurance_target,
         country_code.target_concept_id AS country_target,
         state_code.source_code IS NOT NULL AS state_is_code,
         sex_code.target_concept_id AS sex_target,
@@ -98,6 +99,10 @@ WITH parsed AS (
         ON education_code.source_vocabulary_id = 'SINAC20_ESCOL'
         AND education_code.source_code = s.escolaridad
         AND education_code.invalid_reason IS NULL
+    LEFT JOIN @cdm_schema.source_to_concept_map AS insurance_code
+        ON insurance_code.source_vocabulary_id = 'SINAC20_AFIL'
+        AND insurance_code.source_code = s.afiliacion
+        AND insurance_code.invalid_reason IS NULL
     LEFT JOIN @cdm_schema.source_to_concept_map AS country_code
         ON country_code.source_vocabulary_id = 'SINAC20_RESEXT'
         AND country_code.source_code = s.resideextranjero
@@ -164,6 +169,12 @@ ruled AS (
             WHEN p.education_target IS NOT NULL THEN 'code_to_concept'
             ELSE 'not_in_catalogue'
         END AS education_rule,
+        CASE
+            WHEN p.afiliacion IS NULL THEN 'blank'
+            WHEN p.insurance_target = 0 THEN 'code_to_0'
+            WHEN p.insurance_target IS NOT NULL THEN 'code_to_concept'
+            ELSE 'not_in_catalogue'
+        END AS insurance_rule,
         CASE
             WHEN p.resideextranjero IS NULL THEN 'blank'
             WHEN p.country_target = 0 THEN 'code_to_0'
@@ -262,6 +273,15 @@ SELECT
         WHEN 'code_to_0' THEN 0
         WHEN 'not_in_catalogue' THEN 0
     END AS education_concept_id,
+    -- Insurance (D-102, D-133): every code of AFILIACION_CERTIFICADOS maps to 0, since no
+    -- standard concept names a Mexican institution; the gradient reads the code.
+    r.afiliacion,
+    r.insurance_rule,
+    CASE r.insurance_rule
+        WHEN 'code_to_concept' THEN r.insurance_target
+        WHEN 'code_to_0' THEN 0
+        WHEN 'not_in_catalogue' THEN 0
+    END AS insurance_concept_id,
     -- The newborn (D-103): its sex, from the catalogue SEXO, and its birth weight in grams, as
     -- the certificate records it, extremes included (D-105).
     r.newborn_person_id,

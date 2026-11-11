@@ -12,6 +12,8 @@
 # The concepts added for the newborn (task 1.4.6: birth_weight, gram, mother, child, person_table
 # and the targets of SINAC20_SEXO) were copied on 2026-10-09 from the same bundle, where every one
 # is Standard and Valid.
+# The concept added for the gradient by insurance (task 1.8.2: mother_insurance) was copied on
+# 2026-11-11 from the CONCEPT table loaded from the same bundle, where it is Standard and Valid.
 # cdm_fields lists the CDM fields the concept is written to. The domain of a standard concept
 # decides its table ("Write the data record into the table(s) corresponding to the domain of the
 # Standard CONCEPT_ID", OMOP CDM data model conventions), so a concept written to
@@ -153,6 +155,19 @@ concepts:
     cdm_fields: [observation.observation_concept_id]
     source_column: ESCOLARIDAD
 
+  # Insurance (derechohabiencia) has no standard concept for its Mexican institutions, so every
+  # code of SINAC20_AFIL maps to 0 and the code stays in value_source_value; the gradient groups
+  # the codes (docs/protocol.md §Sensitivity analyses and gradients, D-102, D-133).
+  mother_insurance:
+    concept_id: 46235654
+    concept_name: Primary insurance
+    vocabulary_id: LOINC
+    concept_code: "76437-3"
+    domain_id: Observation
+    standard_concept: S
+    cdm_fields: [observation.observation_concept_id]
+    source_column: AFILIACION
+
   # FACT_RELATIONSHIP reads "fact 1 is <relationship> of fact 2", and every link is written in
   # both directions (OMOP CDM v5.4, FACT_RELATIONSHIP ETL conventions): the mother is the Mother
   # of the newborn, and the newborn is the Child of the mother (D-104).
@@ -259,4 +274,9 @@ source_vocabularies:
     source_column: PESO
     defined_in: descriptor
     cdm_fields: [measurement.value_as_number]
+    target_domain_id: null
+  SINAC20_AFIL:
+    source_column: AFILIACION
+    defined_in: AFILIACION_CERTIFICADOS
+    cdm_fields: [observation.value_as_concept_id]
     target_domain_id: null

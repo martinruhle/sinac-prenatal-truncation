@@ -10,8 +10,8 @@
 --   orphan_location:person             PERSON rows whose location_id is not a LOCATION
 --   person_without_one_observation_period
 --                                      PERSON rows without exactly one observation period
---   mother_without_*                   mother PERSONs without the three rows each of
---                                      MEASUREMENT and OBSERVATION
+--   mother_without_*                   mother PERSONs without their three rows of MEASUREMENT
+--                                      or their four rows of OBSERVATION
 --   newborn_without_one_measurement, newborn_with_an_observation
 --                                      newborn PERSONs without exactly one MEASUREMENT row, their
 --                                      weight, or with an OBSERVATION row (D-103, D-105)
@@ -236,8 +236,8 @@ FROM (
         (SELECT count(*) FROM per_person WHERE role = 'mother' AND measurements <> 3)
     ),
     (
-        'mother_without_three_observations',
-        (SELECT count(*) FROM per_person WHERE role = 'mother' AND observations <> 3)
+        'mother_without_four_observations',
+        (SELECT count(*) FROM per_person WHERE role = 'mother' AND observations <> 4)
     ),
     (
         'newborn_without_one_measurement',

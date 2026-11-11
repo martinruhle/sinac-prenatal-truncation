@@ -24,19 +24,20 @@ from synthetic import RECORDS_2023, Source, fetch, module_schemas, pid, prepare_
 
 #: Records 9 to 13 of the 2023 file, in the order of SOURCE_COLUMNS: FECHANACIMIENTO,
 #: FECHANACIMIENTOMADRE, EDAD, RESIDEEXTRANJERO, ENTIDADRESIDENCIA, EDADGESTACIONAL,
-#: PRODUCTOEMBARAZO, TOTALCONSULTAS, TRIMESTREPRIMERCONSULTA, ESCOLARIDAD, SEXO, PESO. Each is the
-#: normal case of record 1 (8 visits from the first trimester) but for its plurality and its trap.
+#: PRODUCTOEMBARAZO, TOTALCONSULTAS, TRIMESTREPRIMERCONSULTA, ESCOLARIDAD, SEXO, PESO,
+#: AFILIACION. Each is the normal case of record 1 (8 visits from the first trimester) but for
+#: its plurality and its trap.
 MULTIPLE_TRAPS_2023: tuple[tuple[str | None, ...], ...] = (
     # 9. Twins, "GEMELAR": in definition 6.
-    ("09/01/2023", "01/01/1990", "33", "2", "09", "36", "2", "8", "1", "51", "1", "2600"),
+    ("09/01/2023", "01/01/1990", "33", "2", "09", "36", "2", "8", "1", "51", "1", "2600", "02"),
     # 10. Triplets or more, "TRES O MÁS": in definition 6.
-    ("10/01/2023", "01/01/1990", "33", "2", "09", "33", "3", "8", "1", "51", "1", "1900"),
+    ("10/01/2023", "01/01/1990", "33", "2", "09", "33", "3", "8", "1", "51", "1", "1900", "02"),
     # 11. Twins of 21 weeks: step 6.
-    ("11/01/2023", "01/01/1990", "33", "2", "09", "21", "2", "8", "1", "51", "1", "450"),
+    ("11/01/2023", "01/01/1990", "33", "2", "09", "21", "2", "8", "1", "51", "1", "450", "02"),
     # 12. Twins with a count of 99, "No Especificado": step 7.
-    ("12/01/2023", "01/01/1990", "33", "2", "09", "36", "2", "99", "1", "51", "1", "2600"),
+    ("12/01/2023", "01/01/1990", "33", "2", "09", "36", "2", "99", "1", "51", "1", "2600", "02"),
     # 13. Twins with education 99, "SE IGNORA": step 8.
-    ("13/01/2023", "01/01/1990", "33", "2", "09", "36", "2", "8", "1", "99", "1", "2600"),
+    ("13/01/2023", "01/01/1990", "33", "2", "09", "36", "2", "8", "1", "99", "1", "2600", "02"),
 )
 
 #: The steps of definition 2 without "Singleton", as (kind, description, remaining, excluded) of

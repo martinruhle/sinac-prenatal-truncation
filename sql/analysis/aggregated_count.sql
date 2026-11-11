@@ -11,14 +11,18 @@
 --   education_concept_id   the concept of the education level (D-101)
 --   state                  the state of residence, from LOCATION
 --   year                   the year of the delivery, the cohort start (D-062)
+--   insurance_group        the group of the AFILIACION code, the stratum of the gradient by
+--                          insurance (D-099, D-133); not a covariate of any model (D-094)
 --
 -- Every subject of the analysis cohort has all of them (steps 8 and 9 of 02_analysis.sql), and
--- scripts/estimate.py checks that the births of each definition add up to its cohort.
+-- scripts/estimate.py checks that the births of each definition add up to its cohort. Every
+-- mother has her insurance row, a blank one included (sql/etl/observation.sql).
 WITH concepts AS (
     SELECT
         max(c.concept_id) FILTER (WHERE c.concept_key = 'gestational_age_at_birth') AS weeks,
         max(c.concept_id) FILTER (WHERE c.concept_key = 'mother_age_at_delivery') AS age,
-        max(c.concept_id) FILTER (WHERE c.concept_key = 'mother_education') AS education
+        max(c.concept_id) FILTER (WHERE c.concept_key = 'mother_education') AS education,
+        max(c.concept_id) FILTER (WHERE c.concept_key = 'mother_insurance') AS insurance
     FROM @results_schema.concept_sets AS c
 ),
 
@@ -40,7 +44,25 @@ subjects AS (
         END AS age_group,
         e.value_as_concept_id AS education_concept_id,
         l.state,
-        extract(YEAR FROM c.cohort_start_date)::integer AS year
+        extract(YEAR FROM c.cohort_start_date)::integer AS year,
+        -- The insurance groups of docs/protocol.md §Sensitivity analyses and gradients, by the
+        -- codes of AFILIACION_CERTIFICADOS, approved by the author (D-099, D-135). Codes 01, 07
+        -- and 10 form one group because records moved between them inside the period (D-094).
+        -- Unknown is 00, 88 and 99, and also a blank or a code the catalogue does not publish:
+        -- an unknown value is a level of its own (docs/protocol.md §Covariates).
+        CASE i.value_source_value
+            WHEN '02' THEN 'IMSS'
+            WHEN '03' THEN 'ISSSTE'
+            WHEN '04' THEN 'Other social security'
+            WHEN '05' THEN 'Other social security'
+            WHEN '06' THEN 'Other social security'
+            WHEN '11' THEN 'Other social security'
+            WHEN '01' THEN 'No social security'
+            WHEN '07' THEN 'No social security'
+            WHEN '10' THEN 'No social security'
+            WHEN '08' THEN 'Other'
+            ELSE 'Unknown'
+        END AS insurance_group
     FROM @results_schema.cohort AS c
     CROSS JOIN concepts AS k
     INNER JOIN @results_schema.exposure AS x ON c.subject_id = x.subject_id
@@ -50,6 +72,8 @@ subjects AS (
         ON c.subject_id = a.person_id AND k.age = a.measurement_concept_id
     INNER JOIN @cdm_schema.observation AS e
         ON c.subject_id = e.person_id AND k.education = e.observation_concept_id
+    INNER JOIN @cdm_schema.observation AS i
+        ON c.subject_id = i.person_id AND k.insurance = i.observation_concept_id
     INNER JOIN @cdm_schema.person AS p ON c.subject_id = p.person_id
     INNER JOIN @cdm_schema.location AS l ON p.location_id = l.location_id
     WHERE c.cohort_definition_id = ANY(%(definitions)s)
@@ -64,6 +88,7 @@ INSERT INTO @results_schema.aggregated_count (
     education_concept_id,
     state,
     year,
+    insurance_group,
     births
 )
 SELECT
@@ -75,6 +100,7 @@ SELECT
     s.education_concept_id,
     s.state,
     s.year,
+    s.insurance_group,
     count(*) AS births
 FROM subjects AS s
 GROUP BY
@@ -85,4 +111,5 @@ GROUP BY
     s.age_group,
     s.education_concept_id,
     s.state,
-    s.year;
+    s.year,
+    s.insurance_group;
