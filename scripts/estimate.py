@@ -381,8 +381,8 @@ def run(
         where = f", {stratum}" if stratum else ""
         print(
             f"definition {definition}, {period}, cut-off {cutoff} weeks{where}, measure "
-            f"{measure}: the adjusted model set aside {births:,} births of levels whose births "
-            "are all preterm or all term (D-118)"
+            f"{measure}: the adjusted model set aside {births:,} births whose outcome a level or "
+            "a combination of levels predicts exactly (D-118, D-137)"
         )
     observed = [row for row in result.estimates if row.source == OBSERVED]
     for period in dict.fromkeys(row.period for row in observed):
