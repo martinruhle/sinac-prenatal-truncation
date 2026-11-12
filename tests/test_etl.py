@@ -48,6 +48,7 @@ from synthetic import (
     FEMALE,
     FIRST,
     GRAM,
+    INSURANCE,
     JUNIOR_HIGH,
     MALE,
     MAP,
@@ -315,6 +316,7 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
     ]
 
     visits, trim, edu = "TOTALCONSULTAS", "TRIMESTREPRIMERCONSULTA", "ESCOLARIDAD"
+    afil = "AFILIACION"
     assert fetch(
         source.connection,
         f"SELECT observation_id, person_id, observation_concept_id, observation_date, "
@@ -325,24 +327,31 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
         (1, pid(1), VISITS, d(2023, 3, 15), REGISTRY, 8, None, visits, 0, "8"),
         (2, pid(1), TRIMESTER, d(2023, 3, 15), REGISTRY, None, FIRST, trim, 0, "1"),
         (3, pid(1), EDUCATION, d(2023, 3, 15), REGISTRY, None, JUNIOR_HIGH, edu, 0, "51"),
-        (4, pid(2), VISITS, d(2023, 3, 15), REGISTRY, 8, None, visits, 0, "8"),
-        (5, pid(2), TRIMESTER, d(2023, 3, 15), REGISTRY, None, FIRST, trim, 0, "1"),
-        (6, pid(2), EDUCATION, d(2023, 3, 15), REGISTRY, None, JUNIOR_HIGH, edu, 0, "51"),
-        (7, pid(3), VISITS, d(2023, 6, 20), REGISTRY, 45, None, visits, 0, "45"),
-        (8, pid(3), TRIMESTER, d(2023, 6, 20), REGISTRY, None, NO_CARE, trim, 0, "0"),
-        (9, pid(3), EDUCATION, d(2023, 6, 20), REGISTRY, None, SENIOR_HIGH, edu, 0, "132"),
-        (10, pid(4), VISITS, d(2023, 1, 1), REGISTRY, None, None, visits, 0, "99"),
-        (11, pid(4), TRIMESTER, d(2023, 1, 1), REGISTRY, None, 0, trim, 0, "8"),
-        (12, pid(4), EDUCATION, d(2023, 1, 1), REGISTRY, None, 0, edu, 0, "0"),
-        (13, pid(5), VISITS, d(2023, 12, 31), REGISTRY, None, None, visits, 0, None),
-        (14, pid(5), TRIMESTER, d(2023, 12, 31), REGISTRY, None, None, trim, 0, None),
-        (15, pid(5), EDUCATION, d(2023, 12, 31), REGISTRY, None, None, edu, 0, None),
-        (16, pid(7), VISITS, d(2023, 5, 5), REGISTRY, None, None, visits, 0, " 7"),
-        (17, pid(7), TRIMESTER, d(2023, 5, 5), REGISTRY, None, 0, trim, 0, "5"),
-        (18, pid(7), EDUCATION, d(2023, 5, 5), REGISTRY, None, 0, edu, 0, "7"),
-        (19, pid(8), VISITS, d(2023, 2, 28), REGISTRY, 0, None, visits, 0, "0"),
-        (20, pid(8), TRIMESTER, d(2023, 2, 28), REGISTRY, None, FIRST, trim, 0, "1"),
-        (21, pid(8), EDUCATION, d(2023, 2, 28), REGISTRY, None, 0, edu, 0, "88"),
+        (4, pid(1), INSURANCE, d(2023, 3, 15), REGISTRY, None, 0, afil, 0, "02"),
+        (5, pid(2), VISITS, d(2023, 3, 15), REGISTRY, 8, None, visits, 0, "8"),
+        (6, pid(2), TRIMESTER, d(2023, 3, 15), REGISTRY, None, FIRST, trim, 0, "1"),
+        (7, pid(2), EDUCATION, d(2023, 3, 15), REGISTRY, None, JUNIOR_HIGH, edu, 0, "51"),
+        (8, pid(2), INSURANCE, d(2023, 3, 15), REGISTRY, None, 0, afil, 0, "02"),
+        (9, pid(3), VISITS, d(2023, 6, 20), REGISTRY, 45, None, visits, 0, "45"),
+        (10, pid(3), TRIMESTER, d(2023, 6, 20), REGISTRY, None, NO_CARE, trim, 0, "0"),
+        (11, pid(3), EDUCATION, d(2023, 6, 20), REGISTRY, None, SENIOR_HIGH, edu, 0, "132"),
+        (12, pid(3), INSURANCE, d(2023, 6, 20), REGISTRY, None, 0, afil, 0, "07"),
+        (13, pid(4), VISITS, d(2023, 1, 1), REGISTRY, None, None, visits, 0, "99"),
+        (14, pid(4), TRIMESTER, d(2023, 1, 1), REGISTRY, None, 0, trim, 0, "8"),
+        (15, pid(4), EDUCATION, d(2023, 1, 1), REGISTRY, None, 0, edu, 0, "0"),
+        (16, pid(4), INSURANCE, d(2023, 1, 1), REGISTRY, None, 0, afil, 0, "00"),
+        (17, pid(5), VISITS, d(2023, 12, 31), REGISTRY, None, None, visits, 0, None),
+        (18, pid(5), TRIMESTER, d(2023, 12, 31), REGISTRY, None, None, trim, 0, None),
+        (19, pid(5), EDUCATION, d(2023, 12, 31), REGISTRY, None, None, edu, 0, None),
+        (20, pid(5), INSURANCE, d(2023, 12, 31), REGISTRY, None, None, afil, 0, None),
+        (21, pid(7), VISITS, d(2023, 5, 5), REGISTRY, None, None, visits, 0, " 7"),
+        (22, pid(7), TRIMESTER, d(2023, 5, 5), REGISTRY, None, 0, trim, 0, "5"),
+        (23, pid(7), EDUCATION, d(2023, 5, 5), REGISTRY, None, 0, edu, 0, "7"),
+        (24, pid(7), INSURANCE, d(2023, 5, 5), REGISTRY, None, 0, afil, 0, "09"),
+        (25, pid(8), VISITS, d(2023, 2, 28), REGISTRY, 0, None, visits, 0, "0"),
+        (26, pid(8), TRIMESTER, d(2023, 2, 28), REGISTRY, None, FIRST, trim, 0, "1"),
+        (27, pid(8), EDUCATION, d(2023, 2, 28), REGISTRY, None, 0, edu, 0, "88"),
+        (28, pid(8), INSURANCE, d(2023, 2, 28), REGISTRY, None, 0, afil, 0, "88"),
     ]
 
     vocabularies = fetch(
@@ -354,6 +363,7 @@ def test_each_trap_lands_as_the_mapping_says(source: Source) -> None:
     descriptor = ("http://example.test/nacimientos/descriptores.zip?V=2026.07.09", "2026.07.09")
     catalogues = ("http://example.test/nacimientos/catalogos.zip?V=1.1", "1.1")
     assert vocabularies == [
+        ("SINAC20_AFIL", *catalogues, 0),
         ("SINAC20_EDAD", *descriptor, 0),
         ("SINAC20_EDADGEST", *descriptor, 0),
         ("SINAC20_ENTRES", *catalogues, 0),
@@ -409,7 +419,7 @@ def test_the_observation_period_is_the_delivery_day(source: Source) -> None:
         f"SELECT person_id, measurement_date FROM {source.schemas.cdm}.measurement "
         f"UNION ALL SELECT person_id, observation_date FROM {source.schemas.cdm}.observation",
     )
-    assert len(events) == 6 * len(deliveries) + len(births)
+    assert len(events) == 7 * len(deliveries) + len(births)
     assert all(day == (deliveries | births)[person] for person, day in events)
 
 
@@ -459,7 +469,7 @@ EXPECTED_2023_COUNTS: dict[tuple[str, str], int] = {
     ("measurement", "birth_weight:code_to_null"): 1,
     ("measurement", "birth_weight:not_integer"): 1,
     ("measurement", "birth_weight:blank"): 1,
-    ("observation", "rows"): 21,
+    ("observation", "rows"): 28,
     ("observation", "prenatal_visits_count:value"): 4,
     ("observation", "prenatal_visits_count:code_to_null"): 1,
     ("observation", "prenatal_visits_count:not_integer"): 1,
@@ -472,6 +482,10 @@ EXPECTED_2023_COUNTS: dict[tuple[str, str], int] = {
     ("observation", "mother_education:code_to_0"): 2,
     ("observation", "mother_education:not_in_catalogue"): 1,
     ("observation", "mother_education:blank"): 1,
+    ("observation", "mother_insurance:code_to_concept"): 0,
+    ("observation", "mother_insurance:code_to_0"): 5,
+    ("observation", "mother_insurance:not_in_catalogue"): 1,
+    ("observation", "mother_insurance:blank"): 1,
     ("fact_relationship", "rows"): 14,
     ("location", "country_concept_id:code_to_concept"): 4,
     ("location", "country_concept_id:code_to_0"): 2,
@@ -499,7 +513,7 @@ CHECKS = (
     "orphan_location:person",
     "person_without_one_observation_period",
     "mother_without_three_measurements",
-    "mother_without_three_observations",
+    "mother_without_four_observations",
     "newborn_without_one_measurement",
     "newborn_with_an_observation",
     "observation_period_not_the_delivery_day",

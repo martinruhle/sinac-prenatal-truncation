@@ -27,29 +27,30 @@ from synthetic import RECORDS_2023, Source, fetch, module_schemas, pid, prepare_
 
 #: Records 9 to 17 of the 2023 file, in the order of SOURCE_COLUMNS: FECHANACIMIENTO,
 #: FECHANACIMIENTOMADRE, EDAD, RESIDEEXTRANJERO, ENTIDADRESIDENCIA, EDADGESTACIONAL,
-#: PRODUCTOEMBARAZO, TOTALCONSULTAS, TRIMESTREPRIMERCONSULTA, ESCOLARIDAD, SEXO, PESO. Each is the
-#: normal case of record 1 (8 visits from the first trimester) but for its weeks and its trap.
+#: PRODUCTOEMBARAZO, TOTALCONSULTAS, TRIMESTREPRIMERCONSULTA, ESCOLARIDAD, SEXO, PESO,
+#: AFILIACION. Each is the normal case of record 1 (8 visits from the first trimester) but for
+#: its weeks and its trap.
 LANDMARK_TRAPS_2023: tuple[tuple[str | None, ...], ...] = (
     # In the analysis cohort: the weeks on either side of each landmark, which is inclusive.
     # 9. 22 weeks, the first week of the base cohort.
-    ("09/01/2023", "01/01/1990", "33", "2", "09", "22", "1", "8", "1", "51", "1", "3200"),
+    ("09/01/2023", "01/01/1990", "33", "2", "09", "22", "1", "8", "1", "51", "1", "3200", "02"),
     # 10. 27 weeks.
-    ("10/01/2023", "01/01/1990", "33", "2", "09", "27", "1", "8", "1", "51", "1", "3200"),
+    ("10/01/2023", "01/01/1990", "33", "2", "09", "27", "1", "8", "1", "51", "1", "3200", "02"),
     # 11. 28 weeks.
-    ("11/01/2023", "01/01/1990", "33", "2", "09", "28", "1", "8", "1", "51", "1", "3200"),
+    ("11/01/2023", "01/01/1990", "33", "2", "09", "28", "1", "8", "1", "51", "1", "3200", "02"),
     # 12. 31 weeks.
-    ("12/01/2023", "01/01/1990", "33", "2", "09", "31", "1", "8", "1", "51", "1", "3200"),
+    ("12/01/2023", "01/01/1990", "33", "2", "09", "31", "1", "8", "1", "51", "1", "3200", "02"),
     # 13. 32 weeks.
-    ("13/01/2023", "01/01/1990", "33", "2", "09", "32", "1", "8", "1", "51", "1", "3200"),
+    ("13/01/2023", "01/01/1990", "33", "2", "09", "32", "1", "8", "1", "51", "1", "3200", "02"),
     # 14. 33 weeks.
-    ("14/01/2023", "01/01/1990", "33", "2", "09", "33", "1", "8", "1", "51", "1", "3200"),
+    ("14/01/2023", "01/01/1990", "33", "2", "09", "33", "1", "8", "1", "51", "1", "3200", "02"),
     # 15. 34 weeks.
-    ("15/01/2023", "01/01/1990", "33", "2", "09", "34", "1", "8", "1", "51", "1", "3200"),
+    ("15/01/2023", "01/01/1990", "33", "2", "09", "34", "1", "8", "1", "51", "1", "3200", "02"),
     # A record leaves at the first step it fails, so neither of these is counted at step 10.
     # 16. 27 weeks and a count of 99, "No Especificado": step 8.
-    ("16/01/2023", "01/01/1990", "33", "2", "09", "27", "1", "99", "1", "51", "1", "3200"),
+    ("16/01/2023", "01/01/1990", "33", "2", "09", "27", "1", "99", "1", "51", "1", "3200", "02"),
     # 17. 30 weeks and education 99, "SE IGNORA": step 9.
-    ("17/01/2023", "01/01/1990", "33", "2", "09", "30", "1", "8", "1", "99", "1", "3200"),
+    ("17/01/2023", "01/01/1990", "33", "2", "09", "30", "1", "8", "1", "99", "1", "3200", "02"),
 )
 
 #: The landmark files, as (file, definition, week): D-077 numbers a definition by its file, and

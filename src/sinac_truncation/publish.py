@@ -113,9 +113,11 @@ OUTPUT_TABLES: tuple[OutputTable, ...] = (
             _text("variant"),
             _text("level"),
             _text("outcome"),
+            _text("stratum_variable"),
+            _text("stratum_value"),
             _count("births"),
         ),
-        key=(*_ESTIMATE_KEY, "variant", "level", "outcome"),
+        key=(*_ESTIMATE_KEY, "variant", "level", "outcome", "stratum_variable", "stratum_value"),
     ),
     OutputTable(
         file="estimates.csv",

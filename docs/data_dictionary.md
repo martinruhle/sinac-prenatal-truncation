@@ -12,7 +12,7 @@ columns:
   the excluded records with the retained ones. It is not mapped to the CDM (D-123).
 
 The other 42 columns are staged too and are listed by name at the end. Nothing here covers 2019,
-whose variables are `PENDING` unless 2019 is added (D-050).
+whose variables stay `PENDING`: 2019 is future work (D-126).
 
 ## Sources
 
@@ -70,7 +70,7 @@ of null are quoted as published, from the descriptor text or from the catalogue 
 | 20 | `ATENCIONPRENATAL` | Whether the mother received prenatal care | 1-digit code | — | `SI_NO` | `0` "NO ESPECIFICADO", `8` "NO APLICA", `9` "SE IGNORA" | Described only; no rule uses it ([`protocol.md`](protocol.md#one-set-of-records-for-the-four-measures), D-086) |
 | 21 | `TRIMESTREPRIMERCONSULTA` | Trimester of the mother's first prenatal visit | 1-digit code | — | `TRIMESTRE_PRIMER_CONSULTA` | `8` "NO ESPECIFICADO", `9` "SE IGNORA". `0` "NO RECIBIÓ" is an answer, not a null (D-065) | Exposures (b) and (c), and the common set of records (D-086, D-089, D-092); `OBSERVATION` (D-065) |
 | 22 | `TOTALCONSULTAS` | Total prenatal visits during the pregnancy | integer, 0 to 30; blank in 2,554 records | visits (a count) | — | `99` "No Especificado"; blank | Exposures (a), (b) and (d), and the common set of records (D-086, D-088); `OBSERVATION` (D-065, D-066) |
-| 24 | `AFILIACION` | Health-service affiliation (*derechohabiencia*) | 2-digit code, zero-padded | — | `AFILIACION_CERTIFICADOS` | `00` "NO ESPECIFICADO", `88` "NO APLICA", `99` "SE IGNORA" | Insurance gradient (v1.0); not an adjustment covariate (D-094, D-099); not in the CDM until v1.0 (D-102) |
+| 24 | `AFILIACION` | Health-service affiliation (*derechohabiencia*) | 2-digit code, zero-padded | — | `AFILIACION_CERTIFICADOS` | `00` "NO ESPECIFICADO", `88` "NO APLICA", `99` "SE IGNORA" | Insurance gradient in six groups (D-099, D-135); not an adjustment covariate (D-094); an `OBSERVATION` row with the code in `value_source_value` (D-133) |
 | 25 | `ESCOLARIDAD` | Mother's education | code of 1 to 3 digits, not padded | — | `ESCOLARIDAD` | `0` "NO ESPECIFICADO", `88` "NO APLICA", `99` "SE IGNORA" | Education covariate in five levels (D-094), as an `OBSERVATION` row whose concept is the level (D-101) |
 | 30 | `FECHANACIMIENTO` | Date of birth of the live-born child | `dd/mm/yyyy` | — | — | none declared | Base cohort criterion 1; the date of every CDM event (D-052, D-063) |
 | 32 | `SEXO` | Sex of the live-born child | 1-digit code; `1` "HOMBRE", `2` "MUJER" | — | `SEXO` | `0` "NO ESPECIFICADO", `9` "SE IGNORA" | `gender_concept_id` of the newborn `PERSON`, with `0` and `9` as concept 0 (D-103); no criterion or model |

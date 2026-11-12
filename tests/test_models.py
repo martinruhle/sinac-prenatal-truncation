@@ -15,6 +15,8 @@ import pytest
 import statsmodels.api as sm
 from statsmodels.tools.sm_exceptions import ConvergenceWarning
 
+from sinac_truncation import models
+from sinac_truncation.apncu import apncu_variants
 from sinac_truncation.measures import (
     APNCU_VARIANT,
     FIRST_TRIMESTER,
@@ -28,8 +30,10 @@ from sinac_truncation.measures import (
 from sinac_truncation.models import (
     ADJUSTED,
     CRUDE,
+    INSURANCE,
     OBSERVED,
     SENSITIVITY_MEASURES,
+    STATE,
     Cell,
     DistributionRow,
     EstimateRow,
@@ -38,12 +42,16 @@ from sinac_truncation.models import (
     adjusted,
     definition_measures,
     format_estimates,
+    format_gradients,
     model_table,
     observed_estimates,
+    period_axis,
     sensitivity_models,
     simulated_estimates,
     simulated_source,
+    strata,
     summed,
+    year_births,
 )
 from sinac_truncation.simulation import Combination
 
@@ -107,7 +115,7 @@ def _individuals() -> list[tuple[int, int, int, str, int, str, int]]:
 
 
 def _cells(births: list[tuple[int, int, int, str, int, str, int]]) -> list[Cell]:
-    return [Cell(*key, count) for key, count in sorted(Counter(births).items())]
+    return [Cell(*key, "IMSS", count) for key, count in sorted(Counter(births).items())]
 
 
 def _dummies(values: list[str], reference: str) -> npt.NDArray[np.float64]:
@@ -229,6 +237,50 @@ def test_a_level_aliased_with_a_covariate_level_has_no_estimate() -> None:
     assert fit.odds_ratios["0"] == pytest.approx(adjusted(CONFOUNDED, "8+").odds_ratios["0"])
 
 
+def test_rows_a_combination_of_levels_predicts_exactly_are_set_aside() -> None:
+    """Quasi-complete separation (D-137): no level has births of one outcome only (1-4 has 4
+    preterm of 40, state 14 has 10 of 16), but the direction "1-4 minus state 14" predicts two
+    rows exactly. 1-4 in state 09 is all term and 8+ in state 14 all preterm, while 1-4 in state 14
+    is mixed. Without them the likelihood keeps growing along that direction and statsmodels stops
+    at a coefficient with no meaning. The two rows are set aside; 1-4 is then only in state 14,
+    aliased with it, so it has no estimate, and the estimate of 0 is the one without them."""
+    other_state = ("20-24", 1, "14", 2023)
+    rows = [
+        *CONFOUNDED,
+        ModelRow("1-4", PLAIN, 30, 0),
+        ModelRow("1-4", other_state, 10, 4),
+        ModelRow("8+", other_state, 6, 6),
+    ]
+    fit = adjusted(rows, "8+")
+    assert set(fit.odds_ratios) == {"0"}
+    assert fit.set_aside == 36
+    assert fit.odds_ratios["0"] == pytest.approx(adjusted(CONFOUNDED, "8+").odds_ratios["0"])
+
+
+@pytest.mark.parametrize("births", [5, 20, 200])
+def test_a_table_separated_only_by_a_combination_has_no_estimate_at_any_size(births: int) -> None:
+    """The table the smoke run of 1.9.4 met, reduced to four rows: the reference is all term in
+    state 09 and the later start all preterm in state 14, the other two cells are mixed. It used
+    to overflow ``math.exp`` on a Wald limit, whatever the number of births."""
+    half = births // 2
+    other_state = ("20-24", 1, "14", 2023)
+    rows = [
+        ModelRow("first", PLAIN, births, 0),
+        ModelRow("later", PLAIN, births, half),
+        ModelRow("first", other_state, births, half),
+        ModelRow("later", other_state, births, births),
+    ]
+    fit = adjusted(rows, "first")
+    assert fit.odds_ratios == {}
+    assert fit.set_aside == 2 * births
+
+
+def test_a_limit_that_cannot_be_exponentiated_stops_with_a_model_error() -> None:
+    """The guard behind the check for separation: a Wald limit past e^709 is no estimate."""
+    with pytest.raises(ModelError, match="not finite"):
+        models._odds_ratio("later", 23.6, -24_601.5, 24_648.6)
+
+
 def test_without_the_reference_no_level_has_an_estimate() -> None:
     rows = [ModelRow("0", PLAIN, 20, 4), ModelRow("1-4", PLAIN, 30, 3)]
     assert adjusted(rows, "8+").odds_ratios == {}
@@ -264,14 +316,14 @@ def test_a_fit_that_does_not_converge_stops(monkeypatch: pytest.MonkeyPatch, war
 
 #: A small analysis cohort: 39 weeks is term and 35 preterm (cut-off 37).
 CELLS = [
-    Cell(39, 1, 8, "20-24", 1, "09", 2023, 9),
-    Cell(35, 1, 8, "20-24", 1, "09", 2023, 1),
-    Cell(39, 2, 6, "20-24", 1, "09", 2023, 4),
-    Cell(35, 2, 6, "20-24", 1, "09", 2023, 2),
-    Cell(39, 1, 9, "35-39", 1, "09", 2022, 3),
-    Cell(30, 1, 9, "35-39", 1, "09", 2022, 2),
-    Cell(39, 2, 6, "35-39", 1, "09", 2022, 2),
-    Cell(30, 2, 6, "35-39", 1, "09", 2022, 3),
+    Cell(39, 1, 8, "20-24", 1, "09", 2023, "IMSS", 9),
+    Cell(35, 1, 8, "20-24", 1, "09", 2023, "IMSS", 1),
+    Cell(39, 2, 6, "20-24", 1, "09", 2023, "IMSS", 4),
+    Cell(35, 2, 6, "20-24", 1, "09", 2023, "IMSS", 2),
+    Cell(39, 1, 9, "35-39", 1, "09", 2022, "IMSS", 3),
+    Cell(30, 1, 9, "35-39", 1, "09", 2022, "IMSS", 2),
+    Cell(39, 2, 6, "35-39", 1, "09", 2022, "IMSS", 2),
+    Cell(30, 2, 6, "35-39", 1, "09", 2022, "IMSS", 3),
 ]
 
 
@@ -320,7 +372,7 @@ def test_the_estimates_do_not_depend_on_the_order_of_the_cells() -> None:
 
 def test_a_birth_at_the_cut_off_is_term() -> None:
     """Preterm is under 37 completed weeks (NOM-007-SSA2-2016 §3.25): 36 is preterm, 37 is not."""
-    cells = [Cell(36, 1, 8, *PLAIN, 3), Cell(37, 1, 8, *PLAIN, 5)]
+    cells = [Cell(36, 1, 8, *PLAIN, "IMSS", 3), Cell(37, 1, 8, *PLAIN, "IMSS", 5)]
     assert model_table(cells, "a", CUTS) == [ModelRow("8+", PLAIN, 8, 3)]
 
 
@@ -346,10 +398,10 @@ def test_each_level_but_the_reference_has_a_crude_and_an_adjusted_row_with_its_c
 def test_the_distribution_has_every_level_and_both_outcomes() -> None:
     found = observed_estimates(2, ("a",), CELLS, CUTS, period="2022-2023")
     assert found.distribution == [
-        DistributionRow(OBSERVED, 2, "2022-2023", 37, "a", "", "5-7", "preterm", 5),
-        DistributionRow(OBSERVED, 2, "2022-2023", 37, "a", "", "5-7", "term", 6),
-        DistributionRow(OBSERVED, 2, "2022-2023", 37, "a", "", "8+", "preterm", 3),
-        DistributionRow(OBSERVED, 2, "2022-2023", 37, "a", "", "8+", "term", 12),
+        DistributionRow(OBSERVED, 2, "2022-2023", 37, "a", "", "5-7", "preterm", "", "", 5),
+        DistributionRow(OBSERVED, 2, "2022-2023", 37, "a", "", "5-7", "term", "", "", 6),
+        DistributionRow(OBSERVED, 2, "2022-2023", 37, "a", "", "8+", "preterm", "", "", 3),
+        DistributionRow(OBSERVED, 2, "2022-2023", 37, "a", "", "8+", "term", "", "", 12),
     ]
 
 
@@ -429,3 +481,165 @@ def test_the_report_pairs_the_models_of_each_cut_off_apart() -> None:
     )
     assert [line.split()[:2] for line in lines[1:]] == [["2", "37"], ["2", "34"]]
     assert [line.split()[-2] for line in lines[1:]] == ["1.065", "1.200"]
+
+
+# --- The variants of measure (b) ----------------------------------------------------------------
+
+VARIANTS = apncu_variants((6, 10, 16, 22, 28, 32, 36, 38))
+
+
+@pytest.mark.filterwarnings("ignore:Perfect separation", "ignore:divide by zero")
+def test_measure_b_is_estimated_once_per_variant() -> None:
+    """D-130: the four variants each get their own crude and adjusted model, and the other
+    measures keep an empty variant. The rows of `acog_midpoint` are those of the main analysis,
+    which is the default when no variant is passed."""
+    cells = _cells(_individuals())
+    found = observed_estimates(2, ("b", "c"), cells, CUTS, period="2022-2023", variants=VARIANTS)
+    names = [variant.name for variant in VARIANTS]
+    assert {row.variant for row in found.estimates if row.measure == "b"} == set(names)
+    assert {row.variant for row in found.estimates if row.measure == "c"} == {""}
+    assert {row.variant for row in found.distribution if row.measure == "b"} == set(names)
+    for name in names:
+        rows = [row for row in found.estimates if row.variant == name]
+        assert {row.model for row in rows} == {CRUDE, ADJUSTED}
+
+    main = observed_estimates(2, ("b",), cells, CUTS, period="2022-2023")
+    assert [row for row in found.estimates if row.variant == APNCU_VARIANT] == main.estimates
+    assert [row for row in found.distribution if row.variant == APNCU_VARIANT] == main.distribution
+
+
+@pytest.mark.filterwarnings("ignore:Perfect separation", "ignore:divide by zero")
+def test_the_variants_do_not_rate_the_same_births_the_same_way() -> None:
+    """The variants are only worth estimating if they move the index: the month rule changes the
+    expected visits of a first-trimester start, and the NOM-007 calendar expects eight visits
+    where the ACOG schedule expects thirteen at 39 weeks (D-128)."""
+    combinations = summed(_cells(_individuals()))
+    counted = {
+        variant.name: level_counts(combinations, "b", CUTS, apncu=variant) for variant in VARIANTS
+    }
+    assert counted["acog_midpoint"] != counted["acog_first"]
+    assert counted["acog_midpoint"] != counted["acog_last"]
+    assert counted["acog_midpoint"] != counted["nom007_midpoint"]
+
+
+def test_the_simulated_rows_carry_the_variants_too() -> None:
+    """The simulation has crude rows only (D-098), one set per variant."""
+    pregnancies = [Combination(39, 1, 9, 400), Combination(35, 1, 4, 100)]
+    found = simulated_estimates(
+        "e1",
+        pregnancies,
+        CUTS,
+        analysis_definition=2,
+        landmarks={},
+        period="2022-2023",
+        variants=VARIANTS,
+    )
+    assert {row.variant for row in found.estimates if row.measure == "b"} == {
+        variant.name for variant in VARIANTS
+    }
+    assert {row.model for row in found.estimates} == {CRUDE}
+
+
+def test_the_report_tells_the_variants_apart() -> None:
+    """``pipeline.py estimate`` prints one line per level of each variant, so the line has to
+    name it."""
+    cells = _cells(_individuals())
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        found = observed_estimates(2, ("b",), cells, CUTS, period="2022-2023", variants=VARIANTS)
+    lines = format_estimates(found.estimates)
+    assert lines[0].split() == [
+        "def", "cut", "measure", "variant", "level", "births", "preterm", "crude", "OR",
+        "(95", "%", "CI)", "adjusted", "OR", "(95", "%", "CI)",
+    ]  # fmt: skip
+    assert len(lines) == 1 + len([row for row in found.estimates if row.model == CRUDE])
+    for variant in VARIANTS:
+        assert any(variant.name in line for line in lines[1:])
+
+
+# --- The period axis and the gradients (task 1.8.2) ---------------------------------------------
+
+
+def test_the_period_axis_keeps_the_births_of_its_years() -> None:
+    """The axis is the analysis cohort of 2022 and 2023 alone (D-049, D-132)."""
+    assert year_births(CELLS) == {2022: 10, 2023: 16}
+    assert period_axis(CELLS, (2023,)) == CELLS[:4]
+    assert year_births(period_axis(CELLS)) == {2022: 10, 2023: 16}
+
+
+def test_the_strata_group_the_cells_by_state_or_by_insurance_group() -> None:
+    other = [cell._replace(state="14", insurance="Unknown") for cell in CELLS[:2]]
+    cells = [*CELLS, *other]
+    assert {value: len(found) for value, found in strata(cells, STATE).items()} == {
+        "09": 8,
+        "14": 2,
+    }
+    assert list(strata(cells, INSURANCE)) == ["IMSS", "Unknown"]
+    with pytest.raises(ValueError, match="not a stratum variable"):
+        strata(cells, "year")
+
+
+def test_a_stratum_has_its_adjusted_rows_alone_and_carries_its_stratum() -> None:
+    """The gradients fit the adjusted model only (D-099); both tables carry the stratum (D-134)."""
+    plain = observed_estimates(2, ("a", "c"), CELLS, CUTS, period="2022-2023")
+    found = observed_estimates(
+        2, ("a", "c"), CELLS, CUTS, period="2022-2023", stratum=(STATE, "09")
+    )
+    assert {row.model for row in found.estimates} == {ADJUSTED}
+    assert {(row.stratum_variable, row.stratum_value) for row in found.estimates} == {(STATE, "09")}
+    assert {(row.stratum_variable, row.stratum_value) for row in found.distribution} == {
+        (STATE, "09")
+    }
+    # The stratum holds every cell, so its adjusted rows are those of the whole table.
+    assert [row[:9] + row[11:] for row in found.estimates] == [
+        row[:9] + row[11:] for row in plain.estimates if row.model == ADJUSTED
+    ]
+    assert [row.births for row in found.distribution] == [row.births for row in plain.distribution]
+
+
+def test_a_level_set_aside_in_a_stratum_keeps_its_row_and_its_counts() -> None:
+    """D-118 within a stratum: the reference has term births only, so the fit sets it aside and
+    no level has an odds ratio, but the row of each level keeps its births."""
+    cells = [
+        Cell(39, 1, 8, *PLAIN, "Other", 5),
+        Cell(35, 1, 6, *PLAIN, "Other", 2),
+        Cell(39, 1, 6, *PLAIN, "Other", 3),
+    ]
+    found = observed_estimates(2, ("a",), cells, CUTS, period="2023", stratum=(INSURANCE, "Other"))
+    [row] = found.estimates
+    assert (row.level, row.model, row.births, row.preterm) == ("5-7", ADJUSTED, 5, 2)
+    assert (row.odds_ratio, row.lower, row.upper) == (None, None, None)
+    assert found.set_aside == {"a": 5}
+
+
+def test_the_report_pairs_the_models_of_each_period_apart() -> None:
+    row = EstimateRow(
+        OBSERVED, 2, "2020-2023", 37, "c", "", LATER_OR_NO_CARE, FIRST_TRIMESTER, CRUDE, "", "",
+        1200, 85, 1.0, 0.9, 1.1,
+    )  # fmt: skip
+    axis = row._replace(period="2022-2023")
+    lines = format_estimates(
+        [
+            row,
+            row._replace(model=ADJUSTED, odds_ratio=1.065),
+            axis,
+            axis._replace(model=ADJUSTED, odds_ratio=1.08),
+        ]
+    )
+    assert [line.split()[-2] for line in lines[1:]] == ["1.065", "1.080"]
+
+
+def test_the_report_of_the_gradients_has_one_line_per_stratum() -> None:
+    row = EstimateRow(
+        OBSERVED, 2, "2020-2023", 37, "c", "", LATER_OR_NO_CARE, FIRST_TRIMESTER, ADJUSTED,
+        STATE, "06", 1200, 85, 1.25, 1.1, 1.4,
+    )  # fmt: skip
+    lines = format_gradients(
+        [
+            row,
+            row._replace(stratum_value="27", odds_ratio=None, lower=None, upper=None),
+            row._replace(stratum_variable="", stratum_value=""),
+            row._replace(model=CRUDE),
+        ]
+    )
+    assert [line.split()[:3] for line in lines[1:]] == [["state", "06", "1.250"], ["state", "27"]]

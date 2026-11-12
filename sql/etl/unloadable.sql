@@ -59,6 +59,10 @@ FROM (
     FROM pg_temp.records
     WHERE length(escolaridad) > 50
     UNION ALL
+    SELECT source_year, source_row, 'AFILIACION is longer than 50 characters'
+    FROM pg_temp.records
+    WHERE length(afiliacion) > 50
+    UNION ALL
     -- gender_source_value of the newborn is varchar(50) as well.
     SELECT source_year, source_row, 'SEXO is longer than 50 characters'
     FROM pg_temp.records

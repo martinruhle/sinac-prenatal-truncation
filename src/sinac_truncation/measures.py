@@ -19,7 +19,7 @@ from math import exp, log, sqrt
 from statistics import NormalDist
 from typing import Any, NamedTuple
 
-from sinac_truncation.apncu import ApncuLevel, compute_apncu
+from sinac_truncation.apncu import ACOG_MIDPOINT, ApncuLevel, ApncuVariant, compute_apncu
 from sinac_truncation.simulation import Combination
 
 __all__ = [
@@ -45,6 +45,7 @@ __all__ = [
     "reached",
     "reference_level",
     "truncation_shares",
+    "variant_of",
     "visits_level",
 ]
 
@@ -60,8 +61,9 @@ SENSITIVITY_CUTOFFS: tuple[int, ...] = (34, 32)
 #: The measures of docs/protocol.md §Output tables: (a), (a) per count, (b), (c) and (d).
 MEASURES: tuple[str, ...] = ("a", "a_count", "b", "c", "d")
 
-#: Measure (b) on the ACOG schedule with the middle month of the trimester (D-092, D-098).
-APNCU_VARIANT = "acog_midpoint"
+#: Measure (b) of the main analysis, the ACOG schedule with the middle month of the trimester
+#: (D-092, D-098). Its variants are :func:`~sinac_truncation.apncu.apncu_variants` (D-130).
+APNCU_VARIANT = ACOG_MIDPOINT.name
 
 #: The two levels of measure (c), D-089. "NO RECIBIÓ" belongs to the second.
 FIRST_TRIMESTER = "trimester 1"
@@ -130,21 +132,38 @@ def visits_level(visits: int, cuts: VisitCuts) -> str:
     return f"{cuts.calendar}+"
 
 
+def variant_of(measure: str, apncu: ApncuVariant = ACOG_MIDPOINT) -> str:
+    """The value of the column variant: the name of the variant for (b), empty for the other
+    measures, which have one definition each (docs/protocol.md §Output tables)."""
+    return apncu.name if measure == "b" else ""
+
+
 @cache
-def _apncu_level(visits: int, trimester: int, weeks: int) -> str:
-    """Measure (b) of one combination, computed once (D-110)."""
-    return compute_apncu(visits, trimester, weeks).level.value
+def _apncu_level(visits: int, trimester: int, weeks: int, apncu: ApncuVariant) -> str:
+    """Measure (b) of one combination in one variant, computed once (D-110)."""
+    return compute_apncu(
+        visits, trimester, weeks, month_rule=apncu.month_rule, calendar=apncu.calendar
+    ).level.value
 
 
-def measure_level(measure: str, combination: Combination, cuts: VisitCuts) -> str:
+def measure_level(
+    measure: str,
+    combination: Combination,
+    cuts: VisitCuts,
+    *,
+    apncu: ApncuVariant = ACOG_MIDPOINT,
+) -> str:
     """The level of one combination in one measure. The crude comparison here and the models of
-    :mod:`sinac_truncation.models` both read the levels from it, so they cannot differ."""
+    :mod:`sinac_truncation.models` both read the levels from it, so they cannot differ.
+
+    ``apncu`` is the variant of measure (b) (D-130); the other measures do not read it.
+    """
     if measure in ("a", "d"):
         return visits_level(combination.visits, cuts)
     if measure == "a_count":
         return str(combination.visits)
     if measure == "b":
-        return _apncu_level(combination.visits, combination.trimester, combination.weeks)
+        return _apncu_level(combination.visits, combination.trimester, combination.weeks, apncu)
     if measure == "c":
         return FIRST_TRIMESTER if combination.trimester == 1 else LATER_OR_NO_CARE
     raise ValueError(f"unknown measure {measure!r}; the measures are {', '.join(MEASURES)}")
@@ -156,6 +175,7 @@ def level_counts(
     cuts: VisitCuts,
     *,
     preterm_weeks: int = PRETERM_WEEKS,
+    apncu: ApncuVariant = ACOG_MIDPOINT,
 ) -> dict[str, LevelCount]:
     """The births and the preterm births of each level of a measure.
 
@@ -165,7 +185,7 @@ def level_counts(
     births: dict[str, float] = {}
     preterm: dict[str, float] = {}
     for combination in combinations:
-        level = measure_level(measure, combination, cuts)
+        level = measure_level(measure, combination, cuts, apncu=apncu)
         births[level] = births.get(level, 0) + combination.births
         if combination.weeks < preterm_weeks:
             preterm[level] = preterm.get(level, 0) + combination.births
@@ -275,7 +295,7 @@ class ShareRow(NamedTuple):
 
     definition: int
     measure: str
-    #: :data:`APNCU_VARIANT` for (b), empty for the other measures.
+    #: The name of the variant for (b), empty for the other measures (:func:`variant_of`).
     variant: str
     scenario: str
     reference: str
@@ -289,12 +309,13 @@ def _compared(
     observed: Sequence[Combination],
     simulated: Sequence[Combination],
     cuts: VisitCuts,
+    apncu: ApncuVariant,
 ) -> list[ShareRow]:
-    seen = level_counts(observed, measure, cuts)
-    model = level_counts(simulated, measure, cuts)
+    seen = level_counts(observed, measure, cuts, apncu=apncu)
+    model = level_counts(simulated, measure, cuts, apncu=apncu)
     reference = reference_level(measure, cuts)
     levels = ordered_levels(measure, (set(seen) | set(model)) - {reference}, cuts)
-    variant = APNCU_VARIANT if measure == "b" else ""
+    variant = variant_of(measure, apncu)
     return [
         ShareRow(definition, measure, variant, scenario, reference, share)
         for share in truncation_shares(seen, model, reference, levels)
@@ -308,6 +329,7 @@ def compare(
     *,
     analysis_definition: int,
     landmarks: Mapping[int, int],
+    variants: Sequence[ApncuVariant] = (ACOG_MIDPOINT,),
 ) -> list[ShareRow]:
     """Every row of ``truncation_share.csv`` (docs/protocol.md §Output tables).
 
@@ -323,21 +345,31 @@ def compare(
         analysis_definition: the definition the scenarios were simulated from.
         landmarks: the week of each landmark definition
             (:data:`~sinac_truncation.cohorts.LANDMARK_WEEKS`).
+        variants: the variants measure (b) is compared in, one row each
+            (:func:`~sinac_truncation.apncu.apncu_variants`, D-130).
     """
     rows: list[ShareRow] = []
     for scenario, pregnancies in simulated.items():
         for measure in ("a", "a_count", "b", "c"):
-            rows += _compared(
-                analysis_definition,
-                measure,
-                scenario,
-                observed[analysis_definition],
-                pregnancies,
-                cuts,
-            )
+            for apncu in variants if measure == "b" else (ACOG_MIDPOINT,):
+                rows += _compared(
+                    analysis_definition,
+                    measure,
+                    scenario,
+                    observed[analysis_definition],
+                    pregnancies,
+                    cuts,
+                    apncu,
+                )
         for definition, week in landmarks.items():
             rows += _compared(
-                definition, "d", scenario, observed[definition], reached(pregnancies, week), cuts
+                definition,
+                "d",
+                scenario,
+                observed[definition],
+                reached(pregnancies, week),
+                cuts,
+                ACOG_MIDPOINT,
             )
     return rows
 
@@ -376,15 +408,16 @@ def format_shares(rows: Sequence[ShareRow]) -> list[str]:
     """The lines of the report that ``pipeline.py simulate`` prints: one per row, the risk
     differences in percentage points."""
     lines = [
-        f"{'def':<4}{'measure':<9}{'level':<21}{'scenario':<9}{'OR obs':>8}{'OR sim':>8}"
-        f"{'RD obs pp':>11}{'RD sim pp':>11}{'share':>8}"
+        f"{'def':<4}{'measure':<9}{'variant':<17}{'level':<21}{'scenario':<9}{'OR obs':>8}"
+        f"{'OR sim':>8}{'RD obs pp':>11}{'RD sim pp':>11}{'share':>8}"
     ]
     for row in rows:
         share = row.share
         observed_rd = share.observed.risk_difference
         simulated_rd = share.simulated.risk_difference
         lines.append(
-            f"{row.definition:<4}{row.measure:<9}{share.level:<21}{row.scenario:<9}"
+            f"{row.definition:<4}{row.measure:<9}{row.variant:<17}{share.level:<21}"
+            f"{row.scenario:<9}"
             f"{_number(share.observed.odds_ratio, 2):>8}"
             f"{_number(share.simulated.odds_ratio, 2):>8}"
             f"{_number(None if observed_rd is None else 100 * observed_rd, 2):>11}"

@@ -55,23 +55,23 @@ CONFIG = Path(__file__).resolve().parents[1] / "config"
 
 #: Records 9 to 15 of the 2023 file, in the order of SOURCE_COLUMNS: FECHANACIMIENTO,
 #: FECHANACIMIENTOMADRE, EDAD, RESIDEEXTRANJERO, ENTIDADRESIDENCIA, EDADGESTACIONAL,
-#: PRODUCTOEMBARAZO, TOTALCONSULTAS, TRIMESTREPRIMERCONSULTA, ESCOLARIDAD, SEXO, PESO. Each is the
-#: normal case of record 1 but for its trap.
+#: PRODUCTOEMBARAZO, TOTALCONSULTAS, TRIMESTREPRIMERCONSULTA, ESCOLARIDAD, SEXO, PESO,
+#: AFILIACION. Each is the normal case of record 1 but for its trap.
 COHORT_TRAPS_2023: tuple[tuple[str | None, ...], ...] = (
     # 9. A birth of 2022 in the 2023 file: leaves at step 2 when --years is 2023 (D-073).
-    ("31/12/2022", "01/01/1990", "32", "2", "09", "39", "1", "8", "1", "51", "1", "3200"),
+    ("31/12/2022", "01/01/1990", "32", "2", "09", "39", "1", "8", "1", "51", "1", "3200", "02"),
     # 10. RESIDEEXTRANJERO blank, so country_concept_id is NULL: unknown is not Mexico (step 3).
-    ("10/10/2023", "01/01/1990", "33", None, "09", "39", "1", "8", "1", "51", "1", "3200"),
+    ("10/10/2023", "01/01/1990", "33", None, "09", "39", "1", "8", "1", "51", "1", "3200", "02"),
     # 11. Weeks 99 and plurality 0: fails criteria 3 and 4, counted only at step 4.
-    ("11/11/2023", "01/01/1990", "33", "2", "09", "99", "0", "8", "1", "51", "1", "3200"),
+    ("11/11/2023", "01/01/1990", "33", "2", "09", "99", "0", "8", "1", "51", "1", "3200", "02"),
     # 12. Weeks that do not cast (D-075): NULL in the CDM, so not specified (step 4).
-    ("12/11/2023", "01/01/1990", "33", "2", "09", " 38", "1", "8", "1", "51", "1", "3200"),
+    ("12/11/2023", "01/01/1990", "33", "2", "09", " 38", "1", "8", "1", "51", "1", "3200", "02"),
     # 13. Plurality 0, "NO ESPECIFICADO": step 5.
-    ("13/11/2023", "01/01/1990", "33", "2", "09", "38", "0", "8", "1", "51", "1", "3200"),
+    ("13/11/2023", "01/01/1990", "33", "2", "09", "38", "0", "8", "1", "51", "1", "3200", "02"),
     # 14. A singleton born at 21 weeks: step 7.
-    ("14/11/2023", "01/01/1990", "33", "2", "09", "21", "1", "8", "1", "51", "1", "3200"),
+    ("14/11/2023", "01/01/1990", "33", "2", "09", "21", "1", "8", "1", "51", "1", "3200", "02"),
     # 15. A singleton born at exactly 22 weeks: the bound is inclusive (NOM-007 §3.45), it stays.
-    ("15/11/2023", "01/01/1990", "33", "2", "09", "22", "1", "8", "1", "51", "1", "3200"),
+    ("15/11/2023", "01/01/1990", "33", "2", "09", "22", "1", "8", "1", "51", "1", "3200", "02"),
 )
 
 #: The description and kind of each step, as docs/protocol.md §Attrition writes them.

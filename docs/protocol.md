@@ -82,9 +82,15 @@ Year of birth enters the analysis in two ways, which answer different questions 
   between years, in prenatal care and in preterm birth alike. It is categorical rather than
   linear because the pandemic is a shock, not a trend.
 - **As the COVID-19 sensitivity axis.** The estimates on 2020–2023 are set against the same
-  estimates on 2022–2023 (`--years 2022,2023`), for measures (a) and (c) (D-003). Because the
-  period starts in 2020, this sets years of acute disruption against years of recovery, not
-  against a pre-pandemic baseline.
+  estimates on 2022–2023, for measures (a) and (c) (D-003). Because the period starts in 2020,
+  this sets years of acute disruption against years of recovery, not against a pre-pandemic
+  baseline.
+  - The 2022–2023 cohort is taken from the run on 2020–2023, not from a second run with
+    `--years 2022,2023` (D-132). Every record of the analysis cohort is delivered in the year of
+    its file, so the two give the same cohort, and its attrition is the rows of 2022 and 2023 in
+    `attrition.csv`.
+  - `pipeline.py estimate` checks it on every run: the births of each year of delivery must equal
+    the cohort that the attrition of that year's file counts.
 
 ### What the period does not allow
 
@@ -105,13 +111,14 @@ Year of birth enters the analysis in two ways, which answer different questions 
 
 ### Reversal criterion
 
-The decision is reversed only by adding 2019, and only under D-050:
+The decision could be reversed only by adding 2019, and only under D-050:
 
 - `v0.2-progress` has been tagged with all of its committed content.
 - 2019 then gets a timebox of one week of the budget (6 hours) before work on `v1.0` starts.
 - If it does not close within the timebox, 2019 moves to future work.
 
-To keep that cost to the harmonisation itself, the ETL reads each catalogue period through its
+The tag came on 2 November, and the hours left before `v1.0` did not hold that week, so 2019 is
+future work (D-126). To keep its cost to the harmonisation itself, the ETL reads each catalogue period through its
 own adapter, which maps source column names to canonical names. It also registers each period's
 codes as a source vocabulary of its own in `source_to_concept_map`. Adding 2019 then means an
 adapter, mapping rows and the 2019 part of the data dictionary, and no change to cohort or
@@ -422,8 +429,9 @@ What SINAC changes in the algorithm:
     bound, and with the last none would.
   - The article groups initiation by pairs of months because a trimester is too broad, and SINAC
     records exactly that coarser category.
-  - The sensitivity to the rule was cut (D-005, [`roadmap.md`](roadmap.md#43-definition-axes-left-out-of-the-sensitivity-analysis)).
-    The function takes the rule as a parameter.
+  - The sensitivity to the rule, cut by D-005, comes back in `v1.0` with the first and the last
+    month of each trimester (D-127): the variants `acog_first` and `acog_last` below. The
+    function takes the rule as a parameter.
 - **The program's consistency check is applied to the trimester.** Part 3a of the program sets a
   start month above weeks ÷ 4 to missing. Applied to an imputed month 8, it would remove 967 births
   that started care in the third trimester and were delivered at 28 to 31 weeks, all of them
@@ -436,8 +444,9 @@ What SINAC changes in the algorithm:
 
 **Implementation.** `compute_apncu()` computes the index of one record and returns every step of
 the program, and the analysis calls it once per combination of count, trimester and weeks
-(D-110). A record that the common set removes is refused, not set to missing. Its tests hold a
-reference table worked out by hand from the program and from the article's worked example.
+(D-110). A record that the common set removes is refused, not set to missing. Its tests hold two
+reference tables: the ACOG one, worked out by hand from the program and from the article's worked
+example, and the NOM-007 one, worked out from the calendar and the two rules below.
 
 **The index contains the outcome.** Its expected visits depend on the completed weeks at delivery,
 so APNCU is derived from gestational age. Its odds ratio measures the artefact of its construction,
@@ -449,10 +458,42 @@ crude and adjusted models only, which show that artefact, and never a covariate 
 is Kotelchuck's and can be compared with the literature. The ACOG schedule asks for more visits than
 NOM-007, so more mothers fall in the lower levels than the Mexican norm would place there.
 
-A variant on the NOM-007 calendar is planned for `v1.0`. It is the same algorithm, with the expected
-visits taken from [`../config/nom007_schedule.yml`](../config/nom007_schedule.yml). Its own rules,
-how a range of weeks is read and which visits a later start misses, are written with it and are
-`FOR APPROVAL`.
+**The four variants.** Measure (b) is reported once per variant, each a value of the column
+variant of the output tables. Each one gets its own crude and adjusted model, so a variant is
+read against the main analysis at the same model (D-130, D-119).
+
+| Variant | Expected visits from | Month of the trimester |
+|---|---|---|
+| `acog_midpoint` | the ACOG schedule of the program | the middle month: 2, 5, 8 (D-092) |
+| `acog_first` | the ACOG schedule of the program | the first month: 1, 4, 7 (D-127) |
+| `acog_last` | the ACOG schedule of the program | the last month: 3, 6, 9 (D-127) |
+| `nom007_midpoint` | the NOM-007 calendar | the middle month: 2, 5, 8 |
+
+The month rule varies on the ACOG schedule alone, the schedule of the main analysis the
+sensitivity of D-127 is about; the NOM-007 variant keeps the middle month.
+
+**The two rules of the NOM-007 variant.** The algorithm is the one above, with the expected visits
+taken from [`../config/nom007_schedule.yml`](../config/nom007_schedule.yml) instead of the
+program's table. The norm gives ranges of weeks and no count of visits per completed week, so two
+rules are needed and both are the author's criterion, `FOR APPROVAL`:
+
+1. **A range of weeks is read by its first week** (D-128): a pregnancy is expected to have had a
+   visit once it reaches the first week of its range, so the calendar expects 4 visits at 22 to 27
+   completed weeks, 5 at 28 to 31, 6 at 32 to 35, 7 at 36 to 37 and 8 from 38 on. It is the
+   reading D-096 already gives the same calendar in the null simulation. In the cohort it changes
+   one visit, the eighth of weeks 38 to 41: reading the last week instead would expect it only
+   from week 41, which moves term births between the upper three levels and cannot change the
+   level of any preterm birth.
+2. **A later start misses the visits that fall before the month care began** (D-129), a month
+   being four completed weeks, as part 3a of the program reads them when it checks the start month
+   against weeks ÷ 4. The middle months 2, 5 and 8 begin at weeks 4, 16 and 28, so they deduct 0,
+   2 and 4 visits; no care deducts nothing, as the program's table does. Deducting the visits
+   before the first week of the trimester (D-092) gives the same three counts, so the variant does
+   not depend on which of the two readings was taken.
+
+The NOM-007 calendar asks for 8 visits where the ACOG schedule asks for 14 at 40 weeks, so the
+same record reaches a higher level under the norm: 8 visits from a first-trimester start are
+Adequate on the NOM-007 calendar and Intermediate on the ACOG schedule.
 
 ### Trimester boundaries
 
@@ -515,7 +556,7 @@ The odds ratios come from one model, specified once (D-093):
 - **What is reported.** 95 % Wald confidence intervals. The coefficients of the covariates are not
   reported: the model is built to estimate the exposure, and those coefficients have no causal
   reading in it.
-- **Implementation** (`pipeline.py estimate`, D-117, D-118).
+- **Implementation** (`pipeline.py estimate`, D-117, D-118, D-137).
   - [`../sql/analysis/aggregated_count.sql`](../sql/analysis/aggregated_count.sql) writes
     `results.aggregated_count`: per definition, the births per combination of completed weeks,
     first-visit trimester, visits and the four covariates. The run checks that it holds every
@@ -528,6 +569,12 @@ The odds ratios come from one model, specified once (D-093):
   - A level whose births are all preterm or all term has no estimate. A covariate level like that
     leaves the adjusted model, which changes no other estimate. A level that the design cannot
     tell apart from others has no estimate either. The cohorts of 2020–2023 have no such level.
+  - The same holds for rows that a combination of levels predicts exactly, although no level does
+    on its own: quasi-complete separation, under which the maximum likelihood estimate does not
+    exist (Albert and Anderson 1984). A linear program finds those rows (Konis 2007). They are set
+    aside and the model is fitted on the rest, which is the limit of the fit along the separating
+    direction (Geyer 2009). A level they leave aliased has no estimate (D-137). None of the 94
+    adjusted models of 2020–2023 is separated.
 
 ### Covariates
 
@@ -581,13 +628,18 @@ D-099 sets how the alternatives are estimated and reported.
   - The definition with multiples and the period 2022–2023 change the cohort, and each carries its
     attrition. The definition with multiples is definition 6, estimated at 37 weeks.
   - `v0.2-progress` carries two of them, the cut-off and the definition with multiples (D-012,
-    D-124). The period 2022–2023 lands in `v1.0`.
+    D-124). The period 2022–2023 lands in `v1.0`, at 37 weeks on definition 2, with the value
+    `2022-2023` in the column period (D-132).
+- **The variants of measure (b) are not an axis of the definition.** They change how the index
+  rates the same records, not which records enter, so they carry no attrition of their own and
+  live in [§APNCU](#apncu-measure-b) with their own crude and adjusted models (D-130). They run
+  at the cut-off of the main analysis only.
 - **In the definition with multiples, each certificate is one unit.** Its confidence intervals
   ignore that the twins of one pregnancy are not independent, because no published variable groups
   them (D-051).
 - **Gradients (`v1.0`).** The adjusted odds ratios of (a) and (c) are fitted separately within
-  each state of residence and within each insurance group, with the other covariates. The
-  insurance groups are `FOR APPROVAL`:
+  each state of residence and within each insurance group, with the other covariates, at 37 weeks
+  on definition 2. The author approved the insurance groups (D-135):
 
   | Group | `AFILIACION` codes |
   |---|---|
@@ -596,17 +648,29 @@ D-099 sets how the alternatives are estimated and reported.
   | Other social security | 04 PEMEX, 05 SEDENA, 06 SEMAR, 11 ISSFAM |
   | No social security | 01 NINGUNA, 07 SEGURO POPULAR / INSABI, 10 IMSS BIENESTAR |
   | Other | 08 OTRA |
-  | Unknown | 00, 88, 99 |
+  | Unknown | 00, 88, 99, a blank cell or a code the catalogue does not publish |
 
   Codes 01, 07 and 10 form one group because records moved between them inside the period, as
-  shown above. A gradient by code would read that move as a change of coverage.
+  shown above. A gradient by code would read that move as a change of coverage. Code 09 does not
+  exist in `AFILIACION_CERTIFICADOS`.
+- **How a stratum is reported** (D-134).
+  - Each stratum has the adjusted model alone, as D-099 sets. The crude odds ratios of the
+    stratum can be computed from `exposure_distribution.csv`, which carries the stratum in two
+    columns, so every level of every stratum has its exact births, the reference included
+    (D-040).
+  - A level that the fit sets aside within a stratum keeps its row, with its births and no odds
+    ratio, as in the main analysis (D-118), and the run prints how many births it set aside.
+  - A small stratum is shown as it is, with its interval, and no threshold of births. The
+    gradient is read where the intervals of two strata do not overlap. The strata are not ranked
+    by their point estimates, and no test of heterogeneity is run.
 
 ### Output tables
 
 The output tables are defined here, before anything runs (D-098).
 
 - **What they cover.** All of them cover 2020–2023 pooled, with the year as a covariate. The
-  attrition is per year.
+  attrition is per year. The rows of the period axis, in `estimates.csv` and
+  `exposure_distribution.csv`, cover 2022–2023 and carry it in the column period (D-132).
 - **Where they go.** `pipeline.py publish` writes them to `results/` at a milestone (D-014, D-080).
   Until then they live in the `results` schema, under the name of each file without `.csv`, except
   `estimate`. `pipeline.py cohorts` writes `attrition` and `excluded_profile`, `simulate` writes
@@ -625,7 +689,7 @@ The output tables are defined here, before anything runs (D-098).
 | File | One row per | Columns |
 |---|---|---|
 | `attrition.csv` | definition, year of the record files, step | kind, description, remaining, excluded: the columns of `attrition_base.csv`, which it replaced at the `v0.2-progress` publish, for every definition |
-| `exposure_distribution.csv` | source, definition, period, outcome cut-off, measure, variant, level, outcome | births |
+| `exposure_distribution.csv` | source, definition, period, outcome cut-off, measure, variant, level, outcome, stratum variable, stratum value | births |
 | `estimates.csv` | estimate | source, definition, period, outcome cut-off, measure, variant, level, reference, model, stratum variable, stratum value, births, preterm births, odds ratio, lower and upper limits of the 95 % interval |
 | `truncation_share.csv` | definition, measure, variant, level, scenario | reference, observed crude odds ratio with the lower and upper limits of its 95 % interval, simulated odds ratio, observed and simulated risk differences, share (D-112) |
 | `excluded_profile.csv` | definition, validity step, group (excluded, retained) | births, % preterm, % first-trimester start, % no prenatal care (D-121, D-123) |
@@ -636,9 +700,10 @@ The columns take these values:
 |---|---|
 | source | `observed`, `sim_e1`, `sim_e2` |
 | measure | `a`, `a_count`, `b`, `c`, `d` |
-| variant | `acog_midpoint` for (b), and `nom007_midpoint` in `v1.0`; empty for the other measures |
+| variant | for (b), one of `acog_midpoint`, `acog_first`, `acog_last` and `nom007_midpoint` ([§APNCU](#apncu-measure-b), D-130); empty for the other measures |
 | model | `crude`, `adjusted` |
 | stratum variable | empty, `state` or `insurance` |
+| stratum value | empty; the two-digit code of the state of residence, as `ENTIDADES` publishes it; or the insurance group, as named in [§Sensitivity analyses and gradients](#sensitivity-analyses-and-gradients) |
 | outcome | `preterm`, `term` |
 | births, preterm births | those of the level, in `estimates.csv` |
 | odds ratio and its limits | empty for a level without an estimate ([§Model](#model)) |
@@ -704,6 +769,52 @@ All of them are adjusted odds ratios. The crude ones are in `estimates.csv`.
 - **Including multiples moves every adjusted odds ratio towards 1**, and the crude ones of (a).
   The definition keeps 107,221 more births than definition 2. The crude odds ratio of (c) moves
   the other way: it becomes 0.940 (0.933–0.946), against 1.000 in the main analysis.
+
+### What the period axis and the gradients show
+
+Measured as orientation, on 2020–2023, by `pipeline.py publish` at the commit of task 1.8.2 on
+11 November 2026. The table of record is `estimates.csv`, published at `v1.0`. All are adjusted
+odds ratios at 37 weeks on definition 2.
+
+**The period axis** holds 3,000,570 births, the analysis cohort of 2022 and 2023 in
+`attrition.csv` (1,539,748 + 1,460,822).
+
+| Measure, level against the reference | 2020–2023 | 2022–2023 |
+|---|---|---|
+| (a) 0 visits, against 8 or more | 2.458 (2.415–2.501) | 2.567 (2.503–2.632) |
+| (a) 1–4 visits | 2.030 (2.011–2.049) | 2.104 (2.076–2.132) |
+| (a) 5–7 visits | 1.529 (1.518–1.540) | 1.546 (1.530–1.562) |
+| (c) trimester 0, 2 or 3, against trimester 1 | 1.065 (1.057–1.073) | 1.083 (1.071–1.095) |
+
+- **Leaving out 2020 and 2021 barely moves the estimates.** Every odds ratio is slightly further
+  from 1 on 2022–2023, by 0.017 to 0.109. The two cohorts share the births of 2022 and 2023, so
+  their intervals are not independent, and whether they overlap is no test.
+
+**The gradient by insurance**, with the births of the group:
+
+| Group | Births | (a) 0 visits | (a) 1–4 | (a) 5–7 | (c) |
+|---|---|---|---|---|---|
+| IMSS | 1,626,854 | 2.723 (2.561–2.894) | 2.289 (2.244–2.334) | 1.713 (1.692–1.735) | 1.044 (1.027–1.061) |
+| ISSSTE | 139,512 | 2.338 (1.800–3.036) | 1.939 (1.805–2.083) | 1.587 (1.521–1.655) | 1.024 (0.956–1.096) |
+| Other social security | 44,088 | 2.322 (1.691–3.189) | 1.835 (1.636–2.059) | 1.425 (1.321–1.537) | 0.994 (0.905–1.091) |
+| No social security | 3,594,894 | 2.521 (2.470–2.574) | 2.044 (2.018–2.069) | 1.486 (1.471–1.501) | 1.095 (1.085–1.106) |
+| Other | 178,206 | 2.523 (2.276–2.796) | 2.089 (1.978–2.207) | 1.535 (1.471–1.601) | 1.072 (1.025–1.122) |
+| Unknown | 620,043 | 2.676 (2.545–2.814) | 2.064 (2.004–2.126) | 1.549 (1.511–1.587) | 1.068 (1.043–1.094) |
+
+- **(a) keeps its order in every group.** Fewer visits go with more preterm births everywhere.
+- **(c) is above 1 where there is no social security** and is compatible with 1 in ISSSTE and the
+  other social security institutions.
+
+**The gradient by state** has 32 strata, from 34,011 births in Colima (06) upwards.
+
+- **No level of any of the 38 strata was set aside** (D-118), and every level has an odds ratio.
+- **(a) is above 1 in every state.** All 96 intervals lie above 1. At 0 visits the odds ratio
+  ranges from 1.798 (1.686–1.917) in Chiapas (07) to 4.491 (3.845–5.245) in Hidalgo (13).
+- **(c) changes direction between states.** It ranges from 0.852 (0.812–0.894) in Tabasco (27)
+  to 1.349 (1.306–1.394) in Nuevo León (19). Its interval lies below 1 in 4 states and above 1 in
+  18.
+- **The widest interval** is that of (a) at 0 visits in Colima: 3.365 (2.514–4.504), from 441
+  births and 57 preterm births.
 
 ## Null simulation
 
@@ -901,7 +1012,7 @@ allow (§Data source). Two more come from the data model
 
 The exposure measures, the analysis and the simulation add five more, stated where they arise:
 
-- APNCU is approximated from the trimester, with a month rule whose sensitivity was cut
+- APNCU is approximated from the trimester, with a month rule whose sensitivity comes in `v1.0`
   (§APNCU).
 - The ACOG schedule of the index is not the Mexican norm (§APNCU).
 - The bounds of the trimesters have no published source (§Trimester boundaries).
@@ -919,14 +1030,14 @@ The ones the proposal already anticipated are in
 | What proposal v2 says | What this protocol does | Where |
 |---|---|---|
 | SINAC in the INSP standardized version | SSA/DGIS open data | D-001, D-002 |
-| Period 2019–2023 | 2020–2023 | D-041, §Data source |
+| Period 2019–2023 | 2020–2023; 2019 is future work | D-041, D-126, §Data source |
 | "Births" as the unit, without stating it | The live-birth certificate, which the restriction to singletons makes a pregnancy, with one mother `PERSON` per certificate | D-051, §Design |
 | Preterm cut-offs 37, 34 and 32 with no source | 37 weeks from NOM-007-SSA2-2016 §3.25, over a cohort that starts at 22 weeks (§3.45) | D-053, §Outcome |
 | Inclusion or exclusion of births before week 22 as a sensitivity axis | A base exclusion with its count in the attrition table; the axis is dropped | **D-055 `[SCOPE CHANGE]`** |
 | Nothing about the mother's residence | Residence in Mexico is an eligibility criterion; residence abroad becomes future work, with the signal that motivates it | D-057, [`roadmap.md`](roadmap.md#46-prenatal-care-of-mothers-resident-abroad) |
 | Nothing about missing prenatal care data | The four measures on one set of records with known and coherent prenatal care data | D-086, §Exposure measures |
 | Landmark cohorts at weeks 28, 32 or 34 | The three weeks. D-004 had cut them to one or two, and D-090 restores them | D-090, §Exposure measures |
-| APNCU, with the sensitivity to the month assigned within the trimester | Kotelchuck's program, with one rule: the middle month of the trimester | **D-005 `[SCOPE CHANGE]`**, D-091, D-092 |
+| APNCU, with the sensitivity to the month assigned within the trimester | Kotelchuck's program with the middle month of the trimester; the first and the last month as a sensitivity axis in `v1.0` | D-091, D-092, D-127, which reverses D-005 |
 | Odds ratios adjusted for maternal age and education, insurance, state and year | Adjusted for age, education, state and year; insurance becomes a gradient | **D-007, D-094 `[SCOPE CHANGE]`**, §Analysis |
 | The full sensitivity of the definition for every measure | The full grid for measures (a) and (c) | **D-003 `[SCOPE CHANGE]`**, §Analysis |
 | Visits generated with variation in adherence | Two fixed scenarios, the perfect calendar and a calendar with misses | D-010, D-096, §Null simulation |
@@ -934,8 +1045,14 @@ The ones the proposal already anticipated are in
 
 ## References
 
+- Albert A, Anderson JA. On the existence of maximum likelihood estimates in logistic regression
+  models. *Biometrika.* 1984;71(1):1–10.
 - DGIS. *Guía para el correcto llenado del Certificado de Nacimiento, Modelo 2025*. Secretaría de
   Salud.
+- Geyer CJ. Likelihood inference in exponential families and directions of recession.
+  *Electron J Stat.* 2009;3:259–289.
+- Konis K. *Linear programming algorithms for detecting separated data in binary logistic
+  regression models.* DPhil thesis, University of Oxford; 2007.
 - Koroukian SM, Rimm AA. The "Adequacy of Prenatal Care Utilization" (APNCU) index to study low
   birth weight: is the index biased? *J Clin Epidemiol.* 2002;55(3):296–305.
 - Kotelchuck M. An evaluation of the Kessner Adequacy of Prenatal Care Index and a proposed

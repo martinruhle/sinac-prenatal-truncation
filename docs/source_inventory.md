@@ -260,8 +260,8 @@ Stated as measurements. The decision is task 1.2.3 and belongs to the author.
 
 | What | Why | Where it is resolved |
 |---|---|---|
-| Meaning of every 2019 variable | DGIS publishes no descriptor for 2015–2019 | Only if 2019 is added (D-050): data dictionary, from the three sources above with their caveats stated |
-| `DERHAB` + `DERHAB2` → `AFILIACION` | Two fields against one, and no published rule | Only if 2019 is added (D-050): protocol |
-| Education crosswalk 2015–2019 ↔ 2020–2023 | Disjoint code systems; four categories have no counterpart | Only if 2019 is added (D-050): protocol |
+| Meaning of every 2019 variable | DGIS publishes no descriptor for 2015–2019 | Future work, with 2019 (D-126): data dictionary, from the three sources above with their caveats stated |
+| `DERHAB` + `DERHAB2` → `AFILIACION` | Two fields against one, and no published rule | Future work, with 2019 (D-126): protocol |
+| Education crosswalk 2015–2019 ↔ 2020–2023 | Disjoint code systems; four categories have no counterpart | Future work, with 2019 (D-126): protocol |
 | ICD-10 catalogue for 2020–2023 | `DIAGNOSTICOS` is named by the descriptor and not published in the ZIP | Only if congenital anomalies enter the analysis |
 | Whether 2024 and 2025 are definitive or preliminary | Outside the scope of this inventory (D-048) | Only if the period is extended |

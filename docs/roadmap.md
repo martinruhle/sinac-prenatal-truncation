@@ -29,7 +29,8 @@ The detail lives in [`omop_mapping.md`](omop_mapping.md) and `docs/data_dictiona
 these are the ones that shape the schema. The vertical slice of v0.1 maps the mother, the
 observation period, gestational age, plurality, the two prenatal care items and residence
 (D-059 to D-068). Mapping v1, in v0.2, adds the mother's age and education, the covariates of the
-adjusted models (D-100, D-101), and the newborn with its birth weight (D-103 to D-106).
+adjusted models (D-100, D-101), and the newborn with its birth weight (D-103 to D-106). Mapping v2,
+in v1.0, adds insurance for the gradient (D-133).
 
 | SINAC item | OMOP destination | Note |
 |---|---|---|
@@ -42,7 +43,7 @@ adjusted models (D-100, D-101), and the newborn with its birth weight (D-103 to 
 | Total visits, trimester of the first visit | `OBSERVATION` | This is a **declared count**, not one row per visit; it is not modelled as visits (D-065, D-066) |
 | Mother's age | `MEASUREMENT` | The age declared on the certificate, an adjustment covariate (D-094, D-100) |
 | Mother's education | `OBSERVATION` | Each code maps to one of the five levels of the adjustment covariate (D-094, D-101) |
-| Insurance | `PAYER_PLAN_PERIOD` (planned) | Mapped in v1.0 with the gradient by insurance, which is its only use; the destination is decided then (D-094, D-102) |
+| Insurance | `OBSERVATION` | Mapped in v1.0 with the gradient by insurance, its only use: LOINC 76437-3 "Primary insurance", with the code in `value_source_value`, since no standard concept names a Mexican institution (D-102, D-133) |
 | Variables with no standard concept | `concept_id = 0` + `*_source_value` | OMOP convention; the codes are listed in `omop_mapping.md` and in `config/source_to_concept_map.csv` (D-067) |
 
 ## 2. Data source
@@ -63,7 +64,7 @@ The [source inventory](source_inventory.md) measured the cost of each option:
 - The four years 2020–2023 share one descriptor, one catalogue set and identical headers.
 - 2019 needs a harmonization of its own and has no descriptor published by DGIS.
 
-2019 stays as a conditional extension ([§4.5](#45-the-year-2019), D-050). Development runs on
+2019 is future work ([§4.5](#45-the-year-2019), D-126). Development runs on
 2023 (D-009). The argument is in [`protocol.md`](protocol.md#data-source).
 
 ## 3. Milestones of the semester
@@ -72,7 +73,7 @@ The [source inventory](source_inventory.md) measured the cost of each option:
 |---|---|---|---|
 | `v0.1-cohort` | Fri 9 Oct 2026 (session 18) | OMOP ETL of the vertical slice on 2023, base cohort in SQL with its attrition table, SQL tests in CI, README with the evidence map v1 and the source and scope changes written down | tag + release + clean-clone test |
 | `v0.2-progress` | Thu 29 Oct 2026 (tag), Fri 30 Oct (progress review, session 24) | Full period (2020–2023) loaded, remaining mapping and covariate ETL, exposures a–d, crude and adjusted odds ratios, null simulation v1, one or two sensitivity axes (D-012) | tag + release + clean-clone test |
-| `v1.0` | Fri 20 Nov 2026 (session 30, submission) | Remaining sensitivity axes and gradients, APNCU on the NOM-007 calendar (D-091), analysis image, complete entry point, documentation closed, security review, DOI (D-025) | tag + release + clean-clone test + Zenodo |
+| `v1.0` | Fri 20 Nov 2026 (session 30, submission) | Remaining sensitivity axes and gradients, APNCU on the NOM-007 calendar (D-091) and its month rule (D-127), analysis image, complete entry point, documentation closed, security review, DOI (D-025) | tag + release + clean-clone test + Zenodo |
 | presentation | Tue 24 Nov 2026 (session 31) | 12 minutes plus 5 for questions | — |
 
 The `v0.2-progress` tag is cut on the Thursday, the day before the progress review: the review
@@ -118,35 +119,47 @@ case is the weekly time budget.
 | Left out | Decision |
 |---|---|
 | The full sensitivity grid for measures (b) APNCU and (d) landmark cohorts; they appear in the main analysis only | D-003 |
-| Sensitivity to the month assigned within the first-visit trimester for APNCU; a single documented rule, the middle month, is used instead | D-005, D-092 |
 | Sensitivity using birth weight <2500 g as an alternative outcome | D-006 |
 | Insurance as an adjustment covariate; it enters as the gradient by insurance instead | D-007, D-094 |
 | Inclusion of births before week 22 as an axis; the exclusion stays in the base cohort, with its count in the attrition table | D-055 |
 
-Two notes for the re-planning at `v0.2-progress`, where D-084 decides whether a cut comes back:
+Two cuts came back once their cost was known, as D-084 left it to the re-planning of
+`v0.2-progress`:
 
-- **The third landmark week is no longer cut.** D-004 cut it, and D-090 restored it once its cost
-  was known: a landmark is the same filter with another week, about half an hour of work.
-- **The month rule is the cheapest cut to restore.** The protocol has `compute_apncu()` take the
-  rule as a parameter, so running the other two rules costs about half an hour. The rule is not a
-  detail.
-  Measured once as orientation, the share of preterm births rated Adequate Plus is 19.7 % with the
-  first month of each trimester, 25.8 % with the middle month and 36.9 % with the last month.
+- **The third landmark week** (D-090, reversing D-004): a landmark is the same filter with another
+  week, about half an hour of work.
+- **The month rule of APNCU** (D-127, reversing D-005), in `v1.0`. `compute_apncu()` takes the
+  rule as a parameter, so running the other two rules costs about half an hour, and the rule is not
+  a detail. Measured once as orientation, the share of preterm births rated Adequate Plus is 19.7 %
+  with the first month of each trimester, 25.8 % with the middle month and 36.9 % with the last
+  month.
 
 ### 4.4 Engineering left for later
 
 The analysis image (`Dockerfile`) is built after milestone `v0.1-cohort` within a two-hour
-timebox; whatever does not fit in that timebox is future work as well (D-015).
+timebox; whatever does not fit in that timebox is future work as well (D-015). The image of
+`v1.0` runs the test suite without the database (D-131). Left out of the timebox:
+
+- **Building the image in CI.** CI runs the suite with `uv` on the runner; it does not build the
+  image, so a change that breaks the build is found only when the image is built by hand.
+- **The pipeline inside the container.** The image starts no database, and `compose.yml` has no
+  service for it: `scripts/` runs on the host with `uv run`, so the `db` tests skip in the image.
+- **A runtime image without the dev tools.** One image carries ruff, mypy and pytest because it
+  runs the tests; a multi-stage build would keep them out of the image that runs the analysis.
+- **The base images pinned by digest.** They are pinned by tag (`python:3.12.14-slim-trixie`,
+  `uv:0.12.15`), as Postgres is (D-031); a digest would also fix a tag that is pushed again.
 
 ### 4.5 The year 2019
 
 2019 is the only pre-pandemic year among the candidates, and the last year of the 2015–2019
-catalogue period. It is added this semester only if two conditions hold (D-050):
+catalogue period. It was to be added this semester only if two conditions held (D-050):
 
 - `v0.2-progress` has been tagged with all of its committed content.
 - The work fits in a one-week timebox (6 hours) before `v1.0` starts.
 
-Otherwise it is future work. What it costs is listed in [`protocol.md`](protocol.md#data-source).
+The tag came on 2 November, four days late, and the hours left before submission do not hold the
+week, so 2019 is future work (D-126). What it costs is listed in
+[`protocol.md`](protocol.md#data-source).
 
 ### 4.6 Prenatal care of mothers resident abroad
 

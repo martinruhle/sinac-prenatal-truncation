@@ -52,6 +52,14 @@ WITH per_year AS (
             WHERE loaded AND education_rule = 'not_in_catalogue'
         ) AS education_not_in_catalogue,
         count(*) FILTER (WHERE loaded AND education_rule = 'blank') AS education_blank,
+        count(*) FILTER (
+            WHERE loaded AND insurance_rule = 'code_to_concept'
+        ) AS insurance_concept,
+        count(*) FILTER (WHERE loaded AND insurance_rule = 'code_to_0') AS insurance_0,
+        count(*) FILTER (
+            WHERE loaded AND insurance_rule = 'not_in_catalogue'
+        ) AS insurance_not_in_catalogue,
+        count(*) FILTER (WHERE loaded AND insurance_rule = 'blank') AS insurance_blank,
         count(*) FILTER (WHERE loaded AND country_rule = 'code_to_concept') AS country_concept,
         count(*) FILTER (WHERE loaded AND country_rule = 'code_to_0') AS country_0,
         count(*) FILTER (
@@ -147,6 +155,10 @@ CROSS JOIN LATERAL (
     ('observation', 'mother_education:code_to_0', p.education_0),
     ('observation', 'mother_education:not_in_catalogue', p.education_not_in_catalogue),
     ('observation', 'mother_education:blank', p.education_blank),
+    ('observation', 'mother_insurance:code_to_concept', p.insurance_concept),
+    ('observation', 'mother_insurance:code_to_0', p.insurance_0),
+    ('observation', 'mother_insurance:not_in_catalogue', p.insurance_not_in_catalogue),
+    ('observation', 'mother_insurance:blank', p.insurance_blank),
     ('location', 'country_concept_id:code_to_concept', p.country_concept),
     ('location', 'country_concept_id:code_to_0', p.country_0),
     ('location', 'country_concept_id:not_in_catalogue', p.country_not_in_catalogue),

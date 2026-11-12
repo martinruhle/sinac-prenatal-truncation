@@ -1,11 +1,12 @@
-# OMOP mapping v1: the vertical slice, the covariates and the newborn
+# OMOP mapping v2: the vertical slice, the covariates, the newborn and insurance
 
 How the SINAC records of 2020–2023 land in the OMOP CDM v5.4. Version 0 mapped the vertical slice
 (D-009): the tables that the base cohort of [`protocol.md`](protocol.md#base-cohort) and the v0.1
 milestone need. Version 1 adds the covariates of the adjusted odds ratios
 ([`protocol.md`](protocol.md#covariates), D-094): the mother's age and education. It also adds
 the newborn as a `PERSON` of its own, linked to the mother, with its birth weight (D-103 to
-D-106). Source variables are described in [`data_dictionary.md`](data_dictionary.md); this
+D-106). Version 2, in v1.0, adds the mother's insurance, which only the gradient by insurance reads
+(D-102, D-133). Source variables are described in [`data_dictionary.md`](data_dictionary.md); this
 document says where each one goes (D-017).
 
 Every populated field has one row, with its source, its rule and who decided it:
@@ -26,8 +27,8 @@ and domain, and that each domain is one the CDM allows in the field it is writte
 | `PERSON`: the mother, and the newborn (v1) | | |
 | `FACT_RELATIONSHIP`: mother and newborn (v1) | | |
 | `OBSERVATION_PERIOD` | `VISIT_OCCURRENCE`, `CARE_SITE` | No criterion uses the delivery visit, and no visit is ever created for prenatal care (D-066) |
-| `MEASUREMENT`: gestational age, plurality, mother's age (v1), birth weight (v1) | `AFILIACION` (insurance) | Only the gradient by insurance uses it (D-094, D-099), so it is mapped in v1.0 with the gradient (D-102) |
-| `OBSERVATION`: total visits, trimester of the first visit, mother's education (v1) | `ATENCIONPRENATAL` | No rule of the protocol uses it: the common set of records rests on the trimester and the visit count (D-086). Candidate concept if it is ever mapped, checked in Athena: 44817093, LOINC 75204-8 "Prenatal care indicator [CDC.CS]", Observation |
+| `MEASUREMENT`: gestational age, plurality, mother's age (v1), birth weight (v1) | | |
+| `OBSERVATION`: total visits, trimester of the first visit, mother's education (v1), insurance (v2) | `ATENCIONPRENATAL` | No rule of the protocol uses it: the common set of records rests on the trimester and the visit count (D-086). Candidate concept if it is ever mapped, checked in Athena: 44817093, LOINC 75204-8 "Prenatal care indicator [CDC.CS]", Observation |
 | `LOCATION`: residence | | |
 | `CDM_SOURCE`, and `VOCABULARY` and `SOURCE_TO_CONCEPT_MAP` rows for the local codes | | |
 
@@ -298,8 +299,8 @@ Why the declared age, and not one computed from `PERSON`:
 
 ### OBSERVATION
 
-Three rows per `PERSON`, in this order: total visits, the trimester of the first visit, then the
-mother's education.
+Four rows per mother `PERSON`, in this order: total visits, the trimester of the first visit, the
+mother's education and her insurance.
 
 **Total prenatal visits** (`TOTALCONSULTAS`), a **declared count**:
 
@@ -371,6 +372,24 @@ attended, complete or not; a technical program counts at the general level it re
   "Educated to secondary school level" (4074914) would merge both.
 - LOINC 57712-2 is the item of the US standard certificate of live birth, the same panel as the
   visit count (D-065).
+
+**Mother's insurance** (`AFILIACION`, *derechohabiencia*), the stratum of the gradient by
+insurance and never a covariate (D-094, D-099):
+
+| Field | DDL | Source | Rule | Decided by |
+|---|---|---|---|---|
+| `observation_concept_id` | required | `AFILIACION` | `mother_insurance` (46235654) | Project, D-133 |
+| `observation_date`, `observation_type_concept_id`, `observation_source_*` | | | As for total visits | — |
+| `value_as_concept_id` | optional | `AFILIACION` | 0 for each of the 13 codes of `SINAC20_AFIL` and for a code outside the catalogue; NULL for a blank cell | Project, D-067, D-133 |
+| `value_source_value` | optional | `AFILIACION` | Verbatim | Project, D-067 |
+
+- **No standard concept names a Mexican institution**, so every code maps to 0 and the code is
+  read from `value_source_value`. The gradient groups the codes in
+  `sql/analysis/aggregated_count.sql`, by the table of [`protocol.md`](protocol.md#sensitivity-analyses-and-gradients)
+  (D-135).
+- **The map still lists the 13 codes**, so a code that `AFILIACION_CERTIFICADOS` does not publish
+  is counted apart, as `mother_insurance:not_in_catalogue` in `results.etl_counts`.
+- LOINC 76437-3 "Primary insurance" is the item; the certificate records one affiliation.
 
 ### FACT_RELATIONSHIP
 
@@ -451,6 +470,9 @@ The concepts added for the newborn (v1: `birth_weight`, `gram`, `mother`, `child
 and the two targets of `SEXO`) were copied on 2026-10-09 from the same bundle. With them,
 `validate-concepts` passes all 29 concept ids.
 
+The concept added for insurance (v2: `mother_insurance`) was copied on 2026-11-11 from `CONCEPT`
+of the same bundle. With it, `validate-concepts` passes all 30 concept ids.
+
 | Key | concept_id | Vocabulary | Code | Name | Domain | Written to |
 |---|---|---|---|---|---|---|
 | `female` | 8532 | Gender | F | FEMALE | Gender | `person.gender_concept_id` |
@@ -464,6 +486,7 @@ and the two targets of `SEXO`) were copied on 2026-10-09 from the same bundle. W
 | `prenatal_visits_count` | 40771079 | LOINC | 68493-6 | Prenatal visits for this pregnancy # | Observation | `observation.observation_concept_id` |
 | `first_prenatal_visit_trimester` | 44817052 | LOINC | 75163-6 | Mother's Trimester of first prenatal visit [CDC.CS] | Observation | `observation.observation_concept_id` |
 | `mother_education` | 40760823 | LOINC | 57712-2 | Highest level of education Mother | Observation | `observation.observation_concept_id` |
+| `mother_insurance` | 46235654 | LOINC | 76437-3 | Primary insurance | Observation | `observation.observation_concept_id` |
 | `birth_weight` | 3011043 | LOINC | 8339-4 | Birth weight Measured | Measurement | `measurement.measurement_concept_id` |
 | `gram` | 8504 | UCUM | g | gram | Unit | `measurement.unit_concept_id` |
 | `mother` | 4248584 | SNOMED | 72705000 | Mother | Relationship | `fact_relationship.relationship_concept_id` |
@@ -502,7 +525,8 @@ Rejected alternatives:
 | Mother's age | 3007191, LOINC 21612-7 "Age - Reported"; 4028487, SNOMED 13506008 "Maternal age" (both Observation) | Valid, but neither says at which moment the age is taken. LOINC 85724-3 names the mother's age at delivery, which is what the certificate records |
 | Education, answers | The LOINC answers of the US certificate, such as LA12455-4 "8th grade or less" and LA12456-2 "9th - 12th grade, no diploma" | They follow US grades, and *secundaria* falls across two of them (D-101) |
 | Education, answers | Concept 0 for every code, with the levels in SQL | A valid answer would look like a missing one, the distinction D-065 kept for the trimester, and the grouping would need configuration of its own (D-101) |
-| Insurance | `PAYER_PLAN_PERIOD` in v0.2 | No analysis of v0.2 uses insurance; it is mapped with the gradient of v1.0 (D-102) |
+| Insurance | `PAYER_PLAN_PERIOD`, with a payer concept of SOPT | SOPT is a US typology: IMSS would be "Other Government" and SEDENA "Department of Defense". Its period could only be the delivery day (D-062), and the gradient needs the code alone (D-133) |
+| Insurance | 87520-3 "Coverage type"; 63514-4, a PhenX survey question (LOINC, Observation) | Valid, but 76437-3 names the primary insurance of the person, which is what the certificate records (D-133) |
 | Newborn sex, codes 0 and 9 | 8551 "UNKNOWN" (Gender) | Deprecated and non-standard in the loaded bundle; a flavor of null is 0 (D-067, D-103) |
 | Newborn location | The mother's `LOCATION` | The certificate records the mother's residence, not the newborn's (D-103) |
 | Mother–newborn link | 4050951 "Parent of" and 4051272 "Child of" (SNOMED, Observation) | Observation concepts, and less precise than Mother and Child (D-104) |
@@ -535,6 +559,9 @@ value in the source field. Record counts are orientation, over 2020–2023.
 | `ESCOLARIDAD` | 0 | NO ESPECIFICADO | 29,338 | `value_as_concept_id` 0 |
 | `ESCOLARIDAD` | 88 | NO APLICA | 64 | `value_as_concept_id` 0 |
 | `ESCOLARIDAD` | 99 | SE IGNORA | 17,734 | `value_as_concept_id` 0 |
+| `AFILIACION` | 00 | NO ESPECIFICADO | 269,504 | `value_as_concept_id` 0, like every code of the column (D-133) |
+| `AFILIACION` | 88 | NO APLICA | 3,594 | `value_as_concept_id` 0 |
+| `AFILIACION` | 99 | SE IGNORA | 396,526 | `value_as_concept_id` 0 |
 | `FECHANACIMIENTOMADRE` | 09/09/9999 | fecha no especificada | 767 | not used for `year_of_birth` |
 | `SEXO` | 0 | NO ESPECIFICADO | 3,957 | `gender_concept_id` 0 of the newborn |
 | `SEXO` | 9 | SE IGNORA | 654 | `gender_concept_id` 0 of the newborn |
@@ -546,6 +573,11 @@ records) are answers, not missing values: they map to "No prenatal care" and to 
 `ESCOLARIDAD` 88, "NO APLICA", is a flavor of null like the other two (D-067): the descriptor
 says the system sets it when the question does not apply, and education applies to every mother.
 `ESCOLARIDAD` has no blank cell in 2020–2023, and `EDAD` neither.
+
+`AFILIACION` has no blank cell and no code outside its catalogue among the loaded mothers of
+2020–2023, and its other ten codes map to 0 as well, since no standard concept names a Mexican
+institution. Its counts above are those of the loaded mothers, from `results.etl_counts` and
+`OBSERVATION`.
 
 ## What the next tasks take from here
 
@@ -578,9 +610,10 @@ says the system sets it when the question does not apply, and education applies 
   `LOCATION.state` is not NULL. The seven age groups are cut from `value_as_number`, as literals of
   `sql/analysis/aggregated_count.sql` with their source in a comment (D-094, D-117). The
   education levels are the concepts.
-- **v1.0, insurance.** `AFILIACION` is mapped with the gradient by insurance (D-102). Its
-  destination is still open. `PAYER_PLAN_PERIOD` needs start and end dates, which could only be the
-  delivery day under D-062 and D-063, and the payer vocabulary of the CDM (SOPT) is a US typology.
+- **1.8.2, insurance (v2).** The ETL writes the insurance row and counts its rules per year
+  (`mother_insurance:*`). The check of the mothers' `OBSERVATION` rows now requires four
+  (`mother_without_four_observations`). `sql/analysis/aggregated_count.sql` groups the codes into
+  the six insurance groups of the gradient (D-133, D-135).
 - **Data quality checks.** A plausibility check on `year_of_birth`, such as the one of the OHDSI
   Data Quality Dashboard, will flag the one mother born in year 1. That record is known and left
   as it is.

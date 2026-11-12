@@ -6,12 +6,15 @@ landmark and multiples cohorts with ``sql/analysis/aggregated_count.sql``, reads
 at a time, and reads the simulated pregnancies of ``results.simulated_combination``. Measures (a)
 and (c) are also estimated on each alternative definition of the sensitivity analysis (task 1.8.1,
 D-099): the analysis cohort at the cut-offs of 34 and 32 weeks, and the definition with multiples.
-It writes the estimates
-and the exposure distribution to the tables of ``sql/analysis/estimate_tables.sql``. The models
-are :mod:`sinac_truncation.models`, with the measures of :mod:`sinac_truncation.measures` (D-113).
+Task 1.8.2 adds the period axis, the analysis cohort of 2022 and 2023 alone (D-049, D-132), and the
+gradients, the adjusted models of (a) and (c) within each state of residence and each insurance
+group (D-099, D-134). It writes the estimates and the exposure distribution to the tables of
+``sql/analysis/estimate_tables.sql``. The models are :mod:`sinac_truncation.models`, with the
+measures of :mod:`sinac_truncation.measures` (D-113).
 
-A run checks that the aggregated table holds every birth of each cohort before it fits anything,
-and writes everything in one transaction, so a failed run keeps the previous one.
+A run checks that the aggregated table holds every birth of each cohort, and that the analysis
+cohort of each year is the one its attrition counts, before it fits anything, and writes
+everything in one transaction, so a failed run keeps the previous one.
 """
 
 import time
@@ -27,10 +30,13 @@ from psycopg import sql
 
 import etl
 import sql_runner
+from sinac_truncation.apncu import ApncuVariant, apncu_variants
 from sinac_truncation.cohorts import LANDMARK_WEEKS, MULTIPLES_DEFINITION
 from sinac_truncation.measures import PRETERM_WEEKS, VisitCuts
 from sinac_truncation.models import (
+    GRADIENTS,
     OBSERVED,
+    PERIOD_AXIS_YEARS,
     SENSITIVITY_MEASURES,
     Cell,
     DistributionRow,
@@ -39,12 +45,16 @@ from sinac_truncation.models import (
     ModelError,
     definition_measures,
     format_estimates,
+    format_gradients,
     observed_estimates,
+    period_axis,
     sensitivity_models,
     simulated_estimates,
+    strata,
+    year_births,
 )
 from sinac_truncation.period import format_years
-from sinac_truncation.simulation import Combination
+from sinac_truncation.simulation import Combination, SimulationError, calendar_first_weeks
 from sinac_truncation.sqltext import render_sql
 
 #: Repository root, reached from this file so no absolute path is written down (rule 12).
@@ -69,16 +79,25 @@ class Run:
     period: str
     estimates: list[EstimateRow] = field(default_factory=list)
     distribution: list[DistributionRow] = field(default_factory=list)
-    #: Per definition, outcome cut-off and measure, the births an adjusted model set aside
-    #: (D-118).
-    set_aside: dict[tuple[int, int, str], int] = field(default_factory=dict)
+    #: Per definition, period, outcome cut-off, stratum and measure, the births an adjusted model
+    #: set aside (D-118).
+    set_aside: dict[tuple[int, str, int, str, str], int] = field(default_factory=dict)
 
-    def add(self, found: Estimates, definition: int, cutoff: int) -> None:
-        """Add the rows of one definition at one cut-off, or of one scenario."""
+    def add(
+        self,
+        found: Estimates,
+        definition: int,
+        cutoff: int,
+        *,
+        period: str | None = None,
+        stratum: str = "",
+    ) -> None:
+        """Add the rows of one definition at one cut-off, of one stratum, or of one scenario."""
         self.estimates += found.estimates
         self.distribution += found.distribution
         for measure, births in found.set_aside.items():
-            self.set_aside[definition, cutoff, measure] = births
+            key = (definition, period or self.period, cutoff, stratum, measure)
+            self.set_aside[key] = births
 
 
 def read_cuts(schedule: Path = SCHEDULE) -> VisitCuts:
@@ -92,6 +111,19 @@ def read_cuts(schedule: Path = SCHEDULE) -> VisitCuts:
         return VisitCuts.from_schedule(document)
     except (OSError, yaml.YAMLError, KeyError, TypeError, ValueError) as error:
         raise EstimateError(f"cannot read the cut points of {schedule.name}: {error}") from error
+
+
+def read_variants(schedule: Path = SCHEDULE) -> tuple[ApncuVariant, ...]:
+    """The variants of measure (b), the NOM-007 one on the calendar of the file (D-130).
+
+    Raises:
+        EstimateError: the file is missing or malformed.
+    """
+    try:
+        document = yaml.safe_load(schedule.read_text(encoding="utf-8"))
+        return apncu_variants(calendar_first_weeks(document))
+    except (OSError, yaml.YAMLError, KeyError, TypeError, SimulationError) as error:
+        raise EstimateError(f"cannot read the calendar of {schedule.name}: {error}") from error
 
 
 def read_sql(sql_dir: Path = SQL_DIR) -> dict[str, str]:
@@ -151,13 +183,45 @@ def build_aggregated(
 
 def read_period(cur: psycopg.Cursor[Any], schemas: etl.Schemas) -> str:
     """The years of the record files the cohorts were built on, as ``--years`` writes them."""
+    return format_years(list(read_remaining(cur, schemas)))
+
+
+def read_remaining(cur: psycopg.Cursor[Any], schemas: etl.Schemas) -> dict[int, int]:
+    """Per year of the record files, the analysis cohort its attrition counts: the remaining of
+    its last step."""
     cur.execute(
         sql.SQL(
-            "SELECT DISTINCT source_year FROM {} WHERE cohort_definition_id = %s ORDER BY 1"
+            "SELECT DISTINCT ON (source_year) source_year, remaining FROM {} "
+            "WHERE cohort_definition_id = %s ORDER BY source_year, step DESC"
         ).format(_table(schemas, "attrition")),
         (ANALYSIS_DEFINITION,),
     )
-    return format_years([int(year) for (year,) in cur.fetchall()])
+    return {int(year): int(remaining) for year, remaining in cur.fetchall()}
+
+
+def check_years(cells: Sequence[Cell], remaining: Mapping[int, int]) -> None:
+    """Check that the analysis cohort of each year of delivery is the one the attrition of the
+    file of that year counts, which makes the cells of a few years the cohort a run on those
+    years would build (D-132).
+
+    Raises:
+        EstimateError: a year holds other births than its attrition counts.
+    """
+    births = year_births(cells)
+    if births != dict(remaining):
+        raise EstimateError(
+            f"the analysis cohort per year of delivery, {births}, is not the one the attrition "
+            f"counts per year of the record files, {dict(remaining)}: the period axis cannot be "
+            "taken from this run"
+        )
+
+
+def axis_period(years: Sequence[int]) -> str | None:
+    """The period of the period axis, or ``None`` when the run does not cover it: its years are
+    missing, or they are all the run holds, so the axis would repeat the main analysis."""
+    if not set(PERIOD_AXIS_YEARS) < set(years):
+        return None
+    return format_years(PERIOD_AXIS_YEARS)
 
 
 def read_cells(cur: psycopg.Cursor[Any], schemas: etl.Schemas, definition: int) -> list[Cell]:
@@ -165,13 +229,13 @@ def read_cells(cur: psycopg.Cursor[Any], schemas: etl.Schemas, definition: int) 
     cur.execute(
         sql.SQL(
             "SELECT weeks, first_visit_trimester, visits, age_group, education_concept_id, "
-            "state, year, births FROM {} WHERE cohort_definition_id = %s"
+            "state, year, insurance_group, births FROM {} WHERE cohort_definition_id = %s"
         ).format(_table(schemas, "aggregated_count")),
         (definition,),
     )
     return [
-        Cell(int(w), int(t), int(v), str(a), int(e), str(s), int(y), int(b))
-        for w, t, v, a, e, s, y, b in cur.fetchall()
+        Cell(int(w), int(t), int(v), str(a), int(e), str(s), int(y), str(i), int(b))
+        for w, t, v, a, e, s, y, i, b in cur.fetchall()
     ]
 
 
@@ -236,6 +300,7 @@ def run(
     """
     start = time.perf_counter()
     cuts = read_cuts(schedule)
+    variants = read_variants(schedule)
     sql_texts = read_sql(sql_dir)
     # Per definition, its models as (measures, cut-off): the main analysis, then each alternative
     # definition of the sensitivity analysis.
@@ -247,20 +312,57 @@ def run(
     with conn.transaction(), conn.cursor() as cur:
         build_aggregated(cur, schemas, sql_texts, list(models))
         aggregated = time.perf_counter() - start
-        result = Run(period=read_period(cur, schemas))
+        remaining = read_remaining(cur, schemas)
+        result = Run(period=format_years(list(remaining)))
         simulated = read_simulated(cur, schemas)
         for definition, fits in models.items():
             cells = read_cells(cur, schemas, definition)
+            if definition == ANALYSIS_DEFINITION:
+                check_years(cells, remaining)
+                analysis_cells = cells
             for names, cutoff in fits:
                 try:
                     found = observed_estimates(
-                        definition, names, cells, cuts, period=result.period, preterm_weeks=cutoff
+                        definition,
+                        names,
+                        cells,
+                        cuts,
+                        period=result.period,
+                        preterm_weeks=cutoff,
+                        variants=variants,
                     )
                 except ModelError as error:
                     raise EstimateError(
                         f"definition {definition}, cut-off {cutoff} weeks: {error}"
                     ) from error
                 result.add(found, definition, cutoff)
+        axis = axis_period(list(remaining))
+        if axis is not None:
+            try:
+                found = observed_estimates(
+                    ANALYSIS_DEFINITION,
+                    SENSITIVITY_MEASURES,
+                    period_axis(analysis_cells),
+                    cuts,
+                    period=axis,
+                )
+            except ModelError as error:
+                raise EstimateError(f"period {axis}: {error}") from error
+            result.add(found, ANALYSIS_DEFINITION, PRETERM_WEEKS, period=axis)
+        for variable in GRADIENTS:
+            for value, stratum_cells in strata(analysis_cells, variable).items():
+                try:
+                    found = observed_estimates(
+                        ANALYSIS_DEFINITION,
+                        SENSITIVITY_MEASURES,
+                        stratum_cells,
+                        cuts,
+                        period=result.period,
+                        stratum=(variable, value),
+                    )
+                except ModelError as error:
+                    raise EstimateError(f"{variable} {value}: {error}") from error
+                result.add(found, ANALYSIS_DEFINITION, PRETERM_WEEKS, stratum=f"{variable} {value}")
         for scenario, pregnancies in simulated.items():
             found = simulated_estimates(
                 scenario,
@@ -269,19 +371,31 @@ def run(
                 analysis_definition=ANALYSIS_DEFINITION,
                 landmarks=LANDMARK_WEEKS,
                 period=result.period,
+                variants=variants,
             )
             result.add(found, ANALYSIS_DEFINITION, PRETERM_WEEKS)
         write(cur, schemas, result)
 
     print(f"odds ratios of preterm birth, {result.period}, every term categorical (D-093)")
-    for (definition, cutoff, measure), births in result.set_aside.items():
+    for (definition, period, cutoff, stratum, measure), births in result.set_aside.items():
+        where = f", {stratum}" if stratum else ""
         print(
-            f"definition {definition}, cut-off {cutoff} weeks, measure {measure}: the adjusted "
-            f"model set aside {births:,} births of levels whose births are all preterm or all "
-            "term (D-118)"
+            f"definition {definition}, {period}, cut-off {cutoff} weeks{where}, measure "
+            f"{measure}: the adjusted model set aside {births:,} births whose outcome a level or "
+            "a combination of levels predicts exactly (D-118, D-137)"
         )
-    print()
-    for line in format_estimates([row for row in result.estimates if row.source == OBSERVED]):
+    observed = [row for row in result.estimates if row.source == OBSERVED]
+    for period in dict.fromkeys(row.period for row in observed):
+        print(f"\n{period}")
+        for line in format_estimates([row for row in observed if row.period == period]):
+            print(line)
+    if axis is None:
+        print(
+            f"\nno period axis: the run holds {result.period}, and the axis needs "
+            f"{format_years(PERIOD_AXIS_YEARS)} and other years (D-049)"
+        )
+    print("\nadjusted odds ratios within each stratum (D-099); the intervals are in the table")
+    for line in format_gradients(observed):
         print(line)
     print(
         f"\nwritten in {time.perf_counter() - start:.1f} s, {aggregated:.1f} s of them building "

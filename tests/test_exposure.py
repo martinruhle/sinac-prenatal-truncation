@@ -30,48 +30,49 @@ CONFIG = Path(__file__).resolve().parents[1] / "config"
 
 #: Records 9 to 25 of the 2023 file, in the order of SOURCE_COLUMNS: FECHANACIMIENTO,
 #: FECHANACIMIENTOMADRE, EDAD, RESIDEEXTRANJERO, ENTIDADRESIDENCIA, EDADGESTACIONAL,
-#: PRODUCTOEMBARAZO, TOTALCONSULTAS, TRIMESTREPRIMERCONSULTA, ESCOLARIDAD, SEXO, PESO. Each is the
-#: normal case of record 1 (8 visits from the first trimester) but for its trap.
+#: PRODUCTOEMBARAZO, TOTALCONSULTAS, TRIMESTREPRIMERCONSULTA, ESCOLARIDAD, SEXO, PESO,
+#: AFILIACION. Each is the normal case of record 1 (8 visits from the first trimester) but for
+#: its trap.
 EXPOSURE_TRAPS_2023: tuple[tuple[str | None, ...], ...] = (
     # Kept: the levels of (a) at each cut point, (c) for each answer, and the bound of rule 4.
     # 9. Zero visits and "NO RECIBIÓ": no care, which is an answer.
-    ("09/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "0", "0", "51", "1", "3200"),
+    ("09/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "0", "0", "51", "1", "3200", "02"),
     # 10. Four visits from the second trimester: the last count below the minimum of five.
-    ("10/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "4", "2", "51", "1", "3200"),
+    ("10/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "4", "2", "51", "1", "3200", "02"),
     # 11. Five visits from the first trimester: the minimum of the norm.
-    ("11/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "5", "1", "51", "1", "3200"),
+    ("11/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "5", "1", "51", "1", "3200", "02"),
     # 12. Seven visits from the third trimester, born at exactly 28 weeks: the bound is inclusive.
-    ("12/01/2023", "01/01/1990", "33", "2", "09", "28", "1", "7", "3", "51", "1", "3200"),
+    ("12/01/2023", "01/01/1990", "33", "2", "09", "28", "1", "7", "3", "51", "1", "3200", "02"),
     # Step 8, rule 2: the count is not known.
     # 13. 99, "No Especificado".
-    ("13/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "99", "1", "51", "1", "3200"),
+    ("13/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "99", "1", "51", "1", "3200", "02"),
     # 14. A blank count.
-    ("14/01/2023", "01/01/1990", "33", "2", "09", "39", "1", None, "1", "51", "1", "3200"),
+    ("14/01/2023", "01/01/1990", "33", "2", "09", "39", "1", None, "1", "51", "1", "3200", "02"),
     # Step 8, rule 1: the trimester is not known.
     # 15. 8, "NO ESPECIFICADO".
-    ("15/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "6", "8", "51", "1", "3200"),
+    ("15/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "6", "8", "51", "1", "3200", "02"),
     # 16. Zero visits with 9, "SE IGNORA": an unknown start, not no care (D-086).
-    ("16/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "0", "9", "51", "1", "3200"),
+    ("16/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "0", "9", "51", "1", "3200", "02"),
     # 17. A blank trimester.
-    ("17/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "6", None, "51", "1", "3200"),
+    ("17/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "6", None, "51", "1", "3200", "02"),
     # Step 8, rule 3: the two items disagree.
     # 18. Zero visits, and a first visit in the first trimester.
-    ("18/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "0", "1", "51", "1", "3200"),
+    ("18/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "0", "1", "51", "1", "3200", "02"),
     # 19. "NO RECIBIÓ", and three visits.
-    ("19/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "3", "0", "51", "1", "3200"),
+    ("19/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "3", "0", "51", "1", "3200", "02"),
     # Step 8, rule 4: a first visit in the third trimester of a pregnancy that ended at 27 weeks.
-    ("20/01/2023", "01/01/1990", "33", "2", "09", "27", "1", "5", "3", "51", "1", "3200"),
+    ("20/01/2023", "01/01/1990", "33", "2", "09", "27", "1", "5", "3", "51", "1", "3200", "02"),
     # Step 9: one covariate unknown.
     # 21. Age 999, "NO ESPECIFICADO"; the mother's date of birth still loads her (D-060).
-    ("21/01/2023", "01/01/1990", "999", "2", "09", "39", "1", "8", "1", "51", "1", "3200"),
+    ("21/01/2023", "01/01/1990", "999", "2", "09", "39", "1", "8", "1", "51", "1", "3200", "02"),
     # 22. Education 99, "SE IGNORA".
-    ("22/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "8", "1", "99", "1", "3200"),
+    ("22/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "8", "1", "99", "1", "3200", "02"),
     # 23. A blank education.
-    ("23/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "8", "1", None, "1", "3200"),
+    ("23/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "8", "1", None, "1", "3200", "02"),
     # 24. State 99, "SE IGNORA", of a mother resident in Mexico.
-    ("24/01/2023", "01/01/1990", "33", "2", "99", "39", "1", "8", "1", "51", "1", "3200"),
+    ("24/01/2023", "01/01/1990", "33", "2", "99", "39", "1", "8", "1", "51", "1", "3200", "02"),
     # 25. An unknown count and an unknown education: counted at step 8 only.
-    ("25/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "99", "1", "0", "1", "3200"),
+    ("25/01/2023", "01/01/1990", "33", "2", "09", "39", "1", "99", "1", "0", "1", "3200", "02"),
 )
 
 #: One row of results.exposure per mother PERSON, as (row of the file, visits, trimester of the

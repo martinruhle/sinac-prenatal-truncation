@@ -10,6 +10,9 @@ from typing import Any
 import pytest
 import yaml
 
+from sinac_truncation.apncu import apncu_variants
+from sinac_truncation.simulation import calendar_first_weeks
+
 SCHEDULE = Path(__file__).resolve().parents[1] / "config" / "nom007_schedule.yml"
 
 
@@ -51,3 +54,14 @@ def test_every_number_is_read_from_its_published_line(visit: dict[str, Any]) -> 
         assert f" {last} semanas" in weeks
     else:
         assert f" {visit['first_week']} - {last}" in weeks
+
+
+def test_the_first_weeks_are_the_calendar_of_the_apncu_variant() -> None:
+    """The NOM-007 variant of measure (b) expects the visits whose first week the pregnancy
+    reached (D-128), so its calendar is the first weeks of this file, which the reference table
+    of `tests/test_apncu.py` writes down (D-130).
+    """
+    variants = apncu_variants(calendar_first_weeks(_schedule()))
+    assert [variant.calendar for variant in variants if variant.name == "nom007_midpoint"] == [
+        (6, 10, 16, 22, 28, 32, 36, 38)
+    ]

@@ -3,7 +3,8 @@
 -- transaction on every run, so a failed run keeps the previous tables.
 --
 -- aggregated_count: the births of each definition per combination of completed weeks at
---   delivery, first-visit trimester, visits and the four covariates of D-094 (D-093). Every
+--   delivery, first-visit trimester, visits, the four covariates of D-094 (D-093) and the
+--   insurance group of the gradient (D-133). Every
 --   measure is a function of the first three and the outcome a function of the weeks, so each
 --   model table of a measure is this table collapsed (D-117). It stays in the database and is
 --   never versioned (D-098).
@@ -11,7 +12,7 @@
 --   §Output tables lists. A value that does not exist is NULL: the odds ratio of a level with an
 --   empty cell. births and preterm_births are those of the level.
 -- exposure_distribution: the births of each level of each measure, per outcome, with the columns
---   of exposure_distribution.csv.
+--   of exposure_distribution.csv; the stratum of a gradient is in its two columns (D-134).
 --
 -- An empty value of a text column of the key (variant, stratum) is '', as in truncation_share.
 DROP TABLE IF EXISTS
@@ -31,6 +32,8 @@ CREATE TABLE @results_schema.aggregated_count (
     state text NOT NULL,
     -- The year of the delivery.
     year integer NOT NULL,
+    -- The insurance group of docs/protocol.md §Sensitivity analyses and gradients.
+    insurance_group text NOT NULL,
     births bigint NOT NULL,
     PRIMARY KEY (
         cohort_definition_id,
@@ -40,7 +43,8 @@ CREATE TABLE @results_schema.aggregated_count (
         age_group,
         education_concept_id,
         state,
-        year
+        year,
+        insurance_group
     )
 );
 
@@ -89,8 +93,19 @@ CREATE TABLE @results_schema.exposure_distribution (
     level text NOT NULL,
     -- preterm or term.
     outcome text NOT NULL,
+    stratum_variable text NOT NULL,
+    stratum_value text NOT NULL,
     births bigint NOT NULL,
     PRIMARY KEY (
-        source, cohort_definition_id, period, outcome_cutoff, measure, variant, level, outcome
+        source,
+        cohort_definition_id,
+        period,
+        outcome_cutoff,
+        measure,
+        variant,
+        level,
+        outcome,
+        stratum_variable,
+        stratum_value
     )
 );

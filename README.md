@@ -132,10 +132,16 @@ built. It is a world where prenatal care has no effect on preterm birth:
 [`docs/protocol.md`](docs/protocol.md#model) on the cohorts that `cohorts` built:
 - **The aggregated table.** `results.aggregated_count` holds the births of the analysis, landmark
   and multiples cohorts per combination of completed weeks, first-visit trimester, visits, age
-  group, education, state and year. The run checks that it holds every birth of each cohort.
+  group, education, state, year and insurance group. The run checks that it holds every birth of
+  each cohort, and that the births of each year of delivery are the cohort the attrition of that
+  year's file counts.
 - **The sensitivity analysis.** Measures (a) and (c) get the same two models on the analysis
-  cohort with preterm birth under 34 and under 32 weeks, and on the cohort with multiple
-  pregnancies (D-099, D-124).
+  cohort with preterm birth under 34 and under 32 weeks, on the cohort with multiple pregnancies
+  (D-099, D-124), and on the analysis cohort of 2022 and 2023 alone, the period axis, taken from
+  the same run (D-049, D-132).
+- **The gradients.** The adjusted model of (a) and (c) is fitted again within each of the 32
+  states of residence and each of the six insurance groups, and each row carries its stratum
+  (D-099, D-134, D-135).
 - **The models.** For each measure and level, the crude odds ratio against the reference, and the
   one adjusted for age group, education, state and year, from a binomial GLM on that table with
   95 % Wald intervals (D-093). With every term categorical, it gives the estimates of a logistic
@@ -143,9 +149,9 @@ built. It is a world where prenatal care has no effect on preterm birth:
 - **The tables.** The run writes `results.estimate`, with the births and preterm births behind each
   estimate, and `results.exposure_distribution`, in one transaction with the aggregated table. The
   simulated pregnancies of `simulate` add their crude rows, so `estimate` runs after it.
-- **Time.** On 2020–2023 the run took 273 to 311 s, 228 to 286 s of them building the aggregated
-  table; 311 s was the clean clone of `v0.2-progress`. Before the definition with multiples it
-  took 160 to 193 s.
+- **Time.** On 2020–2023 the run took 934 s on 11 November 2026, 812 s of them building the
+  aggregated table, which now also reads the insurance row of each mother. At `v0.2-progress` it
+  took 273 to 311 s, 228 to 286 s of them building that table.
 
 `publish` writes the results a milestone versions under [`results/`](results/) (D-014), with the
 columns of [`docs/protocol.md`](docs/protocol.md#output-tables) §Output tables (D-098):
@@ -172,6 +178,35 @@ The counts are exact, with no small-cell suppression, because the source records
 The tests use synthetic fixtures and download nothing; the ones marked `db` need the compose
 database.
 
+The smoke run checks the whole chain the same way. It runs every step of `all`, from `download`
+to `estimate`, on synthetic records of 2020–2023 and on a synthetic vocabulary built from the real
+`config/` (D-136):
+
+```bash
+uv run --env-file .env python scripts/pipeline.py all --source fixtures
+```
+
+It downloads nothing and writes its files to a temporary directory, removed afterwards. It loads
+them into the schemas `smoke_cdm`, `smoke_staging` and `smoke_results`, which it drops and
+rebuilds each run, so it never touches `data/` or the schemas of `db-init`. CI runs it on every
+push and fails if any step fails. On the laptop of §Reproduce it took 17 s on 12 November 2026.
+
+The [`Dockerfile`](Dockerfile) builds the analysis image: Python 3.12.14, the locked dependencies
+and the code, run as a user without root (D-015, D-131). It runs the tests without the
+database:
+
+```bash
+docker build -t sinac-truncation .
+docker run --rm sinac-truncation pytest
+```
+
+The tests marked `db` skip, because the image starts no database. Without a command, the image
+prints the help of `scripts/pipeline.py`. [`.dockerignore`](.dockerignore) lets only the code,
+the SQL, the configuration, the tests and the lock file into the build, so no data and no `.env`
+reach the image. On the laptop of §Reproduce the first build took 84 s, the image is 1.2 GB,
+and the suite ran in 17 s with 586 tests passed and 84 skipped on 10 November 2026. What the
+image does not do yet is future work ([`docs/roadmap.md`](docs/roadmap.md#44-engineering-left-for-later)).
+
 ## Requirements → evidence
 
 Where the evidence for each minimum requirement of the course lives, and its status at milestone
@@ -182,9 +217,9 @@ still missing and when it lands.
 |---|---|---|
 | Real commit history | [Pull requests merged into `main`](https://github.com/martinruhle/sinac-prenatal-truncation/pulls?q=is%3Apr+is%3Amerged), each with its checks and its AI assistance section | **Met**: #1, then #18–#31, #33 and #35 in `v0.1-cohort`, and #49–#57, #60, #62, #63 and #64 in `v0.2-progress`, one per issue |
 | README lets a third party reproduce the work | README §Reproduce, [`docs/reproducibility.md`](docs/reproducibility.md) | **Met**: rebuilt from a clean clone on 2020–2023, where `publish` wrote the five CSVs of `results/` with the sha256 of the committed manifest; the Athena package is the one file downloaded by hand |
-| Containerized environment | [`compose.yml`](compose.yml) (+ `Dockerfile` from v1.0) | **Met** with `compose.yml`: Postgres 16.15 with a healthcheck, the same file CI starts. The analysis image comes with v1.0 (D-015) |
+| Containerized environment | [`compose.yml`](compose.yml), [`Dockerfile`](Dockerfile) | **Met** with `compose.yml`: Postgres 16.15 with a healthcheck, the same file CI starts. The analysis image of v1.0 runs the tests without the database (D-015, D-131) |
 | At least one documented cohort definition in SQL on OMOP | [`sql/cohorts/`](sql/cohorts/) (definitions 1 to 6), [`docs/protocol.md`](docs/protocol.md#base-cohort) §Base cohort and [§Records analysed](docs/protocol.md#records-analysed), [`results/attrition.csv`](results/attrition.csv), [`results/excluded_profile.csv`](results/excluded_profile.csv) | **Met**: six definitions on 2020–2023, each with its attrition per year and the profile of the records its validity steps remove. The base cohort holds 6,401,232 singleton births and the analysis cohort 6,203,597 |
-| Automated tests with pytest and CI | [`tests/`](tests/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml), CI badge | **Met**: 626 tests on synthetic fixtures, the `db` ones against the compose database. CI runs ruff, the format check, mypy and pytest with an 80 % coverage floor (D-030) |
+| Automated tests with pytest and CI | [`tests/`](tests/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml), CI badge | **Met**: 626 tests on synthetic fixtures, the `db` ones against the compose database. CI runs ruff, the format check, mypy, pytest with an 80 % coverage floor (D-030), and the smoke run `pipeline.py all --source fixtures` (D-136) |
 | Data dictionary | [`docs/data_dictionary.md`](docs/data_dictionary.md) | **Met** for v0.2: the 22 of 64 published columns the project uses (D-011), with the use of each in the analysis. Every variable v0.2 added was already one of them |
 | Honest limitations section | README §Limitations, [`docs/protocol.md`](docs/protocol.md#limitations) §Limitations | **Partial**: eleven limitations are written, those of the source, the design, the data model, the exposure measures, the analysis and the null simulation. The section is completed for v1.0 |
 | AI assistance statement | [`docs/ai_use.md`](docs/ai_use.md), [`CLAUDE.md`](CLAUDE.md) | **Met**: one entry per pull request, taken from its AI assistance section |
@@ -204,15 +239,15 @@ The changes are stated against proposal v2, which is translated in
   ([`docs/source_inventory.md`](docs/source_inventory.md)).
 - **Study period.** 2020–2023 replaces 2019–2023 (D-041). The source inventory measured the cost:
   2019 needs a harmonization of its own and has no DGIS descriptor, while the four later years
-  are one catalogue period. 2019 is added only under the criterion of D-050.
+  are one catalogue period. 2019 is future work (D-050, D-126).
 - **Scope.** The adjusted odds ratios use a reduced covariate set, and the sensitivity analysis
   is smaller:
   - the models adjust for maternal age, education, state and year; insurance is not adjusted
     for and becomes the gradient by insurance of `v1.0` (D-007, D-094);
   - the full sensitivity grid runs for two of the four exposure measures (D-003);
-  - two sensitivity axes are dropped: the month assigned within the first-visit trimester for
-    APNCU, which uses one rule (D-005), and birth weight under 2,500 g as an alternative outcome
-    (D-006).
+  - birth weight under 2,500 g as an alternative outcome is dropped as a sensitivity axis
+    (D-006). The month assigned within the first-visit trimester for APNCU was dropped too
+    (D-005) and came back in `v1.0` as two of the four variants of measure (b) (D-127, D-130).
 
   A third axis, births before week 22, is dropped too. The exclusion stays in the base cohort,
   with its count in the attrition table: 701 records in 2020–2023 (D-055). The three landmark
@@ -288,7 +323,7 @@ pipeline fails on purpose. The manifest lists the files the
 [source inventory](docs/source_inventory.md) measured:
 
 - the 2020–2023 records of the study period;
-- the 2019 records, kept because 2019 is a conditional extension (D-050);
+- the 2019 records, kept for 2019 as future work (D-126);
 - the descriptors and catalogues of both catalogue periods.
 
 ## Limitations
@@ -326,10 +361,13 @@ Two come from the data model ([`docs/omop_mapping.md`](docs/omop_mapping.md)):
 Five come from the exposure measures, the analysis and the null simulation
 ([`docs/protocol.md`](docs/protocol.md#limitations)):
 
-- **APNCU is approximated from the trimester**, with a month rule whose sensitivity was cut
-  ([§APNCU](docs/protocol.md#apncu-measure-b), D-005, D-092).
-- **The ACOG schedule of the index is not the Mexican norm**
-  ([§APNCU](docs/protocol.md#apncu-measure-b)).
+- **APNCU is approximated from the trimester**, with a month rule whose sensitivity is now
+  reported: the first and the last month of each trimester against the middle month
+  ([§APNCU](docs/protocol.md#apncu-measure-b), D-092, D-127, D-130).
+- **The ACOG schedule of the index is not the Mexican norm.** The index keeps it, so it can be
+  compared with the literature, and a variant on the NOM-007 calendar is reported beside it; the
+  two rules that variant needs are the author's criteria
+  ([§APNCU](docs/protocol.md#apncu-measure-b), D-128, D-129).
 - **The bounds of the trimesters have no published source**
   ([§Trimester boundaries](docs/protocol.md#trimester-boundaries), D-092).
 - **The intervals of the definition with multiples ignore the twins of one pregnancy**

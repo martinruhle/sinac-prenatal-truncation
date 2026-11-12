@@ -16,6 +16,16 @@ gives the estimates of a logistic regression on the individual records (D-093).
 
 Each measure is the exposure of its own model and never a covariate of another. Measure (b) is
 fitted to show the artefact of its construction, never read as an effect (CLAUDE.md rule 3).
+
+Two analyses reuse the same aggregated table (docs/protocol.md §Sensitivity analyses and
+gradients):
+
+- **The period axis.** The cells of 2022 and 2023 alone are the cohort a run on those two years
+  would build, because the file of every record is the year of its delivery (D-049, D-132).
+- **The gradients.** The adjusted model is fitted within each state of residence and each
+  insurance group, the stratum given in the columns stratum variable and stratum value (D-099,
+  D-134).
+
 There is no I/O here (CLAUDE.md rule 6).
 """
 
@@ -29,14 +39,15 @@ from typing import NamedTuple
 import numpy as np
 import numpy.typing as npt
 import statsmodels.api as sm
+from scipy.optimize import linprog
 from statsmodels.tools.sm_exceptions import (
     ConvergenceWarning,
     PerfectSeparationWarning,
     SingularMatrixWarning,
 )
 
+from sinac_truncation.apncu import ACOG_MIDPOINT, ApncuVariant
 from sinac_truncation.measures import (
-    APNCU_VARIANT,
     PRETERM_WEEKS,
     SENSITIVITY_CUTOFFS,
     LevelCount,
@@ -47,6 +58,7 @@ from sinac_truncation.measures import (
     ordered_levels,
     reached,
     reference_level,
+    variant_of,
 )
 from sinac_truncation.simulation import Combination
 
@@ -58,6 +70,10 @@ __all__ = [
     "SENSITIVITY_MEASURES",
     "Adjusted",
     "Cell",
+    "GRADIENTS",
+    "INSURANCE",
+    "PERIOD_AXIS_YEARS",
+    "STATE",
     "DistributionRow",
     "EstimateRow",
     "Estimates",
@@ -67,16 +83,25 @@ __all__ = [
     "adjusted",
     "definition_measures",
     "format_estimates",
+    "format_gradients",
     "model_table",
     "observed_estimates",
+    "period_axis",
     "sensitivity_models",
     "simulated_estimates",
     "simulated_source",
+    "strata",
     "summed",
+    "year_births",
 ]
 
 #: The covariates of the adjusted model, in the order of :attr:`ModelRow.covariates` (D-094).
 COVARIATES: tuple[str, ...] = ("age_group", "education", "state", "year")
+
+#: How far from zero a row must be, along a direction of :func:`_separated`, to count as predicted
+#: exactly: ten times the default primal feasibility tolerance of HiGHS (1e-7), the solver of
+#: ``scipy.optimize.linprog``, so a margin is never the solver's own tolerance.
+_SEPARATION_MARGIN = 1e-6
 
 #: The values of the columns source and model of docs/protocol.md §Output tables.
 OBSERVED = "observed"
@@ -93,6 +118,17 @@ _ANALYSIS_MEASURES: tuple[str, ...] = ("a", "a_count", "b", "c")
 #: The measures of every alternative definition of the sensitivity analysis (D-003, D-099).
 SENSITIVITY_MEASURES: tuple[str, ...] = ("a", "c")
 
+#: The years of the COVID-19 sensitivity axis, set against the whole period (D-049).
+PERIOD_AXIS_YEARS: tuple[int, ...] = (2022, 2023)
+
+#: The values of the column stratum variable of the gradients (docs/protocol.md §Output tables).
+STATE = "state"
+INSURANCE = "insurance"
+GRADIENTS: tuple[str, ...] = (STATE, INSURANCE)
+
+#: No stratum: the value of both stratum columns outside the gradients.
+_NO_STRATUM = ("", "")
+
 
 class Cell(NamedTuple):
     """One row of the aggregated table, ``sql/analysis/aggregated_count.sql``."""
@@ -105,6 +141,8 @@ class Cell(NamedTuple):
     education: int
     state: str
     year: int
+    #: The insurance group of docs/protocol.md §Sensitivity analyses and gradients (D-133).
+    insurance: str
     births: int
 
 
@@ -179,6 +217,8 @@ class DistributionRow(NamedTuple):
     variant: str
     level: str
     outcome: str
+    stratum_variable: str
+    stratum_value: str
     births: int
 
 
@@ -188,8 +228,16 @@ class Estimates:
 
     estimates: list[EstimateRow] = field(default_factory=list)
     distribution: list[DistributionRow] = field(default_factory=list)
-    #: Per measure, the births the adjusted model set aside; only measures where it set some.
+    #: Per measure, with its variant for (b) (:func:`_set_aside_key`), the births the adjusted
+    #: model set aside; only the measures where it set some.
     set_aside: dict[str, int] = field(default_factory=dict)
+
+
+def _set_aside_key(measure: str, apncu: ApncuVariant) -> str:
+    """The name of one measure in the report of the births an adjusted model set aside: the
+    measure with its variant for (b), so the variants are told apart (D-118, D-130)."""
+    variant = variant_of(measure, apncu)
+    return f"{measure} ({variant})" if variant else measure
 
 
 def definition_measures(
@@ -224,6 +272,35 @@ def simulated_source(scenario: str) -> str:
     return f"sim_{scenario}"
 
 
+def year_births(cells: Iterable[Cell]) -> dict[int, int]:
+    """The births of the aggregated table per year of delivery."""
+    births: dict[int, int] = defaultdict(int)
+    for cell in cells:
+        births[cell.year] += cell.births
+    return dict(sorted(births.items()))
+
+
+def period_axis(cells: Iterable[Cell], years: Iterable[int] = PERIOD_AXIS_YEARS) -> list[Cell]:
+    """The cells of the period axis: those delivered in ``years``."""
+    kept = set(years)
+    return [cell for cell in cells if cell.year in kept]
+
+
+def strata(cells: Iterable[Cell], variable: str) -> dict[str, list[Cell]]:
+    """The cells of each value of a stratum variable, :data:`STATE` or :data:`INSURANCE`, sorted
+    by value.
+
+    Raises:
+        ValueError: the variable is neither.
+    """
+    if variable not in GRADIENTS:
+        raise ValueError(f"{variable!r} is not a stratum variable: use one of {GRADIENTS}")
+    grouped: dict[str, list[Cell]] = defaultdict(list)
+    for cell in cells:
+        grouped[cell.state if variable == STATE else cell.insurance].append(cell)
+    return dict(sorted(grouped.items()))
+
+
 def summed(cells: Iterable[Cell]) -> list[Combination]:
     """The aggregated table summed over the covariates: the births per combination of weeks,
     trimester and visits, the table ``sql/analysis/combinations.sql`` reads (D-113)."""
@@ -239,6 +316,7 @@ def model_table(
     cuts: VisitCuts,
     *,
     preterm_weeks: int = PRETERM_WEEKS,
+    apncu: ApncuVariant = ACOG_MIDPOINT,
 ) -> list[ModelRow]:
     """The table of the model of one measure: the births and preterm births per level and
     combination of covariates, sorted by both. The database returns the cells in no fixed
@@ -251,7 +329,9 @@ def model_table(
         combination = (cell.weeks, cell.trimester, cell.visits)
         level = levels.get(combination)
         if level is None:
-            level = measure_level(measure, Combination(*combination, cell.births), cuts)
+            level = measure_level(
+                measure, Combination(*combination, cell.births), cuts, apncu=apncu
+            )
             levels[combination] = level
         key = (level, (cell.age_group, cell.education, cell.state, cell.year))
         births[key] += cell.births
@@ -312,25 +392,49 @@ def _identified_columns(design: npt.NDArray[np.float64]) -> npt.NDArray[np.bool_
     return identified
 
 
-def adjusted(rows: Sequence[ModelRow], reference: str) -> Adjusted:
-    """The odds ratio of each level of the exposure against the reference, adjusted for the
-    covariates, from a binomial GLM with a logit link on the model table.
+def _separated(
+    design: npt.NDArray[np.float64], outcome: npt.NDArray[np.float64]
+) -> npt.NDArray[np.bool_]:
+    """The rows some direction of the coefficients predicts exactly: quasi-complete separation.
 
-    A level, of the exposure or of a covariate, whose births are all preterm or all term has an
-    infinite coefficient. The likelihood is highest with its births predicted exactly, and those
-    births then add nothing to the other estimates, so the model is fitted without them and the
-    level has no estimate (D-118). The real cohorts have no such level. A level aliased with
-    others, which the design cannot tell apart, has no estimate either.
-
-    Raises:
-        ModelError: the fit did not converge.
+    A direction separates the data when it puts every row of preterm births only on one side of
+    zero, every row of term births only on the other, and every row with both outcomes on zero
+    (Albert and Anderson 1984). Along it the likelihood keeps growing, so the maximum likelihood
+    estimate does not exist; the rows it puts strictly off zero are the ones the limit predicts
+    exactly (Geyer 2009). A linear program finds such a direction, with each coefficient bounded
+    by 1 (Konis 2007); it is solved again over the rows not yet found until it finds none.
     """
-    kept = _identified(rows)
-    set_aside = sum(row.births for row in rows) - sum(row.births for row in kept)
-    levels = sorted({row.level for row in kept} - {reference})
-    if reference not in {row.level for row in kept}:
-        return Adjusted({}, set_aside)
+    preterm, term = outcome[:, 0], outcome[:, 1]
+    sign = np.where(preterm == 0, -1.0, np.where(term == 0, 1.0, 0.0))
+    one_outcome = sign != 0
+    signed = design * sign[:, None]
+    mixed = design[~one_outcome]
+    found = np.zeros(len(design), dtype=bool)
+    while (candidates := one_outcome & ~found).any():
+        result = linprog(
+            -signed[candidates].sum(axis=0),
+            A_ub=-signed[one_outcome],
+            b_ub=np.zeros(int(one_outcome.sum())),
+            A_eq=mixed if len(mixed) else None,
+            b_eq=np.zeros(len(mixed)) if len(mixed) else None,
+            bounds=(-1.0, 1.0),
+            method="highs",
+        )
+        if result.status != 0:
+            raise ModelError(f"the check for separation failed: {result.message}")
+        new = candidates & (signed @ result.x > _SEPARATION_MARGIN)
+        if not new.any():
+            break
+        found |= new
+    return found
 
+
+def _design(
+    kept: Sequence[ModelRow], reference: str
+) -> tuple[dict[str, int], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """The column of each level of the exposure, the design of dummies and the outcome of each
+    row: preterm and term births."""
+    levels = sorted({row.level for row in kept} - {reference})
     exposure = {level: column for column, level in enumerate(levels, start=1)}
     columns = 1 + len(levels)
     terms: list[dict[Hashable, int]] = []
@@ -355,12 +459,52 @@ def adjusted(rows: Sequence[ModelRow], reference: str) -> Adjusted:
             if value in term:
                 design[line, term[value]] = 1.0
     outcome = np.array([(row.preterm, row.births - row.preterm) for row in kept], dtype=float)
+    return exposure, design, outcome
+
+
+def _odds_ratio(level: str, estimate: float, lower: float, upper: float) -> OddsRatio:
+    try:
+        return OddsRatio(exp(estimate), exp(lower), exp(upper))
+    except OverflowError as error:
+        raise ModelError(
+            f"the odds ratio of {level} or its interval is not finite (log scale {estimate:.3g}, "
+            f"{lower:.3g} to {upper:.3g})"
+        ) from error
+
+
+def adjusted(rows: Sequence[ModelRow], reference: str) -> Adjusted:
+    """The odds ratio of each level of the exposure against the reference, adjusted for the
+    covariates, from a binomial GLM with a logit link on the model table.
+
+    A level, of the exposure or of a covariate, whose births are all preterm or all term has an
+    infinite coefficient. The likelihood is highest with its births predicted exactly, and those
+    births then add nothing to the other estimates, so the model is fitted without them and the
+    level has no estimate (D-118). The same holds for the rows a combination of levels predicts
+    exactly, which no level shows on its own (quasi-complete separation, :func:`_separated`):
+    they are set aside too, and a level they leave aliased has no estimate (D-137). The real
+    cohorts have neither. A level aliased with others, which the design cannot tell apart, has no
+    estimate either.
+
+    Raises:
+        ModelError: the fit did not converge, or an odds ratio or a limit is not finite.
+    """
+    kept = _identified(rows)
+    if reference not in {row.level for row in kept}:
+        return Adjusted({}, sum(row.births for row in rows) - sum(row.births for row in kept))
+    exposure, design, outcome = _design(kept, reference)
+    separated = _separated(design, outcome)
+    if separated.any():
+        kept = [row for row, gone in zip(kept, separated, strict=True) if not gone]
+        if reference not in {row.level for row in kept}:
+            return Adjusted({}, sum(row.births for row in rows) - sum(row.births for row in kept))
+        exposure, design, outcome = _design(kept, reference)
+    set_aside = sum(row.births for row in rows) - sum(row.births for row in kept)
 
     with warnings.catch_warnings():
         # Three warnings of statsmodels describe cases handled here. It reports a separation
         # whenever the fitted shares equal the observed ones in every row, which a table of
-        # counts that the model fits exactly does without any separation; the levels with one
-        # outcome were set aside above. It reports a rank-deficient design as singular; the
+        # counts that the model fits exactly does without any separation; the rows a separation
+        # predicts exactly were set aside above. It reports a rank-deficient design as singular; the
         # levels it cannot identify get no estimate below. A model with as many coefficients as
         # rows divides by zero residual degrees of freedom in a scale the binomial never uses.
         warnings.simplefilter("ignore", PerfectSeparationWarning)
@@ -378,7 +522,7 @@ def adjusted(rows: Sequence[ModelRow], reference: str) -> Adjusted:
     limits = np.asarray(result.conf_int(alpha=0.05), dtype=float)
     return Adjusted(
         {
-            level: OddsRatio(exp(estimates[column]), exp(limits[column, 0]), exp(limits[column, 1]))
+            level: _odds_ratio(level, estimates[column], limits[column, 0], limits[column, 1])
             for level, column in exposure.items()
             if identified[column]
         },
@@ -394,8 +538,10 @@ def _distribution(
     measure: str,
     counts: Mapping[str, LevelCount],
     cuts: VisitCuts,
+    apncu: ApncuVariant,
+    stratum: tuple[str, str] = _NO_STRATUM,
 ) -> list[DistributionRow]:
-    variant = APNCU_VARIANT if measure == "b" else ""
+    variant = variant_of(measure, apncu)
     rows = []
     for level in ordered_levels(measure, counts, cuts):
         count = counts[level]
@@ -403,7 +549,7 @@ def _distribution(
             rows.append(
                 DistributionRow(
                     source, definition, period, cutoff, measure, variant, level, outcome,
-                    int(births),
+                    *stratum, int(births),
                 )
             )  # fmt: skip
     return rows
@@ -417,11 +563,13 @@ def _estimate_rows(
     measure: str,
     counts: Mapping[str, LevelCount],
     cuts: VisitCuts,
+    apncu: ApncuVariant,
     odds_ratios: Mapping[str, Mapping[str, OddsRatio]],
+    stratum: tuple[str, str] = _NO_STRATUM,
 ) -> list[EstimateRow]:
     """One row per level but the reference and per model, in the order of the levels."""
     reference = reference_level(measure, cuts)
-    variant = APNCU_VARIANT if measure == "b" else ""
+    variant = variant_of(measure, apncu)
     rows = []
     for level in ordered_levels(measure, set(counts) - {reference}, cuts):
         count = counts[level]
@@ -430,7 +578,7 @@ def _estimate_rows(
             rows.append(
                 EstimateRow(
                     source, definition, period, cutoff, measure, variant, level, reference,
-                    model, "", "", int(count.births), int(count.preterm), *estimate,
+                    model, *stratum, int(count.births), int(count.preterm), *estimate,
                 )
             )  # fmt: skip
     return rows
@@ -452,9 +600,19 @@ def observed_estimates(
     *,
     period: str,
     preterm_weeks: int = PRETERM_WEEKS,
+    variants: Sequence[ApncuVariant] = (ACOG_MIDPOINT,),
+    stratum: tuple[str, str] = _NO_STRATUM,
 ) -> Estimates:
     """The crude and adjusted estimates and the exposure distribution of the measures of one
     observed definition, from its aggregated table.
+
+    Measure (b) is estimated once per variant of ``variants``, each with its own crude and
+    adjusted model (D-130); the other measures have one definition each.
+
+    With a ``stratum``, (variable, value), the cells are those of one stratum of a gradient: only
+    the adjusted model is fitted (D-099), and both tables carry the stratum (D-134). A level the
+    fit sets aside keeps its row, with its counts and no odds ratio, as in the main analysis
+    (D-118).
 
     Raises:
         ModelError: an adjusted model cannot be fitted.
@@ -462,16 +620,21 @@ def observed_estimates(
     combinations = summed(cells)
     result = Estimates()
     for measure in measures:
-        counts = level_counts(combinations, measure, cuts, preterm_weeks=preterm_weeks)
-        reference = reference_level(measure, cuts)
-        fit = adjusted(model_table(cells, measure, cuts, preterm_weeks=preterm_weeks), reference)
-        if fit.set_aside:
-            result.set_aside[measure] = fit.set_aside
-        args = (OBSERVED, definition, period, preterm_weeks, measure, counts, cuts)
-        result.estimates += _estimate_rows(
-            *args, {CRUDE: _crude(counts, reference), ADJUSTED: fit.odds_ratios}
-        )
-        result.distribution += _distribution(*args)
+        for apncu in variants if measure == "b" else (ACOG_MIDPOINT,):
+            counts = level_counts(
+                combinations, measure, cuts, preterm_weeks=preterm_weeks, apncu=apncu
+            )
+            reference = reference_level(measure, cuts)
+            table = model_table(cells, measure, cuts, preterm_weeks=preterm_weeks, apncu=apncu)
+            fit = adjusted(table, reference)
+            if fit.set_aside:
+                result.set_aside[_set_aside_key(measure, apncu)] = fit.set_aside
+            args = (OBSERVED, definition, period, preterm_weeks, measure, counts, cuts, apncu)
+            models = {ADJUSTED: fit.odds_ratios}
+            if stratum == _NO_STRATUM:
+                models = {CRUDE: _crude(counts, reference), **models}
+            result.estimates += _estimate_rows(*args, models, stratum)
+            result.distribution += _distribution(*args, stratum)
     return result
 
 
@@ -484,12 +647,13 @@ def simulated_estimates(
     landmarks: Mapping[int, int],
     period: str,
     preterm_weeks: int = PRETERM_WEEKS,
+    variants: Sequence[ApncuVariant] = (ACOG_MIDPOINT,),
 ) -> Estimates:
     """The crude estimates and the exposure distribution of one scenario of the null simulation.
 
     The simulation has no covariates, so it has no adjusted model. Measure (d) takes the
     pregnancies that reached the week of each landmark, as :func:`~sinac_truncation.measures.
-    compare` does (D-113).
+    compare` does (D-113), and measure (b) has one row per variant of ``variants`` (D-130).
     """
     source = simulated_source(scenario)
     result = Estimates()
@@ -497,11 +661,14 @@ def simulated_estimates(
         week = landmarks.get(definition)
         selected = pregnancies if week is None else reached(pregnancies, week)
         for measure in measures:
-            counts = level_counts(selected, measure, cuts, preterm_weeks=preterm_weeks)
-            reference = reference_level(measure, cuts)
-            args = (source, definition, period, preterm_weeks, measure, counts, cuts)
-            result.estimates += _estimate_rows(*args, {CRUDE: _crude(counts, reference)})
-            result.distribution += _distribution(*args)
+            for apncu in variants if measure == "b" else (ACOG_MIDPOINT,):
+                counts = level_counts(
+                    selected, measure, cuts, preterm_weeks=preterm_weeks, apncu=apncu
+                )
+                reference = reference_level(measure, cuts)
+                args = (source, definition, period, preterm_weeks, measure, counts, cuts, apncu)
+                result.estimates += _estimate_rows(*args, {CRUDE: _crude(counts, reference)})
+                result.distribution += _distribution(*args)
     return result
 
 
@@ -515,20 +682,47 @@ def format_estimates(rows: Sequence[EstimateRow]) -> list[str]:
     """The lines of the report that ``pipeline.py estimate`` prints: one per level and outcome
     cut-off, with its births, its preterm births and its crude and adjusted odds ratios."""
     lines = [
-        f"{'def':<4}{'cut':<4}{'measure':<9}{'level':<21}{'births':>11}{'preterm':>10}"
-        f"{'crude OR (95 % CI)':>26}{'adjusted OR (95 % CI)':>26}"
+        f"{'def':<4}{'cut':<4}{'measure':<9}{'variant':<17}{'level':<21}{'births':>11}"
+        f"{'preterm':>10}{'crude OR (95 % CI)':>26}{'adjusted OR (95 % CI)':>26}"
     ]
-    adjusted_rows = {
-        (row.definition, row.outcome_cutoff, row.measure, row.level): row
-        for row in rows
-        if row.model == ADJUSTED
-    }
+
+    def key(row: EstimateRow) -> tuple[object, ...]:
+        return (row.definition, row.period, row.outcome_cutoff, row.measure, row.variant,
+                row.level, row.stratum_variable, row.stratum_value)  # fmt: skip
+
+    adjusted_rows = {key(row): row for row in rows if row.model == ADJUSTED}
     for row in rows:
         if row.model != CRUDE:
             continue
-        other = adjusted_rows.get((row.definition, row.outcome_cutoff, row.measure, row.level))
+        other = adjusted_rows.get(key(row))
         lines.append(
-            f"{row.definition:<4}{row.outcome_cutoff:<4}{row.measure:<9}{row.level:<21}"
-            f"{row.births:>11,}{row.preterm:>10,}{_ratio(row):>26}{_ratio(other):>26}"
+            f"{row.definition:<4}{row.outcome_cutoff:<4}{row.measure:<9}{row.variant:<17}"
+            f"{row.level:<21}{row.births:>11,}{row.preterm:>10,}"
+            f"{_ratio(row):>26}{_ratio(other):>26}"
+        )
+    return lines
+
+
+def format_gradients(rows: Sequence[EstimateRow]) -> list[str]:
+    """The lines of the report of the gradients: one per stratum, with the adjusted odds ratio of
+    each level of each measure, the point alone. ``estimates.csv`` has the intervals and counts."""
+    columns: list[tuple[str, str]] = []
+    values: dict[tuple[str, str], dict[tuple[str, str], str]] = defaultdict(dict)
+    for row in rows:
+        if not row.stratum_variable or row.model != ADJUSTED:
+            continue
+        column = (row.measure, row.level)
+        if column not in columns:
+            columns.append(column)
+        point = "" if row.odds_ratio is None else f"{row.odds_ratio:.3f}"
+        values[row.stratum_variable, row.stratum_value][column] = point
+    header = f"{'stratum':<11}{'value':<24}" + "".join(
+        f"{f'({measure}) {level}':>24}" for measure, level in columns
+    )
+    lines = [header]
+    for (variable, value), points in values.items():
+        lines.append(
+            f"{variable:<11}{value:<24}"
+            + "".join(f"{points.get(column, ''):>24}" for column in columns)
         )
     return lines
