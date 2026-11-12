@@ -178,6 +178,19 @@ The counts are exact, with no small-cell suppression, because the source records
 The tests use synthetic fixtures and download nothing; the ones marked `db` need the compose
 database.
 
+The smoke run checks the whole chain the same way. It runs every step of `all`, from `download`
+to `estimate`, on synthetic records of 2020–2023 and on a synthetic vocabulary built from the real
+`config/` (D-136):
+
+```bash
+uv run --env-file .env python scripts/pipeline.py all --source fixtures
+```
+
+It downloads nothing and writes its files to a temporary directory, removed afterwards. It loads
+them into the schemas `smoke_cdm`, `smoke_staging` and `smoke_results`, which it drops and
+rebuilds each run, so it never touches `data/` or the schemas of `db-init`. CI runs it on every
+push and fails if any step fails. On the laptop of §Reproduce it took 17 s on 12 November 2026.
+
 The [`Dockerfile`](Dockerfile) builds the analysis image: Python 3.12.14, the locked dependencies
 and the code, run as a user without root (D-015, D-131). It runs the tests without the
 database:
@@ -206,7 +219,7 @@ still missing and when it lands.
 | README lets a third party reproduce the work | README §Reproduce, [`docs/reproducibility.md`](docs/reproducibility.md) | **Met**: rebuilt from a clean clone on 2020–2023, where `publish` wrote the five CSVs of `results/` with the sha256 of the committed manifest; the Athena package is the one file downloaded by hand |
 | Containerized environment | [`compose.yml`](compose.yml), [`Dockerfile`](Dockerfile) | **Met** with `compose.yml`: Postgres 16.15 with a healthcheck, the same file CI starts. The analysis image of v1.0 runs the tests without the database (D-015, D-131) |
 | At least one documented cohort definition in SQL on OMOP | [`sql/cohorts/`](sql/cohorts/) (definitions 1 to 6), [`docs/protocol.md`](docs/protocol.md#base-cohort) §Base cohort and [§Records analysed](docs/protocol.md#records-analysed), [`results/attrition.csv`](results/attrition.csv), [`results/excluded_profile.csv`](results/excluded_profile.csv) | **Met**: six definitions on 2020–2023, each with its attrition per year and the profile of the records its validity steps remove. The base cohort holds 6,401,232 singleton births and the analysis cohort 6,203,597 |
-| Automated tests with pytest and CI | [`tests/`](tests/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml), CI badge | **Met**: 626 tests on synthetic fixtures, the `db` ones against the compose database. CI runs ruff, the format check, mypy and pytest with an 80 % coverage floor (D-030) |
+| Automated tests with pytest and CI | [`tests/`](tests/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml), CI badge | **Met**: 626 tests on synthetic fixtures, the `db` ones against the compose database. CI runs ruff, the format check, mypy, pytest with an 80 % coverage floor (D-030), and the smoke run `pipeline.py all --source fixtures` (D-136) |
 | Data dictionary | [`docs/data_dictionary.md`](docs/data_dictionary.md) | **Met** for v0.2: the 22 of 64 published columns the project uses (D-011), with the use of each in the analysis. Every variable v0.2 added was already one of them |
 | Honest limitations section | README §Limitations, [`docs/protocol.md`](docs/protocol.md#limitations) §Limitations | **Partial**: eleven limitations are written, those of the source, the design, the data model, the exposure measures, the analysis and the null simulation. The section is completed for v1.0 |
 | AI assistance statement | [`docs/ai_use.md`](docs/ai_use.md), [`CLAUDE.md`](CLAUDE.md) | **Met**: one entry per pull request, taken from its AI assistance section |
