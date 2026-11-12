@@ -2,8 +2,8 @@
 
 This document separates three things: what the course delivers, what was left out of this
 semester, and what continues after it as part of the doctoral project. The question, the
-population and the method live in [`protocol.md`](protocol.md) (the limitations are still PENDING
-there). Every scope change stated here is recorded
+population, the method and the limitations live in [`protocol.md`](protocol.md). Every scope
+change stated here is recorded
 in [`decisions.md`](decisions.md), and the proposal it is stated against is translated in
 [`proposal_v2.md`](proposal_v2.md).
 
