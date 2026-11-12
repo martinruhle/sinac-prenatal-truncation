@@ -2,8 +2,8 @@
 
 **Status:** protocol v2, approved by the author on 2026-10-15 after the review recorded under
 [Approval](#approval) (issue #58). The search ran on 2026-10-15 and 2026-10-16, after that
-approval; its results are under [Results](#results). The author's blind re-screen of 20
-exclusions is PENDING.
+approval; its results are under [Results](#results). The author re-screened 20 exclusions blind on
+2026-11-12, which added one study (see [Blind re-screen](#blind-re-screen)).
 
 ## Purpose
 
@@ -473,41 +473,42 @@ ignored `data/interim/`.
 | Duplicate records removed | 676 | Within and across sources, by DOI, PMID and title |
 | Records removed for other reasons | 0 | One DOI corrected from its source (R1593) and one PMID that does not resolve removed from its record (R0720), both records kept; five records whose DOI does not resolve kept by their OpenAlex identifier, which resolves (R1306, R1616, R1624, R1625, R1628) |
 | Records screened | 1,638 | |
-| Records excluded | 1,582 | E1 3, E2 71, E3 59, E4 1,031, E5 239, E6 172, E7 7 |
-| Reports sought for retrieval | 56 | |
-| Reports not retrieved | 20 | Listed under [What was not found](#what-was-not-found) |
-| Reports assessed for eligibility | 36 | 22 on the full text; 11 on the abstract and 3 on the title alone (WIC programme records, E4), because no open full text was found and that was enough to decide |
-| Reports excluded | 22 | E4 9, E6 13 |
+| Records excluded | 1,579 | E1 3, E2 72, E3 58, E4 1,049, E5 219, E6 171, E7 7 |
+| Reports sought for retrieval | 59 | Three of them sent on by the blind re-screen |
+| Reports not retrieved | 21 | Listed under [What was not found](#what-was-not-found) |
+| Reports assessed for eligibility | 38 | 23 on the full text; 12 on the abstract and 3 on the title alone (WIC programme records, E4), because no open full text was found and that was enough to decide |
+| Reports excluded | 24 | E4 10, E6 14 |
 | Studies included | 14 | |
 
 **Identification of studies via other methods**
 
 | Box | Seeds | Round 1 | Round 2 | Round 3 | Total |
 |---|---:|---:|---:|---:|---:|
-| Works chased | — | 16 | 11 | 2 | 29 |
-| Records identified | 3 | 1,179 | 1,355 | 73 | 2,610 |
-| Already found by the databases or an earlier round | 1 | 146 | 307 | 29 | 483 |
+| Works chased | — | 16 | 12 | 2 | 30 |
+| Records identified | 3 | 1,179 | 1,377 | 73 | 2,632 |
+| Already found by the databases or an earlier round | 1 | 146 | 315 | 29 | 491 |
 | Duplicates within the round | — | 421 | 452 | 16 | 889 |
 | Removed for other reasons (no title) | — | 49 | 1 | 0 | 50 |
-| Records screened | 2 | 563 | 595 | 28 | 1,188 |
-| Records excluded | 1 | 535 | 580 | 22 | 1,138 |
-| Reports sought for retrieval | 1 | 28 | 15 | 6 | 50 |
+| Records screened | 2 | 563 | 609 | 28 | 1,202 |
+| Records excluded | 1 | 534 | 593 | 22 | 1,150 |
+| Reports sought for retrieval | 1 | 29 | 16 | 6 | 52 |
 | Reports not retrieved | 0 | 14 | 10 | 3 | 27 |
-| Reports assessed for eligibility | 1 | 14 | 5 | 3 | 23 |
-| Reports excluded | 0 | 3 | 3 | 3 | 9 |
-| Studies included | 1 | 11 | 2 | 0 | 14 |
+| Reports assessed for eligibility | 1 | 15 | 6 | 3 | 25 |
+| Reports excluded | 0 | 3 | 4 | 3 | 10 |
+| Studies included | 1 | 12 | 2 | 0 | 15 |
 
-- Round 1 chased the three seeds and the 13 other studies the databases included; round 2, the 11
-  studies round 1 included; round 3, the two studies round 2 included. Round 3 included none, so
-  chasing stopped.
-- Records excluded at title and abstract, by code: seeds E4 1; round 1 E1 2, E2 59, E3 60, E4 265,
-  E5 78, E6 63, E7 8; round 2 E2 47, E3 96, E4 383, E5 30, E6 24; round 3 E1 1, E2 3, E3 3, E4 11,
-  E5 3, E6 1. Reports excluded on the full text: round 1 E6 3; round 2 E6 2, E7 1; round 3 E4 1,
-  E5 1, E6 1.
+- Round 1 chased the three seeds and the 13 other studies the databases included; round 2, the 12
+  studies round 1 included, C1-0062 among them once the blind re-screen had included it; round 3,
+  the two studies round 2 included. Round 3 and the chase of C1-0062 included none, so chasing
+  stopped.
+- Records excluded at title and abstract, by code: seeds E4 1; round 1 E1 2, E2 59, E3 60, E4 278,
+  E5 65, E6 62, E7 8; round 2 E1 1, E2 48, E3 96, E4 387, E5 33, E6 28; round 3 E1 1, E2 3, E3 3,
+  E4 12, E5 2, E6 1. Reports excluded on the full text: round 1 E6 3; round 2 E4 1, E6 2, E7 1;
+  round 3 E4 1, E5 1, E6 1.
 - Round 1 holds 28 records from the reference list of R0760 in PubMed Central, for which OpenAlex
   and Europe PMC returned no references; two of them were duplicates found at screening (E7).
 
-**Studies included in the review: 28**, each in one report: 14 via databases and 14 via other
+**Studies included in the review: 29**, each in one report: 14 via databases and 15 via other
 methods.
 
 ## Planned limitations
@@ -547,15 +548,16 @@ the single screener with the author's blind re-screen.
 PubMed and OpenAlex were searched on 2026-10-15 between 21:14 and 21:23 UTC, and LILACS between
 21:23 UTC that day and 00:55 UTC on 2026-10-16. Citation chasing ran on 2026-10-16 in three rounds
 (11:48–12:01, 16:25–16:27 and 16:43 UTC). Screening ended on 2026-10-16 at 16:46 UTC. It used the
-design table under [Purpose](#purpose) and no result of the project.
+design table under [Purpose](#purpose) and no result of the project. The blind re-screen of
+2026-11-12 sent five records to full text, and C1-0062 was chased that day.
 
-Of the 28 included studies, 21 answer Q1, four of them also Q2; none answers Q3; seven answer Q4.
+Of the 29 included studies, 22 answer Q1, four of them also Q2; none answers Q3; seven answer Q4.
 The tables give the extraction and the three closeness axes of
 [Data extraction](#data-extraction). Where none of the six methods fits, the method is written as
 "other" with what the study did. "abstract" in the locator column means the decision rests on the
 abstract, because no open full text was found.
 
-**Q1 and Q2 (21 studies)**
+**Q1 and Q2 (22 studies)**
 
 | ID | Study | Data | Bias | Method | Grade | Locator |
 |---|---|---|---|---|---|---|
@@ -578,6 +580,7 @@ abstract, because no open full text was found.
 | C1-0031 | Wehby et al. 2009 | other Latin American: ECLAMC hospital samples, Brazil | truncation | other: preterm birth analysed only with the delay of the first visit | addressed | Methods, study variables |
 | C1-0055 | VanderWeele et al. 2013 | other: US linked birth and infant death cohort, 2003 | related dependence | index adjustment | mentioned | Methods, APNCU categories |
 | R1306 | Balsa & Triunfo 2015 | other Latin American: Pereira Rossell maternity hospital, Montevideo, 1995–2011 | truncation | index adjustment: preterm births rated against the visits due by their week | addressed | §4.1 and note 7; §3 |
+| C1-0062 | Jogia & Lodhiya 2018 | other: one hospital, Junagadh, Gujarat, India, 650 mothers, 2018 | truncation | index adjustment | mentioned | p. 86, Discussion; p. 83 |
 | C1-0041 | Shin & Song 2019 | other: US PRAMS, 2004–2011 | truncation | index adjustment | mentioned | Discussion |
 | R0760 | Coelho et al. 2026 | other Latin American: SINASC live-birth records, Central-West Brazil, 2015–2024 | truncation | other: sensitivity analysis replacing the visit count with first-trimester initiation | addressed | Methods, Sensitivity Analyses; Results |
 
@@ -630,9 +633,11 @@ the length of gestation from 1965 to 2026, with four groups of means:
   count, which the authors read as reverse causation (Results).
 - *Statement only.* Kotelchuck 1994b (C1-0002, p. 1487), Wise 1994 (C2-0020, p. 1374), Ying 2002
   (R1366, abstract), Bloch et al. 2009 (R0333, abstract), VanderWeele et al. 2013 (C1-0055,
-  Methods) and Shin & Song 2019 (C1-0041, Discussion).
+  Methods), Jogia & Lodhiya 2018 (C1-0062, p. 86) and Shin & Song 2019 (C1-0041, Discussion).
+  Jogia & Lodhiya explain more preterm births among women with adequate APNCU care by the smaller
+  number of visits APNCU expects of a shorter gestation.
 
-Grades: 4 quantified, 11 addressed, 6 mentioned. Four of the 21 rest on the abstract: R0153,
+Grades: 4 quantified, 11 addressed, 7 mentioned. Four of the 22 rest on the abstract: R0153,
 R0548, R0333 and R1366.
 
 **Q2.** Four Q1 studies use Latin American data: Goldberg et al. 1984 (Cali, Colombia), Wehby et
@@ -667,7 +672,7 @@ its abstract only.
 - **Q1 with SINAC.** No study meeting Q1 with SINAC data of any year was found in the same
   sources on the same dates.
 
-These statements hold for the reports that were read. The 47 reports not retrieved are in
+These statements hold for the reports that were read. The 48 reports not retrieved are in
 `records.csv` with the decision "not retrieved" and the reason. Those whose abstract or title
 bears on a question:
 
@@ -676,7 +681,8 @@ bears on a question:
 - Care measures adjusted for gestation, or the bias named (Q1): R0330, R0790 and R1355 (letter and
   reply on Koroukian & Rimm 2002), R0805, C1-0014, C1-0034, C1-0079 (origin of GINDEX), C1-0219,
   C1-0220, C1-0223, C2-0002 (Terris & Gold 1969), C2-0271, C3-0001 (Shwartz 1962, the method
-  source of C2-0004) and C2-0106.
+  source of C2-0004), C2-0106 and R0530 (adequacy of care and birth weight in Cameroon, sent on by
+  the blind re-screen).
 - Seven had an open copy behind a publisher security check, a download check or a bot check,
   which was not bypassed: R0121, R0589, R1159, R1166, C1-0223, C1-0371 and C1-0451; R0625 is
   included on its abstract for the same reason.
@@ -686,13 +692,13 @@ bears on a question:
 On the three axes of [Data extraction](#data-extraction), without judging value:
 
 - **Data.** No Q1 study uses SINAC or other Mexican data; four use other Latin American data and
-  17 other data. Among the Q4 studies, one uses SINAC 2020 (C1-0265) and six SINAC in other
+  18 other data. Among the Q4 studies, one uses SINAC 2020 (C1-0265) and six SINAC in other
   years, and none is graded above "not mentioned".
-- **Bias.** 16 of the 21 Q1 studies describe the truncation of the visit measure itself; five
+- **Bias.** 17 of the 22 Q1 studies describe the truncation of the visit measure itself; five
   describe a related dependence, the rating that an index gives a birth according to its
   gestational age (R1167, C2-0020, C1-0003, C1-0024, C1-0055).
 - **Method.** Landmark or time-dependent design 4 (C2-0004, C1-0210, C1-0242, R0548); index
-  adjustment 10; other 5 (R1637, R0809, C1-0024, C1-0031, R0760); none 2. No study uses a null
+  adjustment 11; other 5 (R1637, R0809, C1-0024, C1-0031, R0760); none 2. No study uses a null
   simulation on a schedule, another simulation or an analytic expectation.
 - **Two axes at once.** Truncation with a landmark or time-dependent design: C2-0004 and C1-0210
   (prematurity, 1960 and 1961 certificates), C1-0242 (a review) and R0548 (cohorts by week of
@@ -704,10 +710,33 @@ On the three axes of [Data extraction](#data-extraction), without judging value:
 
 ### Blind re-screen
 
-The 20 records drawn with `random.Random(58).sample(sorted(ids), 20)` from the 2,751 excluded
-records are R1262, C2-0282, C2-0317, R1518, C2-0298, C1-0182, C2-0262, R0714, R0530, R0312,
-R0035, C2-0541, R0717, R1409, R0588, R0017, R1258, C1-0453, C1-0062 and R0885. PENDING: the
-author's decisions, then every disagreement.
+The 20 records drawn with `random.Random(58).sample(sorted(ids), 20)` from the 2,751 records
+excluded on 2026-10-16 are R1262, C2-0282, C2-0317, R1518, C2-0298, C1-0182, C2-0262, R0714,
+R0530, R0312, R0035, C2-0541, R0717, R1409, R0588, R0017, R1258, C1-0453, C1-0062 and R0885. The
+author screened their titles and abstracts on 2026-11-12 without the assistant's decisions.
+
+- **Decision.** Both exclude 15 of the 20. The author would include five that the assistant had
+  excluded at title and abstract: C2-0298 (E4), R0714 (E4), R0530 (E6), R0717 (E4) and C1-0062
+  (E6). All five went to full text, as the protocol sets:
+  - C1-0062 is included (Q1, mentioned; p. 86).
+  - C2-0298 is excluded as E4: prenatal care is only a sampling criterion.
+  - R0714 is excluded as E6, after a full-text reading.
+  - R0717 is excluded as E4, on the abstract; no open full text was found.
+  - R0530 was not retrieved.
+- **Chasing.** C1-0062 was chased as a study of round 2: 22 candidates and 14 new records, none
+  forwarded.
+- **Code.** Among the 15 records both exclude, the author's codes include the assistant's in 8. In
+  the other 7, the protocol's order (the first code that applies) gives:
+  - R1409 is a conference abstract, so E2, as the assistant coded it.
+  - R1518 is a Zenodo repository record, so E2; the assistant had coded it E3 and it is recoded.
+  - R0017 and R0885 name a care measure but no gestational outcome, so E5, as coded.
+  - C2-0282 names no care measure, so E4, as coded.
+  - R1262 and R1258 are LILACS records whose abstract the run did not store, so they were not
+    rechecked.
+- **Check of E5.** Because four of these differences were E5 against E4, every title-and-abstract
+  exclusion coded E5 was checked for a prenatal-care term in its stored title and abstract. 36 had
+  none, so E4 is the first code that applies, and they were recoded. Another 36 have no stored
+  abstract (most from LILACS) and were not rechecked. The counts above include these changes.
 
 ### Deviations from the protocol
 
@@ -727,6 +756,9 @@ author's decisions, then every disagreement.
   the six methods describes.
 - **Metadata.** C1-0003 is dated 1996, from PubMed, instead of the 2020 that OpenAlex gives its
   repository copy.
+- **After the re-screen.** Five records went to full text, C1-0062 was chased, and 37 exclusion
+  codes were corrected to the protocol's order (36 from E5 to E4, one from E3 to E2), as
+  described under [Blind re-screen](#blind-re-screen).
 
 ## Limitations
 
@@ -736,11 +768,15 @@ author's decisions, then every disagreement.
 - **Journal publications only.** Preprints, theses and conference material were not eligible.
 - **Languages.** English, Spanish and Portuguese only; six records were excluded for language
   (E1).
-- **One screener.** The AI assistant screened every record; the author's blind re-screen of 20
-  exclusions is pending.
+- **One screener.** The AI assistant screened every record. In the author's blind re-screen of 20
+  exclusions, the author would have included 5. One of the 5 was included on its full text, so 1 of
+  the 20 was an exclusion that should have been an inclusion. The other 2,731 exclusions have no
+  second screening.
+- **Exclusion codes.** The codes separate E4 and E5 less reliably than the decisions: 36 E5 codes
+  were corrected after the re-screen, and 36 without a stored abstract were not rechecked.
 - **Abstract-level signals.** A study that names the bias only in its full text passes title and
   abstract screening only through other signals, so "mentioned" is undercounted.
-- **Full text.** 47 of the 106 reports sought were not retrieved, 29 of them published before
+- **Full text.** 48 of the 111 reports sought were not retrieved, 29 of them published before
   2000. Four Q1 inclusions and one Q4 inclusion rest on the abstract, among them Koroukian & Rimm
   2002, the closest study known before the search. Scanned articles were
   read as page images from PubMed Central.
@@ -762,7 +798,7 @@ author's decisions, then every disagreement.
 
 ### Included studies
 
-Authors, journal, volume and pages from PubMed `esummary`, or from OpenAlex for the three records
+Authors, journal, volume and pages from PubMed `esummary`, or from OpenAlex for the four records
 without a PMID. Every PMID resolves in PubMed and every DOI in Crossref or the DOI handle service,
 except that of R1306, which is kept by its OpenAlex identifier (W1554081760).
 
@@ -787,6 +823,7 @@ except that of R1306, which is kept by its OpenAlex identifier (W1554081760).
 - **R1306** · Balsa AI, Triunfo P. THE EFFECTIVENESS OF PRENATAL CARE IN URUGUAY’S LOW-INCOME POPULATION: A PANEL DATA APPROACH. *Latin American Journal of Economics.* 2015;52(2):149–183. doi:10.7764/laje.52.2.149
 - **R0114** · Guendelman S, Thornton D, Perez-Cuevas R, et al. Preterm delivery among first-time Mexico-born mothers: a binational population-based comparison of deliveries in California and Mexico. *J Epidemiol Community Health.* 2015;69(1):35-40. PMID 25210076; doi:10.1136/jech-2014-204020
 - **R0152** · Hamilton ER, Choi KH. The mixed effects of migration: community-level migration and birthweight in Mexico. *Soc Sci Med.* 2015;132:278-86. PMID 25174770; doi:10.1016/j.socscimed.2014.08.031
+- **C1-0062** · Jogia PD, Lodhiya KK. Antenatal care utilisation among low-risk and high-risk pregnant women & its effects on pregnancy outcome. *Obsgyne Review Journal of Obstetric and Gynecology.* 2018;4(4):82–88. doi:10.17511/joog.2018.i04.03
 - **C1-0041** · Shin D, Song WO. Influence of the Adequacy of the Prenatal Care Utilization Index on Small-For-Gestational-Age Infants and Preterm Births in the United States. *J Clin Med.* 2019;8(6):838. PMID 31212823; doi:10.3390/jcm8060838
 - **R0527** · Ancira-Moreno M, Monterrubio-Flores E, Hernández-Cordero S, et al. Incidence of low birth weight in Mexico: A descriptive retrospective study from 2008-2017. *PLoS One.* 2021;16(9):e0256518. PMID 34506506; doi:10.1371/journal.pone.0256518
 - **R0542** · Suárez-Idueta L, Bedford HE, Ohuma EO, et al. Maternal Risk Factors for Small-for-Gestational-Age Newborns in Mexico: Analysis of a Nationwide Representative Cohort. *Front Public Health.* 2021;9:707078. PMID 35004559; doi:10.3389/fpubh.2021.707078
