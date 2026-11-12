@@ -15,6 +15,7 @@ import pytest
 import statsmodels.api as sm
 from statsmodels.tools.sm_exceptions import ConvergenceWarning
 
+from sinac_truncation import models
 from sinac_truncation.apncu import apncu_variants
 from sinac_truncation.measures import (
     APNCU_VARIANT,
@@ -234,6 +235,50 @@ def test_a_level_aliased_with_a_covariate_level_has_no_estimate() -> None:
     assert set(fit.odds_ratios) == {"0"}
     assert fit.set_aside == 0
     assert fit.odds_ratios["0"] == pytest.approx(adjusted(CONFOUNDED, "8+").odds_ratios["0"])
+
+
+def test_rows_a_combination_of_levels_predicts_exactly_are_set_aside() -> None:
+    """Quasi-complete separation (D-137): no level has births of one outcome only (1-4 has 4
+    preterm of 40, state 14 has 10 of 16), but the direction "1-4 minus state 14" predicts two
+    rows exactly. 1-4 in state 09 is all term and 8+ in state 14 all preterm, while 1-4 in state 14
+    is mixed. Without them the likelihood keeps growing along that direction and statsmodels stops
+    at a coefficient with no meaning. The two rows are set aside; 1-4 is then only in state 14,
+    aliased with it, so it has no estimate, and the estimate of 0 is the one without them."""
+    other_state = ("20-24", 1, "14", 2023)
+    rows = [
+        *CONFOUNDED,
+        ModelRow("1-4", PLAIN, 30, 0),
+        ModelRow("1-4", other_state, 10, 4),
+        ModelRow("8+", other_state, 6, 6),
+    ]
+    fit = adjusted(rows, "8+")
+    assert set(fit.odds_ratios) == {"0"}
+    assert fit.set_aside == 36
+    assert fit.odds_ratios["0"] == pytest.approx(adjusted(CONFOUNDED, "8+").odds_ratios["0"])
+
+
+@pytest.mark.parametrize("births", [5, 20, 200])
+def test_a_table_separated_only_by_a_combination_has_no_estimate_at_any_size(births: int) -> None:
+    """The table the smoke run of 1.9.4 met, reduced to four rows: the reference is all term in
+    state 09 and the later start all preterm in state 14, the other two cells are mixed. It used
+    to overflow ``math.exp`` on a Wald limit, whatever the number of births."""
+    half = births // 2
+    other_state = ("20-24", 1, "14", 2023)
+    rows = [
+        ModelRow("first", PLAIN, births, 0),
+        ModelRow("later", PLAIN, births, half),
+        ModelRow("first", other_state, births, half),
+        ModelRow("later", other_state, births, births),
+    ]
+    fit = adjusted(rows, "first")
+    assert fit.odds_ratios == {}
+    assert fit.set_aside == 2 * births
+
+
+def test_a_limit_that_cannot_be_exponentiated_stops_with_a_model_error() -> None:
+    """The guard behind the check for separation: a Wald limit past e^709 is no estimate."""
+    with pytest.raises(ModelError, match="not finite"):
+        models._odds_ratio("later", 23.6, -24_601.5, 24_648.6)
 
 
 def test_without_the_reference_no_level_has_an_estimate() -> None:

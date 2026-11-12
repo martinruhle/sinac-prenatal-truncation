@@ -338,13 +338,16 @@ def run(
                 result.add(found, definition, cutoff)
         axis = axis_period(list(remaining))
         if axis is not None:
-            found = observed_estimates(
-                ANALYSIS_DEFINITION,
-                SENSITIVITY_MEASURES,
-                period_axis(analysis_cells),
-                cuts,
-                period=axis,
-            )
+            try:
+                found = observed_estimates(
+                    ANALYSIS_DEFINITION,
+                    SENSITIVITY_MEASURES,
+                    period_axis(analysis_cells),
+                    cuts,
+                    period=axis,
+                )
+            except ModelError as error:
+                raise EstimateError(f"period {axis}: {error}") from error
             result.add(found, ANALYSIS_DEFINITION, PRETERM_WEEKS, period=axis)
         for variable in GRADIENTS:
             for value, stratum_cells in strata(analysis_cells, variable).items():

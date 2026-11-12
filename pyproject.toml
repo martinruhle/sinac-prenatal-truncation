@@ -15,6 +15,7 @@ dependencies = [
     "psycopg[binary]>=3.3.5",
     "pyyaml>=6.0.3",
     "sqlalchemy>=2.0.54",
+    "scipy>=1.18.1",
     "statsmodels>=0.15.0",
 ]
 
@@ -67,7 +68,7 @@ mypy_path = "scripts"
 # statsmodels publishes no type information (no py.typed and no stubs), so its names are Any
 # and src/sinac_truncation/models.py converts what it returns to typed values (D-118).
 [[tool.mypy.overrides]]
-module = ["statsmodels", "statsmodels.*"]
+module = ["scipy", "scipy.*", "statsmodels", "statsmodels.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
