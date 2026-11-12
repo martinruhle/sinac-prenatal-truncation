@@ -39,6 +39,7 @@ from typing import NamedTuple
 import numpy as np
 import numpy.typing as npt
 import statsmodels.api as sm
+from scipy.optimize import linprog
 from statsmodels.tools.sm_exceptions import (
     ConvergenceWarning,
     PerfectSeparationWarning,
@@ -96,6 +97,11 @@ __all__ = [
 
 #: The covariates of the adjusted model, in the order of :attr:`ModelRow.covariates` (D-094).
 COVARIATES: tuple[str, ...] = ("age_group", "education", "state", "year")
+
+#: How far from zero a row must be, along a direction of :func:`_separated`, to count as predicted
+#: exactly: ten times the default primal feasibility tolerance of HiGHS (1e-7), the solver of
+#: ``scipy.optimize.linprog``, so a margin is never the solver's own tolerance.
+_SEPARATION_MARGIN = 1e-6
 
 #: The values of the columns source and model of docs/protocol.md §Output tables.
 OBSERVED = "observed"
@@ -386,25 +392,49 @@ def _identified_columns(design: npt.NDArray[np.float64]) -> npt.NDArray[np.bool_
     return identified
 
 
-def adjusted(rows: Sequence[ModelRow], reference: str) -> Adjusted:
-    """The odds ratio of each level of the exposure against the reference, adjusted for the
-    covariates, from a binomial GLM with a logit link on the model table.
+def _separated(
+    design: npt.NDArray[np.float64], outcome: npt.NDArray[np.float64]
+) -> npt.NDArray[np.bool_]:
+    """The rows some direction of the coefficients predicts exactly: quasi-complete separation.
 
-    A level, of the exposure or of a covariate, whose births are all preterm or all term has an
-    infinite coefficient. The likelihood is highest with its births predicted exactly, and those
-    births then add nothing to the other estimates, so the model is fitted without them and the
-    level has no estimate (D-118). The real cohorts have no such level. A level aliased with
-    others, which the design cannot tell apart, has no estimate either.
-
-    Raises:
-        ModelError: the fit did not converge.
+    A direction separates the data when it puts every row of preterm births only on one side of
+    zero, every row of term births only on the other, and every row with both outcomes on zero
+    (Albert and Anderson 1984). Along it the likelihood keeps growing, so the maximum likelihood
+    estimate does not exist; the rows it puts strictly off zero are the ones the limit predicts
+    exactly (Geyer 2009). A linear program finds such a direction, with each coefficient bounded
+    by 1 (Konis 2007); it is solved again over the rows not yet found until it finds none.
     """
-    kept = _identified(rows)
-    set_aside = sum(row.births for row in rows) - sum(row.births for row in kept)
-    levels = sorted({row.level for row in kept} - {reference})
-    if reference not in {row.level for row in kept}:
-        return Adjusted({}, set_aside)
+    preterm, term = outcome[:, 0], outcome[:, 1]
+    sign = np.where(preterm == 0, -1.0, np.where(term == 0, 1.0, 0.0))
+    one_outcome = sign != 0
+    signed = design * sign[:, None]
+    mixed = design[~one_outcome]
+    found = np.zeros(len(design), dtype=bool)
+    while (candidates := one_outcome & ~found).any():
+        result = linprog(
+            -signed[candidates].sum(axis=0),
+            A_ub=-signed[one_outcome],
+            b_ub=np.zeros(int(one_outcome.sum())),
+            A_eq=mixed if len(mixed) else None,
+            b_eq=np.zeros(len(mixed)) if len(mixed) else None,
+            bounds=(-1.0, 1.0),
+            method="highs",
+        )
+        if result.status != 0:
+            raise ModelError(f"the check for separation failed: {result.message}")
+        new = candidates & (signed @ result.x > _SEPARATION_MARGIN)
+        if not new.any():
+            break
+        found |= new
+    return found
 
+
+def _design(
+    kept: Sequence[ModelRow], reference: str
+) -> tuple[dict[str, int], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """The column of each level of the exposure, the design of dummies and the outcome of each
+    row: preterm and term births."""
+    levels = sorted({row.level for row in kept} - {reference})
     exposure = {level: column for column, level in enumerate(levels, start=1)}
     columns = 1 + len(levels)
     terms: list[dict[Hashable, int]] = []
@@ -429,12 +459,52 @@ def adjusted(rows: Sequence[ModelRow], reference: str) -> Adjusted:
             if value in term:
                 design[line, term[value]] = 1.0
     outcome = np.array([(row.preterm, row.births - row.preterm) for row in kept], dtype=float)
+    return exposure, design, outcome
+
+
+def _odds_ratio(level: str, estimate: float, lower: float, upper: float) -> OddsRatio:
+    try:
+        return OddsRatio(exp(estimate), exp(lower), exp(upper))
+    except OverflowError as error:
+        raise ModelError(
+            f"the odds ratio of {level} or its interval is not finite (log scale {estimate:.3g}, "
+            f"{lower:.3g} to {upper:.3g})"
+        ) from error
+
+
+def adjusted(rows: Sequence[ModelRow], reference: str) -> Adjusted:
+    """The odds ratio of each level of the exposure against the reference, adjusted for the
+    covariates, from a binomial GLM with a logit link on the model table.
+
+    A level, of the exposure or of a covariate, whose births are all preterm or all term has an
+    infinite coefficient. The likelihood is highest with its births predicted exactly, and those
+    births then add nothing to the other estimates, so the model is fitted without them and the
+    level has no estimate (D-118). The same holds for the rows a combination of levels predicts
+    exactly, which no level shows on its own (quasi-complete separation, :func:`_separated`):
+    they are set aside too, and a level they leave aliased has no estimate (D-137). The real
+    cohorts have neither. A level aliased with others, which the design cannot tell apart, has no
+    estimate either.
+
+    Raises:
+        ModelError: the fit did not converge, or an odds ratio or a limit is not finite.
+    """
+    kept = _identified(rows)
+    if reference not in {row.level for row in kept}:
+        return Adjusted({}, sum(row.births for row in rows) - sum(row.births for row in kept))
+    exposure, design, outcome = _design(kept, reference)
+    separated = _separated(design, outcome)
+    if separated.any():
+        kept = [row for row, gone in zip(kept, separated, strict=True) if not gone]
+        if reference not in {row.level for row in kept}:
+            return Adjusted({}, sum(row.births for row in rows) - sum(row.births for row in kept))
+        exposure, design, outcome = _design(kept, reference)
+    set_aside = sum(row.births for row in rows) - sum(row.births for row in kept)
 
     with warnings.catch_warnings():
         # Three warnings of statsmodels describe cases handled here. It reports a separation
         # whenever the fitted shares equal the observed ones in every row, which a table of
-        # counts that the model fits exactly does without any separation; the levels with one
-        # outcome were set aside above. It reports a rank-deficient design as singular; the
+        # counts that the model fits exactly does without any separation; the rows a separation
+        # predicts exactly were set aside above. It reports a rank-deficient design as singular; the
         # levels it cannot identify get no estimate below. A model with as many coefficients as
         # rows divides by zero residual degrees of freedom in a scale the binomial never uses.
         warnings.simplefilter("ignore", PerfectSeparationWarning)
@@ -452,7 +522,7 @@ def adjusted(rows: Sequence[ModelRow], reference: str) -> Adjusted:
     limits = np.asarray(result.conf_int(alpha=0.05), dtype=float)
     return Adjusted(
         {
-            level: OddsRatio(exp(estimates[column]), exp(limits[column, 0]), exp(limits[column, 1]))
+            level: _odds_ratio(level, estimates[column], limits[column, 0], limits[column, 1])
             for level, column in exposure.items()
             if identified[column]
         },

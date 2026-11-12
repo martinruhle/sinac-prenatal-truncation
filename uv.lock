@@ -607,6 +607,7 @@ dependencies = [
     { name = "pandas" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pyyaml" },
+    { name = "scipy" },
     { name = "sqlalchemy" },
     { name = "statsmodels" },
 ]
@@ -629,6 +630,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=3.0.5" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.5" },
     { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "scipy", specifier = ">=1.18.1" },
     { name = "sqlalchemy", specifier = ">=2.0.54" },
     { name = "statsmodels", specifier = ">=0.15.0" },
 ]

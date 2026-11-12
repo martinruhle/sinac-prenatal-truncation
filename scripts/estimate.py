@@ -338,13 +338,16 @@ def run(
                 result.add(found, definition, cutoff)
         axis = axis_period(list(remaining))
         if axis is not None:
-            found = observed_estimates(
-                ANALYSIS_DEFINITION,
-                SENSITIVITY_MEASURES,
-                period_axis(analysis_cells),
-                cuts,
-                period=axis,
-            )
+            try:
+                found = observed_estimates(
+                    ANALYSIS_DEFINITION,
+                    SENSITIVITY_MEASURES,
+                    period_axis(analysis_cells),
+                    cuts,
+                    period=axis,
+                )
+            except ModelError as error:
+                raise EstimateError(f"period {axis}: {error}") from error
             result.add(found, ANALYSIS_DEFINITION, PRETERM_WEEKS, period=axis)
         for variable in GRADIENTS:
             for value, stratum_cells in strata(analysis_cells, variable).items():
@@ -378,8 +381,8 @@ def run(
         where = f", {stratum}" if stratum else ""
         print(
             f"definition {definition}, {period}, cut-off {cutoff} weeks{where}, measure "
-            f"{measure}: the adjusted model set aside {births:,} births of levels whose births "
-            "are all preterm or all term (D-118)"
+            f"{measure}: the adjusted model set aside {births:,} births whose outcome a level or "
+            "a combination of levels predicts exactly (D-118, D-137)"
         )
     observed = [row for row in result.estimates if row.source == OBSERVED]
     for period in dict.fromkeys(row.period for row in observed):

@@ -556,7 +556,7 @@ The odds ratios come from one model, specified once (D-093):
 - **What is reported.** 95 % Wald confidence intervals. The coefficients of the covariates are not
   reported: the model is built to estimate the exposure, and those coefficients have no causal
   reading in it.
-- **Implementation** (`pipeline.py estimate`, D-117, D-118).
+- **Implementation** (`pipeline.py estimate`, D-117, D-118, D-137).
   - [`../sql/analysis/aggregated_count.sql`](../sql/analysis/aggregated_count.sql) writes
     `results.aggregated_count`: per definition, the births per combination of completed weeks,
     first-visit trimester, visits and the four covariates. The run checks that it holds every
@@ -569,6 +569,12 @@ The odds ratios come from one model, specified once (D-093):
   - A level whose births are all preterm or all term has no estimate. A covariate level like that
     leaves the adjusted model, which changes no other estimate. A level that the design cannot
     tell apart from others has no estimate either. The cohorts of 2020–2023 have no such level.
+  - The same holds for rows that a combination of levels predicts exactly, although no level does
+    on its own: quasi-complete separation, under which the maximum likelihood estimate does not
+    exist (Albert and Anderson 1984). A linear program finds those rows (Konis 2007). They are set
+    aside and the model is fitted on the rest, which is the limit of the fit along the separating
+    direction (Geyer 2009). A level they leave aliased has no estimate (D-137). None of the 94
+    adjusted models of 2020–2023 is separated.
 
 ### Covariates
 
@@ -1039,8 +1045,14 @@ The ones the proposal already anticipated are in
 
 ## References
 
+- Albert A, Anderson JA. On the existence of maximum likelihood estimates in logistic regression
+  models. *Biometrika.* 1984;71(1):1–10.
 - DGIS. *Guía para el correcto llenado del Certificado de Nacimiento, Modelo 2025*. Secretaría de
   Salud.
+- Geyer CJ. Likelihood inference in exponential families and directions of recession.
+  *Electron J Stat.* 2009;3:259–289.
+- Konis K. *Linear programming algorithms for detecting separated data in binary logistic
+  regression models.* DPhil thesis, University of Oxford; 2007.
 - Koroukian SM, Rimm AA. The "Adequacy of Prenatal Care Utilization" (APNCU) index to study low
   birth weight: is the index biased? *J Clin Epidemiol.* 2002;55(3):296–305.
 - Kotelchuck M. An evaluation of the Kessner Adequacy of Prenatal Care Index and a proposed
