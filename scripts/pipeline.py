@@ -5,7 +5,9 @@ uv run --env-file .env python scripts/pipeline.py --help
 
 import argparse
 import sys
+import tempfile
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 
 import httpx
@@ -18,11 +20,11 @@ import etl
 import load_vocab
 import publish
 import simulate
+import smoke_source
 import sql_runner
 import stage
 import validate_concepts
 from sinac_truncation.period import STUDY_YEARS, PeriodError, format_years, parse_years
-from sinac_truncation.sqltext import schema_mapping
 
 #: Repository root, reached from this file so no absolute path is written down (rule 12).
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -40,11 +42,45 @@ DDL_FILES = (
 CDM_SCHEMA = "cdm"
 STAGING_SCHEMA = "staging"
 RESULTS_SCHEMA = "results"
-SCHEMAS = (CDM_SCHEMA, STAGING_SCHEMA, RESULTS_SCHEMA)
 
 
-def db_init(*, recreate: bool) -> int:
+#: The schemas of the smoke run on synthetic fixtures, apart from the real load so a smoke run
+#: never touches it (D-136). They are dropped and rebuilt by each run, and kept after it.
+SMOKE_SCHEMAS = etl.Schemas(cdm="smoke_cdm", staging="smoke_staging", results="smoke_results")
+
+
+@dataclass(frozen=True)
+class Source:
+    """Where the steps read their files and which schemas they write to."""
+
+    schemas: etl.Schemas
+    #: The manifest: config/sources.yml, or the one of the fixtures.
+    sources_path: Path
+    #: The record ZIPs, and where `stage` extracts them and writes their Parquet copies.
+    raw_dir: Path
+    extracted_dir: Path
+    interim_dir: Path
+    #: The directory the `file:` of the manifest's `vocabulary:` block is relative to.
+    vocabulary_root: Path
+
+
+#: The real source: the DGIS files under data/ and the schemas `db-init` creates.
+DGIS = Source(
+    schemas=etl.Schemas(cdm=CDM_SCHEMA, staging=STAGING_SCHEMA, results=RESULTS_SCHEMA),
+    sources_path=download.SOURCES_PATH,
+    raw_dir=download.RAW_DIR,
+    extracted_dir=stage.EXTRACTED_DIR,
+    interim_dir=stage.INTERIM_DIR,
+    vocabulary_root=REPO_ROOT,
+)
+
+#: The values of `all --source`.
+SOURCES = ("dgis", "fixtures")
+
+
+def db_init(*, recreate: bool, schemas: etl.Schemas = DGIS.schemas) -> int:
     """Create the schemas and apply the OMOP CDM v5.4 DDL, primary keys and indices."""
+    listed = (schemas.cdm, schemas.staging, schemas.results)
     try:
         conninfo = sql_runner.conninfo_from_env()
     except sql_runner.MissingEnvironmentError as error:
@@ -54,13 +90,13 @@ def db_init(*, recreate: bool) -> int:
     try:
         with psycopg.connect(conninfo) as conn:
             if recreate:
-                sql_runner.drop_schemas(conn, SCHEMAS)
-            sql_runner.ensure_schemas(conn, SCHEMAS)
+                sql_runner.drop_schemas(conn, listed)
+            sql_runner.ensure_schemas(conn, listed)
 
-            existing = sql_runner.count_tables(conn, CDM_SCHEMA)
+            existing = sql_runner.count_tables(conn, schemas.cdm)
             if existing:
                 print(
-                    f"error: schema {CDM_SCHEMA!r} already holds {existing} tables. "
+                    f"error: schema {schemas.cdm!r} already holds {existing} tables. "
                     "Re-run with --recreate to drop and rebuild the schemas, "
                     "or use `docker compose down -v` to start from an empty database.",
                     file=sys.stderr,
@@ -68,22 +104,35 @@ def db_init(*, recreate: bool) -> int:
                 return 1
 
             for path in DDL_FILES:
-                sql_runner.run_sql_file(conn, path, schema_mapping(*SCHEMAS))
+                sql_runner.run_sql_file(conn, path, schemas.markers)
                 print(f"applied {path.relative_to(REPO_ROOT).as_posix()}")
 
-            created = sql_runner.count_tables(conn, CDM_SCHEMA)
+            created = sql_runner.count_tables(conn, schemas.cdm)
     except psycopg.OperationalError as error:
         print(f"error: cannot reach the database: {error}", file=sys.stderr)
         return 2
 
-    print(f"schemas {', '.join(SCHEMAS)} ready; {created} tables in {CDM_SCHEMA}")
+    print(f"schemas {', '.join(listed)} ready; {created} tables in {schemas.cdm}")
     return 0
 
 
-def download_source(*, entry_id: str, record: bool, dest: Path, timeout: float) -> int:
+def download_source(
+    *,
+    entry_id: str,
+    record: bool,
+    dest: Path,
+    timeout: float,
+    sources_path: Path = download.SOURCES_PATH,
+) -> int:
     """Download one source file, or verify the copy already on disk, against the manifest."""
     try:
-        download.run(entry_id, record_digest=record, dest_dir=dest, timeout=timeout)
+        download.run(
+            entry_id,
+            record_digest=record,
+            dest_dir=dest,
+            sources_path=sources_path,
+            timeout=timeout,
+        )
     except download.DownloadError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
@@ -93,16 +142,29 @@ def download_source(*, entry_id: str, record: bool, dest: Path, timeout: float) 
     return 0
 
 
-def download_sources(*, entry_ids: Sequence[str], record: bool, dest: Path, timeout: float) -> int:
+def download_sources(
+    *,
+    entry_ids: Sequence[str],
+    record: bool,
+    dest: Path,
+    timeout: float,
+    sources_path: Path = download.SOURCES_PATH,
+) -> int:
     """Download or verify each source in turn, stopping at the first one that fails."""
     for entry_id in entry_ids:
-        status = download_source(entry_id=entry_id, record=record, dest=dest, timeout=timeout)
+        status = download_source(
+            entry_id=entry_id,
+            record=record,
+            dest=dest,
+            timeout=timeout,
+            sources_path=sources_path,
+        )
         if status != 0:
             return status
     return 0
 
 
-def stage_years(*, years: Sequence[int]) -> int:
+def stage_years(*, years: Sequence[int], source: Source = DGIS) -> int:
     """Stage each year's record file into the staging schema, stopping at the first failure."""
     try:
         conninfo = sql_runner.conninfo_from_env()
@@ -113,7 +175,15 @@ def stage_years(*, years: Sequence[int]) -> int:
     try:
         with psycopg.connect(conninfo) as conn:
             for year in years:
-                stage.run(year, conn=conn, schema=STAGING_SCHEMA)
+                stage.run(
+                    year,
+                    conn=conn,
+                    schema=source.schemas.staging,
+                    raw_dir=source.raw_dir,
+                    extracted_dir=source.extracted_dir,
+                    interim_dir=source.interim_dir,
+                    sources_path=source.sources_path,
+                )
     except stage.StageError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
@@ -121,11 +191,11 @@ def stage_years(*, years: Sequence[int]) -> int:
         print(f"error: cannot reach the database: {error}", file=sys.stderr)
         return 2
 
-    print(f"staged {format_years(years)}; counts in {STAGING_SCHEMA}.load_counts")
+    print(f"staged {format_years(years)}; counts in {source.schemas.staging}.load_counts")
     return 0
 
 
-def load_vocabulary() -> int:
+def load_vocabulary(*, source: Source = DGIS) -> int:
     """Load the Athena package that config/sources.yml declares into the cdm schema."""
     try:
         conninfo = sql_runner.conninfo_from_env()
@@ -135,7 +205,12 @@ def load_vocabulary() -> int:
 
     try:
         with psycopg.connect(conninfo) as conn:
-            load_vocab.run(conn, schema=CDM_SCHEMA)
+            load_vocab.run(
+                conn,
+                schema=source.schemas.cdm,
+                sources_path=source.sources_path,
+                repo_root=source.vocabulary_root,
+            )
     except load_vocab.VocabError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
@@ -145,7 +220,7 @@ def load_vocabulary() -> int:
     return 0
 
 
-def check_concepts() -> int:
+def check_concepts(*, source: Source = DGIS) -> int:
     """Check every concept_id of the configuration against the loaded vocabulary."""
     try:
         conninfo = sql_runner.conninfo_from_env()
@@ -155,7 +230,9 @@ def check_concepts() -> int:
 
     try:
         with psycopg.connect(conninfo) as conn:
-            problems = validate_concepts.run(conn, schema=CDM_SCHEMA)
+            problems = validate_concepts.run(
+                conn, schema=source.schemas.cdm, sources_path=source.sources_path
+            )
     except validate_concepts.NotLoadedError as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
@@ -168,7 +245,7 @@ def check_concepts() -> int:
     return 1 if problems else 0
 
 
-def build_cdm(*, years: Sequence[int]) -> int:
+def build_cdm(*, years: Sequence[int], source: Source = DGIS) -> int:
     """Populate the OMOP tables of the vertical slice from the staged years."""
     try:
         conninfo = sql_runner.conninfo_from_env()
@@ -176,10 +253,15 @@ def build_cdm(*, years: Sequence[int]) -> int:
         print(f"error: {error}", file=sys.stderr)
         return 2
 
-    schemas = etl.Schemas(cdm=CDM_SCHEMA, staging=STAGING_SCHEMA, results=RESULTS_SCHEMA)
     try:
         with psycopg.connect(conninfo) as conn:
-            etl.run(conn, years, schemas=schemas, reference=etl.git_reference())
+            etl.run(
+                conn,
+                years,
+                schemas=source.schemas,
+                sources_path=source.sources_path,
+                reference=etl.git_reference(),
+            )
     except etl.EtlError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
@@ -189,7 +271,7 @@ def build_cdm(*, years: Sequence[int]) -> int:
     return 0
 
 
-def build_cohorts(*, years: Sequence[int]) -> int:
+def build_cohorts(*, years: Sequence[int], source: Source = DGIS) -> int:
     """Build the cohorts of sql/cohorts/ and their attrition on the record files of the years."""
     try:
         conninfo = sql_runner.conninfo_from_env()
@@ -197,10 +279,9 @@ def build_cohorts(*, years: Sequence[int]) -> int:
         print(f"error: {error}", file=sys.stderr)
         return 2
 
-    schemas = etl.Schemas(cdm=CDM_SCHEMA, staging=STAGING_SCHEMA, results=RESULTS_SCHEMA)
     try:
         with psycopg.connect(conninfo) as conn:
-            cohorts.run(conn, years, schemas=schemas)
+            cohorts.run(conn, years, schemas=source.schemas)
     except cohorts.CohortError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
@@ -210,7 +291,7 @@ def build_cohorts(*, years: Sequence[int]) -> int:
     return 0
 
 
-def run_simulation() -> int:
+def run_simulation(*, source: Source = DGIS) -> int:
     """Run the null simulation on the analysis and landmark cohorts in the database."""
     try:
         conninfo = sql_runner.conninfo_from_env()
@@ -218,10 +299,9 @@ def run_simulation() -> int:
         print(f"error: {error}", file=sys.stderr)
         return 2
 
-    schemas = etl.Schemas(cdm=CDM_SCHEMA, staging=STAGING_SCHEMA, results=RESULTS_SCHEMA)
     try:
         with psycopg.connect(conninfo) as conn:
-            simulate.run(conn, schemas=schemas)
+            simulate.run(conn, schemas=source.schemas)
     except simulate.SimulateError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
@@ -231,7 +311,7 @@ def run_simulation() -> int:
     return 0
 
 
-def run_estimates() -> int:
+def run_estimates(*, source: Source = DGIS) -> int:
     """Estimate the crude and adjusted odds ratios on the cohorts in the database."""
     try:
         conninfo = sql_runner.conninfo_from_env()
@@ -239,10 +319,9 @@ def run_estimates() -> int:
         print(f"error: {error}", file=sys.stderr)
         return 2
 
-    schemas = etl.Schemas(cdm=CDM_SCHEMA, staging=STAGING_SCHEMA, results=RESULTS_SCHEMA)
     try:
         with psycopg.connect(conninfo) as conn:
-            estimate.run(conn, schemas=schemas)
+            estimate.run(conn, schemas=source.schemas)
     except estimate.EstimateError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
@@ -252,7 +331,7 @@ def run_estimates() -> int:
     return 0
 
 
-def run_all(*, years: Sequence[int]) -> int:
+def run_all(*, years: Sequence[int], source: Source = DGIS) -> int:
     """Rebuild the cohorts, the null simulation and the odds ratios from the raw files: every
     step in order, stopping at the first failure.
 
@@ -265,17 +344,18 @@ def run_all(*, years: Sequence[int]) -> int:
             lambda: download_sources(
                 entry_ids=[download.record_id(year) for year in years],
                 record=False,
-                dest=download.RAW_DIR,
+                dest=source.raw_dir,
                 timeout=download.DEFAULT_TIMEOUT,
+                sources_path=source.sources_path,
             ),
         ),
-        ("stage", lambda: stage_years(years=years)),
-        ("vocab", lambda: load_vocabulary()),
-        ("validate-concepts", lambda: check_concepts()),
-        ("cdm", lambda: build_cdm(years=years)),
-        ("cohorts", lambda: build_cohorts(years=years)),
-        ("simulate", lambda: run_simulation()),
-        ("estimate", lambda: run_estimates()),
+        ("stage", lambda: stage_years(years=years, source=source)),
+        ("vocab", lambda: load_vocabulary(source=source)),
+        ("validate-concepts", lambda: check_concepts(source=source)),
+        ("cdm", lambda: build_cdm(years=years, source=source)),
+        ("cohorts", lambda: build_cohorts(years=years, source=source)),
+        ("simulate", lambda: run_simulation(source=source)),
+        ("estimate", lambda: run_estimates(source=source)),
     )
     for name, step in steps:
         print(f"== {name}")
@@ -287,6 +367,37 @@ def run_all(*, years: Sequence[int]) -> int:
     return 0
 
 
+def run_smoke(*, years: Sequence[int]) -> int:
+    """`all` on synthetic fixtures: write them to a temporary directory, rebuild the smoke
+    schemas and run every step there (task 1.9.4, D-136).
+
+    Nothing is downloaded, and neither data/ nor the schemas `db-init` creates are touched. The
+    directory is removed afterwards; the smoke schemas are kept for inspection.
+    """
+    with tempfile.TemporaryDirectory(prefix="sinac-smoke-") as directory:
+        print("== fixtures")
+        try:
+            written = smoke_source.write(Path(directory), years)
+        except smoke_source.FixtureError as error:
+            print(f"error: {error}", file=sys.stderr)
+            print("error: `all` stopped at `fixtures`", file=sys.stderr)
+            return 1
+        source = Source(
+            schemas=SMOKE_SCHEMAS,
+            sources_path=written.sources_path,
+            raw_dir=written.raw_dir,
+            extracted_dir=written.extracted_dir,
+            interim_dir=written.interim_dir,
+            vocabulary_root=written.root,
+        )
+        print("== db-init")
+        status = db_init(recreate=True, schemas=SMOKE_SCHEMAS)
+        if status != 0:
+            print("error: `all` stopped at `db-init`", file=sys.stderr)
+            return status
+        return run_all(years=years, source=source)
+
+
 def publish_results(*, years: Sequence[int]) -> int:
     """Rebuild the results at this commit and write the five output files and their manifest to
     results/."""
@@ -296,7 +407,7 @@ def publish_results(*, years: Sequence[int]) -> int:
         print(f"error: {error}", file=sys.stderr)
         return 2
 
-    schemas = etl.Schemas(cdm=CDM_SCHEMA, staging=STAGING_SCHEMA, results=RESULTS_SCHEMA)
+    schemas = DGIS.schemas
     try:
         code = publish.current_code()
         with psycopg.connect(conninfo) as conn:
@@ -538,6 +649,19 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     add_years_option(all_parser, what="years whose record files the steps run on")
+    all_parser.add_argument(
+        "--source",
+        choices=SOURCES,
+        default="dgis",
+        help=(
+            "dgis (default): the DGIS files and the Athena package under data/, into the schemas "
+            "of `db-init`. fixtures: a smoke run on synthetic records and a synthetic vocabulary "
+            "built from the real config/, written to a temporary directory and loaded into "
+            f"{SMOKE_SCHEMAS.cdm}, {SMOKE_SCHEMAS.staging} and {SMOKE_SCHEMAS.results}, which "
+            "are dropped and rebuilt first; nothing is downloaded and data/ is not touched "
+            "(D-136)"
+        ),
+    )
 
     publish_parser = subcommands.add_parser(
         "publish",
@@ -592,6 +716,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "estimate":
         return run_estimates()
     if args.command == "all":
+        if args.source == "fixtures":
+            return run_smoke(years=args.years)
         return run_all(years=args.years)
     if args.command == "publish":
         return publish_results(years=args.years)

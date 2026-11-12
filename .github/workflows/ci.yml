@@ -56,5 +56,11 @@ jobs:
       - name: Apply the OMOP schema
         run: uv run python scripts/pipeline.py db-init
 
+      # Every step of `all`, from download to estimate, on the study period: synthetic records
+      # and a synthetic vocabulary built from the real config/, in the smoke_* schemas. Nothing
+      # is downloaded; the step fails as soon as one step of the pipeline fails (D-136).
+      - name: Smoke run on synthetic fixtures
+        run: uv run python scripts/pipeline.py all --source fixtures
+
       - name: Pytest
         run: uv run pytest --cov --cov-report=term-missing
