@@ -34,25 +34,26 @@ from synthetic import RECORDS_2023, Source, fetch, module_schemas, prepare_sourc
 
 #: Records 9 to 16 of the 2023 file, in the order of SOURCE_COLUMNS: FECHANACIMIENTO,
 #: FECHANACIMIENTOMADRE, EDAD, RESIDEEXTRANJERO, ENTIDADRESIDENCIA, EDADGESTACIONAL,
-#: PRODUCTOEMBARAZO, TOTALCONSULTAS, TRIMESTREPRIMERCONSULTA, ESCOLARIDAD, SEXO, PESO. Each is the
-#: normal case of record 1 but for its weeks, its visits and its first-visit trimester.
+#: PRODUCTOEMBARAZO, TOTALCONSULTAS, TRIMESTREPRIMERCONSULTA, ESCOLARIDAD, SEXO, PESO,
+#: AFILIACION. Each is the normal case of record 1 but for its weeks, its visits and its
+#: first-visit trimester.
 SIMULATION_RECORDS_2023: tuple[tuple[str | None, ...], ...] = (
     # 9. 40 weeks, 6 visits from the first trimester.
-    ("09/01/2023", "01/01/1990", "33", "2", "09", "40", "1", "6", "1", "51", "1", "3200"),
+    ("09/01/2023", "01/01/1990", "33", "2", "09", "40", "1", "6", "1", "51", "1", "3200", "02"),
     # 10. 41 weeks, 12 visits from the first trimester.
-    ("10/01/2023", "01/01/1990", "33", "2", "09", "41", "1", "12", "1", "51", "1", "3200"),
+    ("10/01/2023", "01/01/1990", "33", "2", "09", "41", "1", "12", "1", "51", "1", "3200", "02"),
     # 11. 36 weeks, 5 visits from the second trimester.
-    ("11/01/2023", "01/01/1990", "33", "2", "09", "36", "1", "5", "2", "51", "1", "3200"),
+    ("11/01/2023", "01/01/1990", "33", "2", "09", "36", "1", "5", "2", "51", "1", "3200", "02"),
     # 12. 30 weeks, 2 visits from the third trimester.
-    ("12/01/2023", "01/01/1990", "33", "2", "09", "30", "1", "2", "3", "51", "1", "3200"),
+    ("12/01/2023", "01/01/1990", "33", "2", "09", "30", "1", "2", "3", "51", "1", "3200", "02"),
     # 13. 28 weeks, no care.
-    ("13/01/2023", "01/01/1990", "33", "2", "09", "28", "1", "0", "0", "51", "1", "3200"),
+    ("13/01/2023", "01/01/1990", "33", "2", "09", "28", "1", "0", "0", "51", "1", "3200", "02"),
     # 14. 33 weeks, 6 visits from the first trimester.
-    ("14/01/2023", "01/01/1990", "33", "2", "09", "33", "1", "6", "1", "51", "1", "3200"),
+    ("14/01/2023", "01/01/1990", "33", "2", "09", "33", "1", "6", "1", "51", "1", "3200", "02"),
     # 15. 35 weeks, 4 visits from the second trimester.
-    ("15/01/2023", "01/01/1990", "33", "2", "09", "35", "1", "4", "2", "51", "1", "3200"),
+    ("15/01/2023", "01/01/1990", "33", "2", "09", "35", "1", "4", "2", "51", "1", "3200", "02"),
     # 16. 38 weeks, 9 visits from the first trimester.
-    ("16/01/2023", "01/01/1990", "33", "2", "09", "38", "1", "9", "1", "51", "1", "3200"),
+    ("16/01/2023", "01/01/1990", "33", "2", "09", "38", "1", "9", "1", "51", "1", "3200", "02"),
 )
 
 #: The analysis cohort per combination: records 1 and 2, and 9 to 16.

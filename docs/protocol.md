@@ -82,9 +82,15 @@ Year of birth enters the analysis in two ways, which answer different questions 
   between years, in prenatal care and in preterm birth alike. It is categorical rather than
   linear because the pandemic is a shock, not a trend.
 - **As the COVID-19 sensitivity axis.** The estimates on 2020–2023 are set against the same
-  estimates on 2022–2023 (`--years 2022,2023`), for measures (a) and (c) (D-003). Because the
-  period starts in 2020, this sets years of acute disruption against years of recovery, not
-  against a pre-pandemic baseline.
+  estimates on 2022–2023, for measures (a) and (c) (D-003). Because the period starts in 2020,
+  this sets years of acute disruption against years of recovery, not against a pre-pandemic
+  baseline.
+  - The 2022–2023 cohort is taken from the run on 2020–2023, not from a second run with
+    `--years 2022,2023` (D-132). Every record of the analysis cohort is delivered in the year of
+    its file, so the two give the same cohort, and its attrition is the rows of 2022 and 2023 in
+    `attrition.csv`.
+  - `pipeline.py estimate` checks it on every run: the births of each year of delivery must equal
+    the cohort that the attrition of that year's file counts.
 
 ### What the period does not allow
 
@@ -616,7 +622,8 @@ D-099 sets how the alternatives are estimated and reported.
   - The definition with multiples and the period 2022–2023 change the cohort, and each carries its
     attrition. The definition with multiples is definition 6, estimated at 37 weeks.
   - `v0.2-progress` carries two of them, the cut-off and the definition with multiples (D-012,
-    D-124). The period 2022–2023 lands in `v1.0`.
+    D-124). The period 2022–2023 lands in `v1.0`, at 37 weeks on definition 2, with the value
+    `2022-2023` in the column period (D-132).
 - **The variants of measure (b) are not an axis of the definition.** They change how the index
   rates the same records, not which records enter, so they carry no attrition of their own and
   live in [§APNCU](#apncu-measure-b) with their own crude and adjusted models (D-130). They run
@@ -625,8 +632,8 @@ D-099 sets how the alternatives are estimated and reported.
   ignore that the twins of one pregnancy are not independent, because no published variable groups
   them (D-051).
 - **Gradients (`v1.0`).** The adjusted odds ratios of (a) and (c) are fitted separately within
-  each state of residence and within each insurance group, with the other covariates. The
-  insurance groups are `FOR APPROVAL`:
+  each state of residence and within each insurance group, with the other covariates, at 37 weeks
+  on definition 2. The author approved the insurance groups (D-135):
 
   | Group | `AFILIACION` codes |
   |---|---|
@@ -635,17 +642,29 @@ D-099 sets how the alternatives are estimated and reported.
   | Other social security | 04 PEMEX, 05 SEDENA, 06 SEMAR, 11 ISSFAM |
   | No social security | 01 NINGUNA, 07 SEGURO POPULAR / INSABI, 10 IMSS BIENESTAR |
   | Other | 08 OTRA |
-  | Unknown | 00, 88, 99 |
+  | Unknown | 00, 88, 99, a blank cell or a code the catalogue does not publish |
 
   Codes 01, 07 and 10 form one group because records moved between them inside the period, as
-  shown above. A gradient by code would read that move as a change of coverage.
+  shown above. A gradient by code would read that move as a change of coverage. Code 09 does not
+  exist in `AFILIACION_CERTIFICADOS`.
+- **How a stratum is reported** (D-134).
+  - Each stratum has the adjusted model alone, as D-099 sets. The crude odds ratios of the
+    stratum can be computed from `exposure_distribution.csv`, which carries the stratum in two
+    columns, so every level of every stratum has its exact births, the reference included
+    (D-040).
+  - A level that the fit sets aside within a stratum keeps its row, with its births and no odds
+    ratio, as in the main analysis (D-118), and the run prints how many births it set aside.
+  - A small stratum is shown as it is, with its interval, and no threshold of births. The
+    gradient is read where the intervals of two strata do not overlap. The strata are not ranked
+    by their point estimates, and no test of heterogeneity is run.
 
 ### Output tables
 
 The output tables are defined here, before anything runs (D-098).
 
 - **What they cover.** All of them cover 2020–2023 pooled, with the year as a covariate. The
-  attrition is per year.
+  attrition is per year. The rows of the period axis, in `estimates.csv` and
+  `exposure_distribution.csv`, cover 2022–2023 and carry it in the column period (D-132).
 - **Where they go.** `pipeline.py publish` writes them to `results/` at a milestone (D-014, D-080).
   Until then they live in the `results` schema, under the name of each file without `.csv`, except
   `estimate`. `pipeline.py cohorts` writes `attrition` and `excluded_profile`, `simulate` writes
@@ -664,7 +683,7 @@ The output tables are defined here, before anything runs (D-098).
 | File | One row per | Columns |
 |---|---|---|
 | `attrition.csv` | definition, year of the record files, step | kind, description, remaining, excluded: the columns of `attrition_base.csv`, which it replaced at the `v0.2-progress` publish, for every definition |
-| `exposure_distribution.csv` | source, definition, period, outcome cut-off, measure, variant, level, outcome | births |
+| `exposure_distribution.csv` | source, definition, period, outcome cut-off, measure, variant, level, outcome, stratum variable, stratum value | births |
 | `estimates.csv` | estimate | source, definition, period, outcome cut-off, measure, variant, level, reference, model, stratum variable, stratum value, births, preterm births, odds ratio, lower and upper limits of the 95 % interval |
 | `truncation_share.csv` | definition, measure, variant, level, scenario | reference, observed crude odds ratio with the lower and upper limits of its 95 % interval, simulated odds ratio, observed and simulated risk differences, share (D-112) |
 | `excluded_profile.csv` | definition, validity step, group (excluded, retained) | births, % preterm, % first-trimester start, % no prenatal care (D-121, D-123) |
@@ -678,6 +697,7 @@ The columns take these values:
 | variant | for (b), one of `acog_midpoint`, `acog_first`, `acog_last` and `nom007_midpoint` ([§APNCU](#apncu-measure-b), D-130); empty for the other measures |
 | model | `crude`, `adjusted` |
 | stratum variable | empty, `state` or `insurance` |
+| stratum value | empty; the two-digit code of the state of residence, as `ENTIDADES` publishes it; or the insurance group, as named in [§Sensitivity analyses and gradients](#sensitivity-analyses-and-gradients) |
 | outcome | `preterm`, `term` |
 | births, preterm births | those of the level, in `estimates.csv` |
 | odds ratio and its limits | empty for a level without an estimate ([§Model](#model)) |
@@ -743,6 +763,52 @@ All of them are adjusted odds ratios. The crude ones are in `estimates.csv`.
 - **Including multiples moves every adjusted odds ratio towards 1**, and the crude ones of (a).
   The definition keeps 107,221 more births than definition 2. The crude odds ratio of (c) moves
   the other way: it becomes 0.940 (0.933–0.946), against 1.000 in the main analysis.
+
+### What the period axis and the gradients show
+
+Measured as orientation, on 2020–2023, by `pipeline.py publish` at the commit of task 1.8.2 on
+11 November 2026. The table of record is `estimates.csv`, published at `v1.0`. All are adjusted
+odds ratios at 37 weeks on definition 2.
+
+**The period axis** holds 3,000,570 births, the analysis cohort of 2022 and 2023 in
+`attrition.csv` (1,539,748 + 1,460,822).
+
+| Measure, level against the reference | 2020–2023 | 2022–2023 |
+|---|---|---|
+| (a) 0 visits, against 8 or more | 2.458 (2.415–2.501) | 2.567 (2.503–2.632) |
+| (a) 1–4 visits | 2.030 (2.011–2.049) | 2.104 (2.076–2.132) |
+| (a) 5–7 visits | 1.529 (1.518–1.540) | 1.546 (1.530–1.562) |
+| (c) trimester 0, 2 or 3, against trimester 1 | 1.065 (1.057–1.073) | 1.083 (1.071–1.095) |
+
+- **Leaving out 2020 and 2021 barely moves the estimates.** Every odds ratio is slightly further
+  from 1 on 2022–2023, by 0.017 to 0.109. The two cohorts share the births of 2022 and 2023, so
+  their intervals are not independent, and whether they overlap is no test.
+
+**The gradient by insurance**, with the births of the group:
+
+| Group | Births | (a) 0 visits | (a) 1–4 | (a) 5–7 | (c) |
+|---|---|---|---|---|---|
+| IMSS | 1,626,854 | 2.723 (2.561–2.894) | 2.289 (2.244–2.334) | 1.713 (1.692–1.735) | 1.044 (1.027–1.061) |
+| ISSSTE | 139,512 | 2.338 (1.800–3.036) | 1.939 (1.805–2.083) | 1.587 (1.521–1.655) | 1.024 (0.956–1.096) |
+| Other social security | 44,088 | 2.322 (1.691–3.189) | 1.835 (1.636–2.059) | 1.425 (1.321–1.537) | 0.994 (0.905–1.091) |
+| No social security | 3,594,894 | 2.521 (2.470–2.574) | 2.044 (2.018–2.069) | 1.486 (1.471–1.501) | 1.095 (1.085–1.106) |
+| Other | 178,206 | 2.523 (2.276–2.796) | 2.089 (1.978–2.207) | 1.535 (1.471–1.601) | 1.072 (1.025–1.122) |
+| Unknown | 620,043 | 2.676 (2.545–2.814) | 2.064 (2.004–2.126) | 1.549 (1.511–1.587) | 1.068 (1.043–1.094) |
+
+- **(a) keeps its order in every group.** Fewer visits go with more preterm births everywhere.
+- **(c) is above 1 where there is no social security** and is compatible with 1 in ISSSTE and the
+  other social security institutions.
+
+**The gradient by state** has 32 strata, from 34,011 births in Colima (06) upwards.
+
+- **No level of any of the 38 strata was set aside** (D-118), and every level has an odds ratio.
+- **(a) is above 1 in every state.** All 96 intervals lie above 1. At 0 visits the odds ratio
+  ranges from 1.798 (1.686–1.917) in Chiapas (07) to 4.491 (3.845–5.245) in Hidalgo (13).
+- **(c) changes direction between states.** It ranges from 0.852 (0.812–0.894) in Tabasco (27)
+  to 1.349 (1.306–1.394) in Nuevo León (19). Its interval lies below 1 in 4 states and above 1 in
+  18.
+- **The widest interval** is that of (a) at 0 visits in Colima: 3.365 (2.514–4.504), from 441
+  births and 57 preterm births.
 
 ## Null simulation
 

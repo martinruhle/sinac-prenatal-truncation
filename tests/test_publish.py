@@ -83,6 +83,8 @@ def test_the_five_files_hold_the_columns_of_the_protocol() -> None:
             "variant",
             "level",
             "outcome",
+            "stratum_variable",
+            "stratum_value",
             "births",
         ),
         "estimates.csv": (
@@ -320,7 +322,7 @@ def record(
     first-visit trimester or education. The fields are in the order of SOURCE_COLUMNS."""
     return (
         "15/03/2023", "02/05/1995", "27", "2", "09", weeks, plurality, visits, trimester,
-        education, "1", "3200",
+        education, "1", "3200", "02",
     )  # fmt: skip
 
 

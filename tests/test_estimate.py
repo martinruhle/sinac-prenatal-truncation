@@ -27,6 +27,7 @@ from sinac_truncation.models import (
     ADJUSTED,
     CRUDE,
     OBSERVED,
+    Cell,
     DistributionRow,
     EstimateRow,
     summed,
@@ -50,13 +51,14 @@ def record(
     trimester: int = 1,
     state: str = "09",
     plurality: int = 1,
+    insurance: str = "02",
 ) -> tuple[str | None, ...]:
     """Record 1 of ``tests/synthetic.py``, the normal case, with another declared age, weeks,
-    visits, first-visit trimester, state or plurality. The fields are in the order of
+    visits, first-visit trimester, state, plurality or insurance. The fields are in the order of
     SOURCE_COLUMNS."""
     return (
         "15/03/2023", "02/05/1995", str(age), "2", state, str(weeks), str(plurality),
-        str(visits), str(trimester), "51", "1", "3200",
+        str(visits), str(trimester), "51", "1", "3200", insurance,
     )  # fmt: skip
 
 
@@ -65,20 +67,20 @@ def record(
 #: the second trimester.
 AGE_RECORDS = (
     *(record(age) for age in (14, 15, 19, 20, 24, 25, 29, 30, 34, 35, 39, 40)),
-    ("15/03/2023", "02/05/1995", "31", "2", "14", "35", "1", "6", "2", "132", "1", "3200"),
+    ("15/03/2023", "02/05/1995", "31", "2", "14", "35", "1", "6", "2", "132", "1", "3200", "02"),
 )
 
 #: The aggregated table of the analysis cohort, by hand: records 1 and 2 of RECORDS_2023 (age
 #: 27) and AGE_RECORDS. Records 3 to 8 leave the cohort.
 AGGREGATED = [
-    (35, 2, 6, "30-34", SENIOR_HIGH, "14", 2023, 1),
-    (39, 1, 8, "15-19", JUNIOR_HIGH, "09", 2023, 2),
-    (39, 1, 8, "20-24", JUNIOR_HIGH, "09", 2023, 2),
-    (39, 1, 8, "25-29", JUNIOR_HIGH, "09", 2023, 4),
-    (39, 1, 8, "30-34", JUNIOR_HIGH, "09", 2023, 2),
-    (39, 1, 8, "35-39", JUNIOR_HIGH, "09", 2023, 2),
-    (39, 1, 8, "40 and over", JUNIOR_HIGH, "09", 2023, 1),
-    (39, 1, 8, "under 15", JUNIOR_HIGH, "09", 2023, 1),
+    (35, 2, 6, "30-34", SENIOR_HIGH, "14", 2023, "IMSS", 1),
+    (39, 1, 8, "15-19", JUNIOR_HIGH, "09", 2023, "IMSS", 2),
+    (39, 1, 8, "20-24", JUNIOR_HIGH, "09", 2023, "IMSS", 2),
+    (39, 1, 8, "25-29", JUNIOR_HIGH, "09", 2023, "IMSS", 4),
+    (39, 1, 8, "30-34", JUNIOR_HIGH, "09", 2023, "IMSS", 2),
+    (39, 1, 8, "35-39", JUNIOR_HIGH, "09", 2023, "IMSS", 2),
+    (39, 1, 8, "40 and over", JUNIOR_HIGH, "09", 2023, "IMSS", 1),
+    (39, 1, 8, "under 15", JUNIOR_HIGH, "09", 2023, "IMSS", 1),
 ]
 
 
@@ -139,9 +141,9 @@ def tables(source: Source) -> dict[str, list[tuple[Any, ...]]]:
     return {
         name: fetch(source.connection, f"SELECT * FROM {results}.{name} ORDER BY {order}")
         for name, order in (
-            ("aggregated_count", "1, 2, 3, 4, 5, 6, 7, 8"),
-            ("estimate", "1, 2, 3, 4, 5, 6, 7, 8, 9"),
-            ("exposure_distribution", "1, 2, 3, 4, 5, 6, 7, 8"),
+            ("aggregated_count", "1, 2, 3, 4, 5, 6, 7, 8, 9"),
+            ("estimate", "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11"),
+            ("exposure_distribution", "1, 2, 3, 4, 5, 6, 7, 8, 9, 10"),
         )
     }
 
@@ -211,6 +213,7 @@ def test_a_run_estimates_the_crude_and_adjusted_odds_ratios_of_the_records(
         if row.source == OBSERVED
         and row.definition != MULTIPLES_DEFINITION
         and row.outcome_cutoff == PRETERM_WEEKS
+        and not row.stratum_variable
     }
     # Measure (c): 6 preterm of 10 later starts against 3 of 8 first-trimester starts.
     crude = observed["c", "", LATER_OR_NO_CARE, CRUDE]
@@ -256,17 +259,31 @@ def test_a_run_estimates_the_crude_and_adjusted_odds_ratios_of_the_records(
     # Intermediate. Under 34 and under 32 weeks no birth is preterm, so every level of (a) and
     # (c) is all term.
     assert run.set_aside == {
-        (2, 37, "b (acog_midpoint)"): 8,
-        (2, 37, "b (acog_first)"): 11,
-        (2, 37, "b (acog_last)"): 8,
-        (2, 37, "b (nom007_midpoint)"): 8,
-        **{(2, cutoff, measure): 18 for cutoff in (34, 32) for measure in ("a", "c")},
+        (2, "2023", 37, "", "b (acog_midpoint)"): 8,
+        (2, "2023", 37, "", "b (acog_first)"): 11,
+        (2, "2023", 37, "", "b (acog_last)"): 8,
+        (2, "2023", 37, "", "b (nom007_midpoint)"): 8,
+        **{(2, "2023", cutoff, "", m): 18 for cutoff in (34, 32) for m in ("a", "c")},
     }
+    # One state and one insurance group: each gradient has one stratum, the whole cohort, with
+    # the adjusted odds ratio of the main analysis. A run on 2023 alone has no period axis.
+    gradient = {
+        (row.stratum_variable, row.stratum_value, row.measure, row.model): row.odds_ratio
+        for row in run.estimates
+        if row.stratum_variable
+    }
+    assert gradient == pytest.approx(
+        {("state", "09", "c", ADJUSTED): 2.0, ("insurance", "IMSS", "c", ADJUSTED): 2.0},
+        rel=1e-8,
+    )
+    assert {row.period for row in run.estimates} == {"2023"}
 
     # The distribution splits the 18 births of each measure, variant, definition and cut-off by
     # outcome: 9 births at 35 weeks are preterm under 37 weeks and term under 34 or 32. Every
     # record is a singleton, so the definition with multiples holds the same births.
-    observed_distribution = [row for row in run.distribution if row.source == OBSERVED]
+    observed_distribution = [
+        row for row in run.distribution if row.source == OBSERVED and not row.stratum_variable
+    ]
     found = {
         (row.definition, row.outcome_cutoff, row.measure, row.variant)
         for row in observed_distribution
@@ -329,7 +346,11 @@ def test_each_alternative_definition_moves_one_side_of_the_main_analysis(
     simulate.run(source.connection, schemas=source.schemas)
     run = script.run(source.connection, schemas=source.schemas)
 
-    observed = [row for row in run.distribution if row.source == OBSERVED and row.measure == "c"]
+    observed = [
+        row
+        for row in run.distribution
+        if row.source == OBSERVED and row.measure == "c" and not row.stratum_variable
+    ]
     births: dict[tuple[int, int, str], list[int]] = {}
     for row in observed:
         count = births.setdefault((row.definition, row.outcome_cutoff, row.level), [0, 0])
@@ -361,3 +382,108 @@ def test_each_alternative_definition_moves_one_side_of_the_main_analysis(
         for definition, cutoff in ((2, 34), (2, 32), (6, 37))
         for model in (CRUDE, ADJUSTED)
     }
+
+
+#: Two states and two insurance groups, for the gradients of task 1.8.2. Every record has 8
+#: visits, so measure (a) has its reference alone, and (c) is the measure with estimates:
+#:   state 09, IMSS (02)                  later start: 2 preterm, 2 term; first trimester: 1, 3
+#:   state 14, Seguro Popular/INSABI (07) later start: 1 term; first trimester: 2 term
+#: The births of state 14 are all term, so the adjusted model sets them aside (D-118): within
+#: its strata no level has an estimate, and in the main analysis state 14 leaves the fit.
+GRADIENT_RECORDS = (
+    *[record(27, weeks=35, trimester=2)] * 2,
+    *[record(27, trimester=2)] * 2,
+    record(27, weeks=35),
+    *[record(27)] * 3,
+    record(27, trimester=2, state="14", insurance="07"),
+    *[record(27, state="14", insurance="07")] * 2,
+)
+
+
+@pytest.mark.db
+def test_the_gradients_fit_the_adjusted_model_within_each_stratum(
+    db_connection: sql_runner.Connection, schemas: etl.Schemas, tmp_path: Path
+) -> None:
+    """D-099, D-134: one adjusted model of (a) and (c) per state and per insurance group, whose
+    rows carry the stratum and the exact counts of each level (D-040)."""
+    source = built(staged(db_connection, schemas, tmp_path, GRADIENT_RECORDS))
+    simulate.run(source.connection, schemas=source.schemas)
+    run = script.run(source.connection, schemas=source.schemas)
+
+    strata = {
+        (row.stratum_variable, row.stratum_value, row.measure, row.level, row.model): (
+            row.births,
+            row.preterm,
+            row.odds_ratio,
+        )
+        for row in run.estimates
+        if row.stratum_variable
+    }
+    # (2 / 2) / (1 / 3) = 3 within state 09 and IMSS, where nothing else varies.
+    assert strata == {
+        ("state", "09", "c", LATER_OR_NO_CARE, ADJUSTED): (4, 2, pytest.approx(3.0, rel=1e-8)),
+        ("state", "14", "c", LATER_OR_NO_CARE, ADJUSTED): (1, 0, None),
+        ("insurance", "IMSS", "c", LATER_OR_NO_CARE, ADJUSTED): (
+            4,
+            2,
+            pytest.approx(3.0, rel=1e-8),
+        ),
+        ("insurance", "No social security", "c", LATER_OR_NO_CARE, ADJUSTED): (1, 0, None),
+    }
+    # The distribution of each stratum holds all its births, the reference included.
+    births: dict[tuple[str, str, str], int] = {}
+    for row in run.distribution:
+        if row.stratum_variable:
+            key = (row.stratum_variable, row.stratum_value, row.measure)
+            births[key] = births.get(key, 0) + row.births
+    assert births == {
+        (variable, value, measure): count
+        for variable, values in (
+            ("state", ("09", "14")),
+            ("insurance", ("IMSS", "No social security")),
+        )
+        for value, count in zip(values, (8, 3), strict=True)
+        for measure in ("a", "c")
+    }
+    assert {key: births for key, births in run.set_aside.items() if key[3]} == {
+        (2, "2023", 37, stratum, measure): 3
+        for stratum in ("state 14", "insurance No social security")
+        for measure in ("a", "c")
+    }
+    # The main analysis sets state 14 aside and keeps the estimate of state 09.
+    [main] = [
+        row
+        for row in run.estimates
+        if row.source == OBSERVED
+        and row.definition == 2
+        and row.outcome_cutoff == PRETERM_WEEKS
+        and row.measure == "c"
+        and row.model == ADJUSTED
+        and not row.stratum_variable
+    ]
+    assert main.odds_ratio == pytest.approx(3.0, rel=1e-8)
+    assert run.set_aside[2, "2023", 37, "", "c"] == 3
+
+
+# --- The period axis (task 1.8.2) ----------------------------------------------------------------
+
+
+def test_the_period_axis_needs_its_years_and_others() -> None:
+    """The axis sets 2022-2023 against a longer run (D-049): on 2022-2023 alone it would repeat
+    the main analysis, and a run without either year cannot build it."""
+    assert script.axis_period([2020, 2021, 2022, 2023]) == "2022-2023"
+    assert script.axis_period([2021, 2022, 2023]) == "2022-2023"
+    assert script.axis_period([2022, 2023]) is None
+    assert script.axis_period([2023]) is None
+    assert script.axis_period([2020, 2021, 2023]) is None
+
+
+def test_the_period_axis_needs_each_year_to_be_the_one_its_attrition_counts() -> None:
+    """D-132: the cells of a year of delivery are the cohort of the file of that year."""
+    cells = [
+        Cell(39, 1, 8, "20-24", JUNIOR_HIGH, "09", 2022, "IMSS", 4),
+        Cell(39, 1, 8, "20-24", JUNIOR_HIGH, "09", 2023, "IMSS", 6),
+    ]
+    script.check_years(cells, {2022: 4, 2023: 6})
+    with pytest.raises(script.EstimateError, match="period axis"):
+        script.check_years(cells, {2022: 5, 2023: 5})

@@ -29,7 +29,8 @@ The detail lives in [`omop_mapping.md`](omop_mapping.md) and `docs/data_dictiona
 these are the ones that shape the schema. The vertical slice of v0.1 maps the mother, the
 observation period, gestational age, plurality, the two prenatal care items and residence
 (D-059 to D-068). Mapping v1, in v0.2, adds the mother's age and education, the covariates of the
-adjusted models (D-100, D-101), and the newborn with its birth weight (D-103 to D-106).
+adjusted models (D-100, D-101), and the newborn with its birth weight (D-103 to D-106). Mapping v2,
+in v1.0, adds insurance for the gradient (D-133).
 
 | SINAC item | OMOP destination | Note |
 |---|---|---|
@@ -42,7 +43,7 @@ adjusted models (D-100, D-101), and the newborn with its birth weight (D-103 to 
 | Total visits, trimester of the first visit | `OBSERVATION` | This is a **declared count**, not one row per visit; it is not modelled as visits (D-065, D-066) |
 | Mother's age | `MEASUREMENT` | The age declared on the certificate, an adjustment covariate (D-094, D-100) |
 | Mother's education | `OBSERVATION` | Each code maps to one of the five levels of the adjustment covariate (D-094, D-101) |
-| Insurance | `PAYER_PLAN_PERIOD` (planned) | Mapped in v1.0 with the gradient by insurance, which is its only use; the destination is decided then (D-094, D-102) |
+| Insurance | `OBSERVATION` | Mapped in v1.0 with the gradient by insurance, its only use: LOINC 76437-3 "Primary insurance", with the code in `value_source_value`, since no standard concept names a Mexican institution (D-102, D-133) |
 | Variables with no standard concept | `concept_id = 0` + `*_source_value` | OMOP convention; the codes are listed in `omop_mapping.md` and in `config/source_to_concept_map.csv` (D-067) |
 
 ## 2. Data source

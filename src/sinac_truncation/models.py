@@ -16,6 +16,16 @@ gives the estimates of a logistic regression on the individual records (D-093).
 
 Each measure is the exposure of its own model and never a covariate of another. Measure (b) is
 fitted to show the artefact of its construction, never read as an effect (CLAUDE.md rule 3).
+
+Two analyses reuse the same aggregated table (docs/protocol.md §Sensitivity analyses and
+gradients):
+
+- **The period axis.** The cells of 2022 and 2023 alone are the cohort a run on those two years
+  would build, because the file of every record is the year of its delivery (D-049, D-132).
+- **The gradients.** The adjusted model is fitted within each state of residence and each
+  insurance group, the stratum given in the columns stratum variable and stratum value (D-099,
+  D-134).
+
 There is no I/O here (CLAUDE.md rule 6).
 """
 
@@ -59,6 +69,10 @@ __all__ = [
     "SENSITIVITY_MEASURES",
     "Adjusted",
     "Cell",
+    "GRADIENTS",
+    "INSURANCE",
+    "PERIOD_AXIS_YEARS",
+    "STATE",
     "DistributionRow",
     "EstimateRow",
     "Estimates",
@@ -68,12 +82,16 @@ __all__ = [
     "adjusted",
     "definition_measures",
     "format_estimates",
+    "format_gradients",
     "model_table",
     "observed_estimates",
+    "period_axis",
     "sensitivity_models",
     "simulated_estimates",
     "simulated_source",
+    "strata",
     "summed",
+    "year_births",
 ]
 
 #: The covariates of the adjusted model, in the order of :attr:`ModelRow.covariates` (D-094).
@@ -94,6 +112,17 @@ _ANALYSIS_MEASURES: tuple[str, ...] = ("a", "a_count", "b", "c")
 #: The measures of every alternative definition of the sensitivity analysis (D-003, D-099).
 SENSITIVITY_MEASURES: tuple[str, ...] = ("a", "c")
 
+#: The years of the COVID-19 sensitivity axis, set against the whole period (D-049).
+PERIOD_AXIS_YEARS: tuple[int, ...] = (2022, 2023)
+
+#: The values of the column stratum variable of the gradients (docs/protocol.md §Output tables).
+STATE = "state"
+INSURANCE = "insurance"
+GRADIENTS: tuple[str, ...] = (STATE, INSURANCE)
+
+#: No stratum: the value of both stratum columns outside the gradients.
+_NO_STRATUM = ("", "")
+
 
 class Cell(NamedTuple):
     """One row of the aggregated table, ``sql/analysis/aggregated_count.sql``."""
@@ -106,6 +135,8 @@ class Cell(NamedTuple):
     education: int
     state: str
     year: int
+    #: The insurance group of docs/protocol.md §Sensitivity analyses and gradients (D-133).
+    insurance: str
     births: int
 
 
@@ -180,6 +211,8 @@ class DistributionRow(NamedTuple):
     variant: str
     level: str
     outcome: str
+    stratum_variable: str
+    stratum_value: str
     births: int
 
 
@@ -231,6 +264,35 @@ def sensitivity_models(
 def simulated_source(scenario: str) -> str:
     """The value of the column source for a scenario of ``config/null_simulation.yml``."""
     return f"sim_{scenario}"
+
+
+def year_births(cells: Iterable[Cell]) -> dict[int, int]:
+    """The births of the aggregated table per year of delivery."""
+    births: dict[int, int] = defaultdict(int)
+    for cell in cells:
+        births[cell.year] += cell.births
+    return dict(sorted(births.items()))
+
+
+def period_axis(cells: Iterable[Cell], years: Iterable[int] = PERIOD_AXIS_YEARS) -> list[Cell]:
+    """The cells of the period axis: those delivered in ``years``."""
+    kept = set(years)
+    return [cell for cell in cells if cell.year in kept]
+
+
+def strata(cells: Iterable[Cell], variable: str) -> dict[str, list[Cell]]:
+    """The cells of each value of a stratum variable, :data:`STATE` or :data:`INSURANCE`, sorted
+    by value.
+
+    Raises:
+        ValueError: the variable is neither.
+    """
+    if variable not in GRADIENTS:
+        raise ValueError(f"{variable!r} is not a stratum variable: use one of {GRADIENTS}")
+    grouped: dict[str, list[Cell]] = defaultdict(list)
+    for cell in cells:
+        grouped[cell.state if variable == STATE else cell.insurance].append(cell)
+    return dict(sorted(grouped.items()))
 
 
 def summed(cells: Iterable[Cell]) -> list[Combination]:
@@ -407,6 +469,7 @@ def _distribution(
     counts: Mapping[str, LevelCount],
     cuts: VisitCuts,
     apncu: ApncuVariant,
+    stratum: tuple[str, str] = _NO_STRATUM,
 ) -> list[DistributionRow]:
     variant = variant_of(measure, apncu)
     rows = []
@@ -416,7 +479,7 @@ def _distribution(
             rows.append(
                 DistributionRow(
                     source, definition, period, cutoff, measure, variant, level, outcome,
-                    int(births),
+                    *stratum, int(births),
                 )
             )  # fmt: skip
     return rows
@@ -432,6 +495,7 @@ def _estimate_rows(
     cuts: VisitCuts,
     apncu: ApncuVariant,
     odds_ratios: Mapping[str, Mapping[str, OddsRatio]],
+    stratum: tuple[str, str] = _NO_STRATUM,
 ) -> list[EstimateRow]:
     """One row per level but the reference and per model, in the order of the levels."""
     reference = reference_level(measure, cuts)
@@ -444,7 +508,7 @@ def _estimate_rows(
             rows.append(
                 EstimateRow(
                     source, definition, period, cutoff, measure, variant, level, reference,
-                    model, "", "", int(count.births), int(count.preterm), *estimate,
+                    model, *stratum, int(count.births), int(count.preterm), *estimate,
                 )
             )  # fmt: skip
     return rows
@@ -467,12 +531,18 @@ def observed_estimates(
     period: str,
     preterm_weeks: int = PRETERM_WEEKS,
     variants: Sequence[ApncuVariant] = (ACOG_MIDPOINT,),
+    stratum: tuple[str, str] = _NO_STRATUM,
 ) -> Estimates:
     """The crude and adjusted estimates and the exposure distribution of the measures of one
     observed definition, from its aggregated table.
 
     Measure (b) is estimated once per variant of ``variants``, each with its own crude and
     adjusted model (D-130); the other measures have one definition each.
+
+    With a ``stratum``, (variable, value), the cells are those of one stratum of a gradient: only
+    the adjusted model is fitted (D-099), and both tables carry the stratum (D-134). A level the
+    fit sets aside keeps its row, with its counts and no odds ratio, as in the main analysis
+    (D-118).
 
     Raises:
         ModelError: an adjusted model cannot be fitted.
@@ -490,10 +560,11 @@ def observed_estimates(
             if fit.set_aside:
                 result.set_aside[_set_aside_key(measure, apncu)] = fit.set_aside
             args = (OBSERVED, definition, period, preterm_weeks, measure, counts, cuts, apncu)
-            result.estimates += _estimate_rows(
-                *args, {CRUDE: _crude(counts, reference), ADJUSTED: fit.odds_ratios}
-            )
-            result.distribution += _distribution(*args)
+            models = {ADJUSTED: fit.odds_ratios}
+            if stratum == _NO_STRATUM:
+                models = {CRUDE: _crude(counts, reference), **models}
+            result.estimates += _estimate_rows(*args, models, stratum)
+            result.distribution += _distribution(*args, stratum)
     return result
 
 
@@ -544,20 +615,44 @@ def format_estimates(rows: Sequence[EstimateRow]) -> list[str]:
         f"{'def':<4}{'cut':<4}{'measure':<9}{'variant':<17}{'level':<21}{'births':>11}"
         f"{'preterm':>10}{'crude OR (95 % CI)':>26}{'adjusted OR (95 % CI)':>26}"
     ]
-    adjusted_rows = {
-        (row.definition, row.outcome_cutoff, row.measure, row.variant, row.level): row
-        for row in rows
-        if row.model == ADJUSTED
-    }
+
+    def key(row: EstimateRow) -> tuple[object, ...]:
+        return (row.definition, row.period, row.outcome_cutoff, row.measure, row.variant,
+                row.level, row.stratum_variable, row.stratum_value)  # fmt: skip
+
+    adjusted_rows = {key(row): row for row in rows if row.model == ADJUSTED}
     for row in rows:
         if row.model != CRUDE:
             continue
-        other = adjusted_rows.get(
-            (row.definition, row.outcome_cutoff, row.measure, row.variant, row.level)
-        )
+        other = adjusted_rows.get(key(row))
         lines.append(
             f"{row.definition:<4}{row.outcome_cutoff:<4}{row.measure:<9}{row.variant:<17}"
             f"{row.level:<21}{row.births:>11,}{row.preterm:>10,}"
             f"{_ratio(row):>26}{_ratio(other):>26}"
+        )
+    return lines
+
+
+def format_gradients(rows: Sequence[EstimateRow]) -> list[str]:
+    """The lines of the report of the gradients: one per stratum, with the adjusted odds ratio of
+    each level of each measure, the point alone. ``estimates.csv`` has the intervals and counts."""
+    columns: list[tuple[str, str]] = []
+    values: dict[tuple[str, str], dict[tuple[str, str], str]] = defaultdict(dict)
+    for row in rows:
+        if not row.stratum_variable or row.model != ADJUSTED:
+            continue
+        column = (row.measure, row.level)
+        if column not in columns:
+            columns.append(column)
+        point = "" if row.odds_ratio is None else f"{row.odds_ratio:.3f}"
+        values[row.stratum_variable, row.stratum_value][column] = point
+    header = f"{'stratum':<11}{'value':<24}" + "".join(
+        f"{f'({measure}) {level}':>24}" for measure, level in columns
+    )
+    lines = [header]
+    for (variable, value), points in values.items():
+        lines.append(
+            f"{variable:<11}{value:<24}"
+            + "".join(f"{points.get(column, ''):>24}" for column in columns)
         )
     return lines

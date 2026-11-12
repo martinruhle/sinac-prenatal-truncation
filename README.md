@@ -132,10 +132,16 @@ built. It is a world where prenatal care has no effect on preterm birth:
 [`docs/protocol.md`](docs/protocol.md#model) on the cohorts that `cohorts` built:
 - **The aggregated table.** `results.aggregated_count` holds the births of the analysis, landmark
   and multiples cohorts per combination of completed weeks, first-visit trimester, visits, age
-  group, education, state and year. The run checks that it holds every birth of each cohort.
+  group, education, state, year and insurance group. The run checks that it holds every birth of
+  each cohort, and that the births of each year of delivery are the cohort the attrition of that
+  year's file counts.
 - **The sensitivity analysis.** Measures (a) and (c) get the same two models on the analysis
-  cohort with preterm birth under 34 and under 32 weeks, and on the cohort with multiple
-  pregnancies (D-099, D-124).
+  cohort with preterm birth under 34 and under 32 weeks, on the cohort with multiple pregnancies
+  (D-099, D-124), and on the analysis cohort of 2022 and 2023 alone, the period axis, taken from
+  the same run (D-049, D-132).
+- **The gradients.** The adjusted model of (a) and (c) is fitted again within each of the 32
+  states of residence and each of the six insurance groups, and each row carries its stratum
+  (D-099, D-134, D-135).
 - **The models.** For each measure and level, the crude odds ratio against the reference, and the
   one adjusted for age group, education, state and year, from a binomial GLM on that table with
   95 % Wald intervals (D-093). With every term categorical, it gives the estimates of a logistic
@@ -143,9 +149,9 @@ built. It is a world where prenatal care has no effect on preterm birth:
 - **The tables.** The run writes `results.estimate`, with the births and preterm births behind each
   estimate, and `results.exposure_distribution`, in one transaction with the aggregated table. The
   simulated pregnancies of `simulate` add their crude rows, so `estimate` runs after it.
-- **Time.** On 2020–2023 the run took 273 to 311 s, 228 to 286 s of them building the aggregated
-  table; 311 s was the clean clone of `v0.2-progress`. Before the definition with multiples it
-  took 160 to 193 s.
+- **Time.** On 2020–2023 the run took 934 s on 11 November 2026, 812 s of them building the
+  aggregated table, which now also reads the insurance row of each mother. At `v0.2-progress` it
+  took 273 to 311 s, 228 to 286 s of them building that table.
 
 `publish` writes the results a milestone versions under [`results/`](results/) (D-014), with the
 columns of [`docs/protocol.md`](docs/protocol.md#output-tables) §Output tables (D-098):
