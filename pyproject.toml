@@ -51,6 +51,7 @@ known-first-party = [
     "pipeline",
     "publish",
     "simulate",
+    "smoke_source",
     "sql_runner",
     "stage",
     "synthetic",

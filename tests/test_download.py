@@ -239,6 +239,7 @@ def test_pipeline_passes_the_arguments_through(
         "entry_id": "x",
         "record_digest": True,
         "dest_dir": dest,
+        "sources_path": download.SOURCES_PATH,
         "timeout": download.DEFAULT_TIMEOUT,
     }
 
