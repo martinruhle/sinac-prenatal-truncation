@@ -993,37 +993,193 @@ and (d). The measure it does not truncate, (c), shows no crude association.
 
 ## Limitations
 
-PENDING. The limitations that the decisions above already establish are stated where they arise:
-one mother `PERSON` per certificate and no link between the pregnancies of one woman (§Design and
-unit of analysis), births certified after DGIS closed a year's file and duplicate certificates
-that cannot be confirmed (§Base cohort), the selection the two validity steps introduce
-(§Outcome), the 670 records the data model cannot hold (§Attrition), and what the period does not
-allow (§Data source). Two more come from the data model
-([`omop_mapping.md`](omop_mapping.md)):
+Each limitation says which conclusion it affects and in which direction. A direction is stated
+only where the design or a measurement fixes it; otherwise it is written as unknown (D-138). Those
+that come from a cut of scope name the decision. Counts marked as orientation were measured once
+on `data/interim/sinac_*.parquet`, on the singletons of resident mothers with 22 weeks or more
+(6,401,842 records), not on the cohort tables of record.
 
-- **OMOP cannot carry the ethnicity SINAC records.** The race and ethnicity fields of `PERSON`
-  encode US OMB categories. SINAC records whether the mother considers herself indigenous and
-  whether she speaks an indigenous language, so both fields are 0 and the two variables stay out
-  of `PERSON` (D-061). The question they open is future work
-  ([`roadmap.md`](roadmap.md#47-indigenous-mothers)).
-- **The observation period is the delivery day.** SINAC observes nothing of the pregnancy but its
-  end and a declaration made then, so OMOP tools see no prenatal window. That is the premise of
-  the study, written into the data model rather than hidden by it (D-062).
+### What proposal v2 anticipated
 
-The exposure measures, the analysis and the simulation add five more, stated where they arise:
+| Anticipated limitation | Now |
+|---|---|
+| Measurement of gestational weeks, with birth weight under 2,500 g as a sensitivity | Stands, without the sensitivity, which was cut (D-006). The proposal's "moderate agreement with the clinical record" has no source and is not repeated: PENDING a source |
+| Declared visit count; APNCU only approximated | Stands, now measured: the count heaps, and the month rule of APNCU is a sensitivity axis (D-127) |
+| Reverse causation | Stands, and the curve of (a) per count shows it |
+| Live births only; no link between the pregnancies of one mother | Stands |
+| Period 2019–2023 with the COVID-19 disruption | Changed: 2020–2023 has no pre-pandemic year (D-041, D-126) |
 
-- APNCU is approximated from the trimester, with a month rule whose sensitivity comes in `v1.0`
-  (§APNCU).
-- The ACOG schedule of the index is not the Mexican norm (§APNCU).
-- The bounds of the trimesters have no published source (§Trimester boundaries).
-- The intervals of the definition with multiples ignore the twins of one pregnancy (§Sensitivity
-  analyses and gradients).
-- The simulated calendar cannot produce more than eight visits, nor eight before week 38. It is
-  stricter than the care mothers receive, so its shares say whether truncation alone can produce
-  the observed association, not how much of it it produces (§Null simulation).
+### The source and the registry
 
-The ones the proposal already anticipated are in
-[`proposal_v2.md`](proposal_v2.md#anticipated-limitations).
+- **Gestational age is declared in completed weeks, and the cut-off sits on its densest
+  preterm week.** 46.2 % of the preterm births are at 36 weeks and 76.9 % at 34 to 36
+  (orientation), so one week declared wrongly at the boundary changes the outcome.
+  - *Affects* every odds ratio and every share of truncation.
+  - *Direction:* an error unrelated to care pulls the odds ratios towards 1; an error that
+    depends on care has an unknown direction. The lower cut-offs move away from the boundary, and
+    the odds ratios of (a) move further from 1 under them, but a stricter outcome would also do
+    that, so the two cannot be told apart.
+  - *From a cut:* the birth-weight sensitivity of the proposal (D-006). It would address the
+    measurement of the weeks, not truncation.
+- **The visit count is a declaration, not a record of encounters.** Counts heap at 10, 12, 15
+  and 20: 726,647 records declare 10 visits against 114,085 that declare 11, and 123,643 declare
+  15 against 38,164 and 19,461 that declare 14 and 16 (orientation).
+  - *Affects* the curve of (a) per count between 9 and 15, including its lowest point at 11,
+    which rests on the few mothers who declare a count that is not round. The levels of (a) are
+    less exposed: only the boundary between 1–4 and 5–7 falls on a heaped count (672,128 records
+    at 5 against 392,043 at 4).
+  - *Direction:* unknown for the curve; the shape between 9 and 15 is not read beyond its fall
+    and its rise.
+- **The registry holds live births only.** Pregnancies that end in a fetal death after 22 weeks
+  are absent from every measure.
+  - *Affects* every odds ratio and the population the results describe.
+  - *Direction:* unknown, because SINAC records neither their care nor their weeks.
+- **No mother identifier.** A woman with two births in 2020–2023 is two independent records
+  (§Design and unit of analysis).
+  - *Affects* the confidence intervals, which treat every birth as independent.
+  - *Direction:* the intervals are somewhat too narrow; the odds ratios themselves are not biased
+    by it.
+- **The records the validity steps remove are not like the rest** (`excluded_profile.csv`).
+  - Step 8, prenatal care data known and coherent, removes 153,611 records (2.4 % of those that
+    reach it). 19.94 % of those with a known trimester record no care, against 2.53 % retained,
+    and 7.90 % are preterm against 7.05 %.
+  - Step 9, covariates known, removes 44,024 (0.7 %), with 8.10 % recording no care.
+  - Step 4, gestational age specified, removes 4,806 records (0.074 % of the files, §Outcome),
+    and step 5, multiplicity specified, 10,115.
+  - *Affects* the odds ratios of the low-care levels, where the removed records concentrate.
+  - *Direction:* unknown, because what is missing is the care data itself; the size of the steps
+    bounds it.
+- **Births certified after DGIS closed a year's file are invisible, and 213 exact duplicates
+  stay** (§Base cohort). *Direction:* unknown; both are too few to move an estimate at the
+  precision reported.
+
+### The source change and the period
+
+- **The open data of DGIS replace the standardized series of INSP** (D-001, D-002). Every
+  cleaning rule is this project's, from the DGIS descriptor and catalogues, and the results were
+  not compared with that series.
+  - *Affects* comparisons with studies that used the INSP series.
+  - *Direction:* unknown.
+- **The files are served over HTTP without TLS.** The recorded sha256 detects a later change to a
+  file but does not authenticate the first download.
+  - *Affects* the claim that the inputs are DGIS's own, not any estimate.
+- **The period needs no harmonisation, but the insurance catalogue changed meaning inside it.**
+  2020–2023 has one descriptor and one catalogue set ([`source_inventory.md`](source_inventory.md)),
+  dated no later than 2022. In the analysis cohort, Seguro Popular/INSABI fell from 258,936
+  records in 2020 to 117,078 in 2021, and code 07 from 115,838 in 2022 to 81,336 in 2023
+  (§Covariates, D-135).
+  - *Affects* the gradient by insurance: the group without social security holds a population
+    that moves among its three codes over the years.
+  - *Direction:* unknown.
+- **No pre-pandemic year** (D-041). The secular trend and the pandemic cannot be told apart, and
+  2022–2023 is not a baseline (§What the period does not allow).
+  - *Affects* the period axis. Its odds ratios move 0.017 to 0.109 further from 1 when 2020 and
+    2021 are left out, which says the association held through the disruption, not that it was
+    the same before it.
+  - *Direction:* unknown for any year before 2020.
+  - *From a cut:* 2019 is future work (D-126 `[SCOPE CHANGE]`).
+
+### The data model
+
+- **The observation window ends at the outcome.** The observation period of every mother is the
+  delivery day (D-062), and the visits she can declare stop at delivery. On the NOM-007 calendar a
+  pregnancy is expected to have 7 visits at 36 to 37 completed weeks and 8 from 38 on (D-128), so
+  no preterm birth is due the eighth visit that (a) takes as its reference.
+  - *Affects* (a), (a) per count, (b) and (d), whose exposure depends on the length of the
+    window; (c) does not (§The measures).
+  - *Direction:* away from 1 for the low-care levels of (a) and (d), without any effect of care.
+    The null simulation shows it can produce more than the whole observed crude association
+    (§What the run shows). This is the premise of the study, not a defect of the data.
+  - OMOP tools that compute exposure inside the observation period see no prenatal window.
+- **Codes without a standard concept** ([`omop_mapping.md`](omop_mapping.md#codes-without-a-standard-concept)).
+  Over the 6,531,527 records of the files, `concept_id` 0 or a null value stands for an unknown
+  answer in 1.88 % of the trimester of the first visit, 0.92 % of the visit count, 0.72 % of
+  education, 0.07 % of gestational age and 10.25 % of insurance. Every insurance code maps to 0 by
+  design, and the gradient reads its source value (D-133).
+  - *Affects* the portability of the definitions to another CDM, which is what the proposal says
+    transfers: a tool that reads concepts alone cannot rebuild the insurance groups or tell an
+    unknown trimester from a known one. Within this study each unknown code is handled by a rule
+    (steps 8 and 9, or the level "Unknown", 620,043 births, 10.0 % of the analysis cohort).
+  - *Direction:* none on the estimates; unknown for the level "Unknown" of the gradient.
+- **OMOP cannot carry the ethnicity SINAC records** (D-061). Whether the mother considers herself
+  indigenous or speaks an indigenous language stays out of `PERSON`.
+  - *Affects* no estimate; it leaves a question out ([`roadmap.md`](roadmap.md#47-indigenous-mothers)).
+
+### The exposure measures
+
+- **APNCU is approximated from the trimester.** The month assigned within the trimester moves the
+  share of preterm births rated Adequate Plus from 19.7 % (first month) to 25.8 % (middle) to
+  36.9 % (last) (D-127), and the variants are reported (§APNCU).
+  - *Affects* the levels of (b).
+  - *Direction:* a later month inflates the artefact of (b).
+- **The ACOG schedule of the index is not the Mexican norm.** It asks for 14 visits at 40 weeks
+  where NOM-007 asks for 8, so more mothers fall in the lower levels than the norm would place
+  there. The NOM-007 variant rests on two rules of the author, `FOR APPROVAL` (D-128, D-129).
+  - *Affects* the distribution of (b) and its comparison with the literature, which uses ACOG.
+- **The bounds of the trimesters have no published source** (§Trimester boundaries, D-092).
+  - *Affects* the month rule of (b) and the null simulation. *Direction:* unknown.
+- **The landmark cohorts bound truncation but do not remove it.** SINAC has no visit dates (rule
+  4), so (d) counts every visit, including those after the landmark.
+  - *Affects* (d). *Direction:* away from 1, less as the landmark rises.
+- **The definition with multiples ignores the twins of one pregnancy** (§Sensitivity analyses and
+  gradients, D-099).
+  - *Affects* the intervals of definition 6. *Direction:* too narrow.
+
+### The analysis
+
+- **Reverse causation.** Complicated pregnancies receive more visits and deliver preterm more
+  often. The curve of (a) per count rises again to 1.819 at 30 visits.
+  - *Affects* (a) and (d), whose reference, 8 or more visits, holds those pregnancies.
+  - *Direction:* towards 1 for the low-care levels against that reference.
+- **Few adjusters.** The models adjust for age, education, state and year only, and insurance
+  enters as a gradient (D-007, D-094 `[SCOPE CHANGE]`). The obstetric history that SINAC records
+  (`NUMEROEMBARAZOS`, `HIJOSNACIDOSMUERTOS` and others) is staged but not used (D-011).
+  - *Affects* every adjusted odds ratio. Adjusting already moved them away from 1 (2.458 against
+    1.943 for no care), and (c) has no crude association and a small adjusted one (§What the
+    models show).
+  - *Direction:* unknown for the confounders left out.
+  - *From a cut:* D-007.
+- **Precision is not accuracy.** With 6,203,597 births the intervals are narrow and carry random
+  error only. The 38 strata of the gradients are read stratum by stratum, with no correction for
+  multiplicity and no test of heterogeneity (D-134).
+  - *Affects* "(c) changes direction between states": its interval excludes 1 in 22 of 32 states,
+    and some of those would by chance alone.
+  - *Direction:* the heterogeneity looks more certain than it is.
+- **The full grid of sensitivity runs for (a) and (c) only** (D-003 `[SCOPE CHANGE]`). (b) and
+  (d) are not checked against the cut-off or the multiples.
+
+### The null simulation
+
+- **The simulated calendar cannot produce more than eight visits, nor eight before week 38.** It
+  is stricter than the care mothers receive: 177,704 of the 437,153 observed preterm births
+  (40.7 %) have 8 visits or more, and none in the null world (§What it computes).
+  - *Affects* the shares of truncation, which say whether truncation alone can produce the
+    observed association, not how much of it it produces (§What truncation alone explains).
+  - *Direction:* the shares are too large as a measure of how much truncation explains.
+- **The simulation has no covariates**, so its shares compare crude odds ratios and say nothing
+  about the adjusted ones.
+
+### What the study cannot claim, and what is already known
+
+- **No effect of care.** The design is one of association. No odds ratio of this study says that
+  prenatal care prevents or does not prevent preterm birth.
+- **No split of the observed association.** A share above 1 does not separate truncation from
+  reverse causation or confounding inside the observed odds ratio.
+- **The population is narrow.** Live singleton births of mothers resident in Mexico, 2020–2023,
+  with known care data and covariates.
+- **The bias is known.** 22 of the 29 studies included by the documented search describe, address
+  or quantify the dependence of care measures on the length of gestation, from Shwartz and
+  Vinyard (1965) and Terris and Glasser (1974), with life tables, to Kramer (1987), who names the
+  "prematurity artefact", and Koroukian and Rimm (2002) for APNCU
+  ([`literature_search.md`](literature_search.md#what-is-known-per-question)). The study does not
+  show that the bias exists, nor that it can be handled.
+- **What was not found** ([`literature_search.md`](literature_search.md#what-was-not-found)): no
+  study with data collected in Mexico that describes, addresses or quantifies the dependence, none
+  with SINAC data, no study of Mexican birth certificates among the six read in full that
+  mentions it, and no null simulation or analytic expectation of the association it produces. These are absences in PubMed, OpenAlex and LILACS on
+  2026-10-15 and 2026-10-16, with one screener, 48 reports not retrieved and sources not covered
+  ([`literature_search.md`](literature_search.md#limitations)); they are no claim that the study
+  is new.
 
 ## Changes from proposal v2
 
@@ -1059,11 +1215,17 @@ The ones the proposal already anticipated are in
   Adequacy of Prenatal Care Utilization Index. *Am J Public Health.* 1994;84(9):1414–1420.
 - Kotelchuck M. Adequacy of Prenatal Care Utilization Index: SAS computational program, version 3.
   September 1994. <https://www.mchlibrary.org/databases/HSNRCPDFs/APNCU994_20SAS.pdf>
+- Kramer MS. Determinants of low birth weight: methodological assessment and meta-analysis.
+  *Bull World Health Organ.* 1987;65(5):663–737.
 - NOM-007-SSA2-2016, Para la atención de la mujer durante el embarazo, parto y puerperio, y de la
   persona recién nacida. *Diario Oficial de la Federación*, 7 April 2016.
   <https://dof.gob.mx/nota_detalle.php?codigo=5432289&fecha=07/04/2016>
 - Raju TNK, et al. Optimizing care and outcome for late-preterm (near-term) infants: a summary of
   the workshop sponsored by the National Institute of Child Health and Human Development.
   *Pediatrics.* 2006;118(3):1207–1214.
+- Shwartz S, Vinyard JH Jr. Prenatal care and prematurity. *Public Health Rep.*
+  1965;80(3):237–248.
+- Terris M, Glasser M. A life table analysis of the relation of prenatal care to prematurity.
+  *Am J Public Health.* 1974;64(9):869–875.
 - World Health Organization. Preterm birth, fact sheet, 10 May 2023.
   <https://www.who.int/en/news-room/fact-sheets/detail/preterm-birth>

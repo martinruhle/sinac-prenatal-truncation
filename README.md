@@ -8,7 +8,7 @@ window produces on its own.
 
 **No data in this repository.** Everything is rebuilt from the public SINAC download; `/data/`
 and `.env` are ignored by git. The question and the method live in
-[`docs/protocol.md`](docs/protocol.md) (the limitations are still PENDING there), the plan in
+[`docs/protocol.md`](docs/protocol.md), the plan in
 [`docs/roadmap.md`](docs/roadmap.md), and every non-obvious decision in
 [`docs/decisions.md`](docs/decisions.md).
 
@@ -221,7 +221,7 @@ still missing and when it lands.
 | At least one documented cohort definition in SQL on OMOP | [`sql/cohorts/`](sql/cohorts/) (definitions 1 to 6), [`docs/protocol.md`](docs/protocol.md#base-cohort) §Base cohort and [§Records analysed](docs/protocol.md#records-analysed), [`results/attrition.csv`](results/attrition.csv), [`results/excluded_profile.csv`](results/excluded_profile.csv) | **Met**: six definitions on 2020–2023, each with its attrition per year and the profile of the records its validity steps remove. The base cohort holds 6,401,232 singleton births and the analysis cohort 6,203,597 |
 | Automated tests with pytest and CI | [`tests/`](tests/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml), CI badge | **Met**: 626 tests on synthetic fixtures, the `db` ones against the compose database. CI runs ruff, the format check, mypy, pytest with an 80 % coverage floor (D-030), and the smoke run `pipeline.py all --source fixtures` (D-136) |
 | Data dictionary | [`docs/data_dictionary.md`](docs/data_dictionary.md) | **Met** for v0.2: the 22 of 64 published columns the project uses (D-011), with the use of each in the analysis. Every variable v0.2 added was already one of them |
-| Honest limitations section | README §Limitations, [`docs/protocol.md`](docs/protocol.md#limitations) §Limitations | **Partial**: eleven limitations are written, those of the source, the design, the data model, the exposure measures, the analysis and the null simulation. The section is completed for v1.0 |
+| Honest limitations section | README §Limitations, [`docs/protocol.md`](docs/protocol.md#limitations) §Limitations | **Met** for v1.0: each limitation states the conclusion it affects and its direction, those that come from a cut of scope name the decision, and what the documented literature search found is set against what the study can claim |
 | AI assistance statement | [`docs/ai_use.md`](docs/ai_use.md), [`CLAUDE.md`](CLAUDE.md) | **Met**: one entry per pull request, taken from its AI assistance section |
 | No credentials, no identifiable data | [`.gitignore`](.gitignore), [`.dockerignore`](.dockerignore), `results/` policy (D-014, D-040), security review notes (v1.0) | **Met** for v0.2: `/data/` and `.env` are ignored, CI generates its database password per run (D-039), `results/` holds aggregate counts only, and the history was checked at each tag ([`v0.1-cohort`](https://github.com/martinruhle/sinac-prenatal-truncation/releases/tag/v0.1-cohort), [`v0.2-progress`](https://github.com/martinruhle/sinac-prenatal-truncation/releases/tag/v0.2-progress)). The security review is part of v1.0 |
 
@@ -328,55 +328,49 @@ pipeline fails on purpose. The manifest lists the files the
 
 ## Limitations
 
-PENDING: completed together with `docs/protocol.md` for `v1.0`. Eleven limitations already apply.
-Four come from the source and the design:
+The full list, with the conclusion each one affects, its direction and the cuts of scope behind
+it, is in [`docs/protocol.md` §Limitations](docs/protocol.md#limitations). In short:
+
+**What the results cannot say.**
+
+- **No effect of care.** The design is one of association, and complicated pregnancies receive
+  more visits, which pulls the odds ratios of low care against 8 or more visits towards 1.
+- **The shares of truncation say whether truncation alone *can* produce the association, not how
+  much of it it produces.** The simulated calendar is stricter than the care mothers receive.
+- **The bias is known since 1965.** The documented search found no study of it with Mexican or
+  SINAC data, in the sources and dates it covered
+  ([`docs/literature_search.md`](docs/literature_search.md#what-was-not-found)); that is no claim
+  that the study is new.
+
+**The data.**
+
+- **The observation window ends at the outcome**: the visits stop at delivery, which is the
+  premise of the study and moves the odds ratios of (a), (b) and (d) away from 1 without any
+  effect of care.
+- **Gestational age and the visit count are declarations.** 46.2 % of the preterm births are at
+  36 weeks, next to the cut-off, and the visit count heaps at 10, 12, 15 and 20.
+- **Live births only, and no mother identifier**: fetal deaths are absent, and the confidence
+  intervals treat two births of one woman as independent, so they are somewhat too narrow.
+- **The validity steps remove records with less care** (2.4 % at the step on prenatal care data,
+  `results/excluded_profile.csv`), in an unknown direction.
+- **Few adjusters**: age, education, state and year (D-007, D-094); the obstetric history SINAC
+  records is not used.
+- **The study period, 2020–2023, has no pre-pandemic year** (D-041, D-126). The secular trend and
+  the pandemic cannot be told apart, and the insurance catalogue changed meaning inside the period.
+- **APNCU is approximated from the trimester, on the ACOG schedule rather than the Mexican norm**;
+  the month rule and a NOM-007 variant are reported beside it (D-127 to D-130).
+- **OMOP carries neither SINAC's ethnicity nor a prenatal window**, and every insurance code maps
+  to `concept_id` 0 (D-061, D-062, D-133).
+
+**Reproduction.**
 
 - The DGIS files are served over **HTTP without TLS**. The recorded sha256 detects any later
   change to a file, but it does not authenticate the first download.
-- **The study period, 2020–2023, has no pre-pandemic year** (D-041). The secular trend and the
-  effect of the COVID-19 pandemic cannot be told apart. The COVID-19 sensitivity axis therefore
-  sets the years of acute disruption against the years of recovery, not against a pre-pandemic
-  baseline ([`docs/protocol.md`](docs/protocol.md#what-the-period-does-not-allow)).
-- **SINAC publishes no mother identifier**, so the pregnancies of one woman cannot be linked and
-  the mother is one `PERSON` per certificate. The certificates of one multiple pregnancy cannot be
-  grouped either, which is why the base cohort keeps singletons only (D-051,
-  [`docs/protocol.md`](docs/protocol.md#design-and-unit-of-analysis)).
 - **The vocabulary package cannot be downloaded again as it is.** Athena builds each package on
   request, so a rebuild months later uses another package, and its sha256 in
   `results/manifest.json` differs. `validate-concepts` checks that every configured concept is
   still valid and standard in it, but the published counts were verified with the package of
   record only (see `vocab` in §Reproduce).
-
-Two come from the data model ([`docs/omop_mapping.md`](docs/omop_mapping.md)):
-
-- **OMOP cannot carry the ethnicity SINAC records.** The race and ethnicity fields of `PERSON`
-  encode US OMB categories. SINAC records whether the mother considers herself indigenous and
-  whether she speaks an indigenous language, so both fields are 0 and the two variables stay out
-  of `PERSON` (D-061). The question they open is future work
-  ([`docs/roadmap.md`](docs/roadmap.md#47-indigenous-mothers)).
-- **The observation period is the delivery day.** SINAC observes nothing of the pregnancy but its
-  end and a declaration made then, so OMOP tools see no prenatal window. That is the premise of
-  the study, written into the data model rather than hidden by it (D-062).
-
-Five come from the exposure measures, the analysis and the null simulation
-([`docs/protocol.md`](docs/protocol.md#limitations)):
-
-- **APNCU is approximated from the trimester**, with a month rule whose sensitivity is now
-  reported: the first and the last month of each trimester against the middle month
-  ([§APNCU](docs/protocol.md#apncu-measure-b), D-092, D-127, D-130).
-- **The ACOG schedule of the index is not the Mexican norm.** The index keeps it, so it can be
-  compared with the literature, and a variant on the NOM-007 calendar is reported beside it; the
-  two rules that variant needs are the author's criteria
-  ([§APNCU](docs/protocol.md#apncu-measure-b), D-128, D-129).
-- **The bounds of the trimesters have no published source**
-  ([§Trimester boundaries](docs/protocol.md#trimester-boundaries), D-092).
-- **The intervals of the definition with multiples ignore the twins of one pregnancy**
-  ([§Sensitivity analyses and gradients](docs/protocol.md#sensitivity-analyses-and-gradients),
-  D-099).
-- **The simulated calendar cannot produce more than eight visits, nor eight before week 38.** It
-  is stricter than the care mothers receive, so its shares say whether truncation alone can
-  produce the observed association, not how much of it it produces
-  ([§Null simulation](docs/protocol.md#null-simulation)).
 
 ## AI assistance
 
