@@ -102,6 +102,5 @@ From [`roadmap.md` §3](roadmap.md#3-milestones-of-the-semester):
 - **Documentation.** The limitations section closed, the release archived on Zenodo with a DOI.
 - **In progress.** A documented literature search on gestational-length truncation of
   prenatal-care measures (issue #58), so that the report makes no unsourced claim about prior work.
-- **After this review.** The feedback goes into the re-planning of the remaining weeks (issue #48),
-  before the presentation of 24 November.
+- **After this review.** The feedback goes into the re-planning of the remaining weeks (issue #48).
 
