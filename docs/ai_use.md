@@ -421,7 +421,7 @@ section, in the author's voice, except the lines marked as written at the docume
 - What the assistant did: found every mention of the dropped milestone in the versioned files and on GitHub; at the author's request deleted the milestone, its issues and one comment; reworded D-013, D-085, D-126 and the two documents; and wrote D-139.
 - What I decided or checked myself:[^closure] Asked that nothing outside the analysis and its later publication appear in the repository (D-139), and asked for the merge.
 
-#### [#PR_CLOSURE](https://github.com/martinruhle/sinac-prenatal-truncation/pull/PR_CLOSURE) · Documentation closure (1.10.2)
+#### [#88](https://github.com/martinruhle/sinac-prenatal-truncation/pull/88) · Documentation closure (1.10.2)
 
 - Tool / model: Claude Code, Claude Opus 5.5
 - What the assistant did: read the planning item and every document it names; laid out the three questions the closure left for the author with options, pros and cons; wrote `LICENSE` from GitHub's Apache-2.0 text, `CITATION.cff`, this section and its five author lines written at the closure, D-140 and the updates of the README, the roadmap, the protocol and the data dictionary; closed #77 as not planned.
