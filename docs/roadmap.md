@@ -74,7 +74,6 @@ The [source inventory](source_inventory.md) measured the cost of each option:
 | `v0.1-cohort` | Fri 9 Oct 2026 (session 18) | OMOP ETL of the vertical slice on 2023, base cohort in SQL with its attrition table, SQL tests in CI, README with the evidence map v1 and the source and scope changes written down | tag + release + clean-clone test |
 | `v0.2-progress` | Thu 29 Oct 2026 (tag), Fri 30 Oct (progress review, session 24) | Full period (2020–2023) loaded, remaining mapping and covariate ETL, exposures a–d, crude and adjusted odds ratios, null simulation v1, one or two sensitivity axes (D-012) | tag + release + clean-clone test |
 | `v1.0` | Fri 20 Nov 2026 (session 30, submission) | Remaining sensitivity axes and gradients, APNCU on the NOM-007 calendar (D-091) and its month rule (D-127), analysis image, complete entry point, documentation closed, security review, DOI (D-025) | tag + release + clean-clone test + Zenodo |
-| presentation | Tue 24 Nov 2026 (session 31) | 12 minutes plus 5 for questions | — |
 
 The `v0.2-progress` tag is cut on the Thursday, the day before the progress review: the review
 sees a stable state, and the feedback goes into the re-planning rather than into work in
