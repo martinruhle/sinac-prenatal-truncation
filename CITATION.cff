@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "SINAC prenatal care and truncation of the gestational window"
+abstract: >-
+  How much the association between prenatal care and preterm birth in Mexico changes with the
+  definition of the exposure and of the cohort, and how much of it truncation of the gestational
+  window produces on its own. The code rebuilds the 2020-2023 live-birth records of the SINAC
+  open data published by DGIS in an OMOP CDM v5.4 database, defines the cohorts in SQL with
+  their attrition, and estimates crude and adjusted odds ratios for four prenatal-care measures
+  against a null simulation. No record is distributed with the code.
+authors:
+  - given-names: "Martín"
+    family-names: "Ruhle"
+    affiliation: "Biología Computacional, INMEGEN; Posgrados de Ciencias Biomédicas, UNAM"
+    city: "Ciudad de México"
+    country: MX
+    orcid: "https://orcid.org/0000-0001-6692-8803"
+repository-code: "https://github.com/martinruhle/sinac-prenatal-truncation"
+license: Apache-2.0
+version: "1.0"
+date-released: "2026-11-20"
+keywords:
+  - prenatal care
+  - preterm birth
+  - truncation of the gestational window
+  - SINAC
+  - Mexico
+  - OMOP CDM

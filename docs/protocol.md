@@ -4,9 +4,9 @@ The question, the data and the methods of the study. The question is stated in
 [`proposal_v2.md`](proposal_v2.md); scope changes against it are listed in
 [`roadmap.md`](roadmap.md) and argued in [`decisions.md`](decisions.md).
 
-**Draft.** Everything but the limitations is written: the question, the data, the design, the
-cohorts and their attrition, the outcome, the exposure measures, the analysis, the null simulation
-and the output tables. The limitations are PENDING; they are completed for milestone `v1.0`.
+**Final for `v1.0`.** It states the question, the data, the design, the cohorts and their
+attrition, the outcome, the exposure measures, the analysis, the null simulation, the output tables
+and the limitations.
 
 ## Question
 

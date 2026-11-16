@@ -148,6 +148,9 @@ timebox; whatever does not fit in that timebox is future work as well (D-015). T
 - **The base images pinned by digest.** They are pinned by tag (`python:3.12.14-slim-trixie`,
   `uv:0.12.15`), as Postgres is (D-031); a digest would also fix a tag that is pushed again.
 
+The CI hardening of D-031 is future work too (D-140): the GitHub Actions of CI are pinned by
+their version tag, not by commit SHA, and no Dependabot update keeps them current.
+
 ### 4.5 The year 2019
 
 2019 is the only pre-pandemic year among the candidates, and the last year of the 2015–2019
