@@ -283,3 +283,5 @@ the author's sign-off.
   Rejected: repeating the proposal's sentence; a direction for every limitation. Why: the sentence has no citation in the proposal (rule 2), and a guessed direction would be a claim without a source.
 - **D-139 · 2026-11-16** Nothing that is not part of the analysis or its publication is added to the repository or its issue tracker. D-013 drops the milestone that was not part of the analysis, and D-085, D-126, docs/roadmap.md and docs/progress_review.md drop their mentions of it.
   Rejected: keeping that milestone as a record of the plan. Why: the repository is the record the analysis will be published from.
+- **D-140 · 2026-11-16** The pinning of GitHub Actions by commit SHA and the monthly Dependabot update of D-031 are not implemented in `v1.0` and are future work (docs/roadmap.md §4.4): CI uses the tags `actions/checkout@v7` and `astral-sh/setup-uv@v10.1.0`. The Postgres image stays pinned as D-031 says.
+  Rejected: issue #77 in week 47. Why: it was conditional on buffer left in week 47 (the checkpoint of 13 November set at the re-planning of #78), and the author kept those hours for `v1.0` at the documentation closure.

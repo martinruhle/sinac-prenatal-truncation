@@ -1,7 +1,8 @@
 # AI assistance
 
 This project was developed with an AI coding assistant: Claude Code (Anthropic), running Claude
-Opus 5 and, from pull request #25, Claude Opus 5.5. This file states how the assistant was used
+Opus 5 and, from pull request #25, mostly Claude Opus 5.5; the section of each pull request names
+its model. This file states how the assistant was used
 and, pull request by pull request, what it did and what the author decided or checked. The record
 is assembled from the "AI assistance" section that every pull request carries since #18, as the
 [pull request template](../.github/pull_request_template.md) asks.
@@ -24,7 +25,7 @@ is assembled from the "AI assistance" section that every pull request carries si
   where a task left questions open, the assistant laid them out with options and a
   recommendation, measured on the 2020–2023 records where the records bore on them and priced in
   hours of the weekly budget where scope was at stake; the author chose (#49, #51 to #55, #57,
-  #60, #62). In #56 and #63 it first checked that the protocol and the decisions already settled
+  #60, #62), and after that tag in #78 to #82, #84 and #85. In #56 and #63 it first checked that the protocol and the decisions already settled
   every choice. For the reference tables of #55 and #57 the author computed some rows blind and
   approved the others from the assistant's step-by-step trace.
 - **Data.** The assistant read the public DGIS record files and the Athena vocabulary package on
@@ -40,10 +41,13 @@ is assembled from the "AI assistance" section that every pull request carries si
 - **Subagents and workflows.** Up to #63 the assistant worked as a single agent: the session
   transcripts of the project show no subagent in any earlier pull request. The close of
   `v0.2-progress` (#64) is the first pull request in which it ran workflows, scripts that spread a
-  task over several subagents running in parallel; its section below says for what.
+  task over several subagents running in parallel; its section below says for what. The session
+  transcripts of the pull requests merged after #64 show no subagent and no workflow.
 - **The author's line.** "What I decided or checked myself" is the author's statement. In #62 and
   #63 the author asked the assistant to write it from what the author had done and decided in the
-  session.
+  session. In #61, #65, #81, #85 and #87 it was empty when the pull request merged; at the
+  documentation closure the author asked the assistant to write it from the author's own messages
+  in each session, and the lines say no more than those messages do.
 - **Attribution.** The commit that merged each pull request, except #18, carries a
   `Co-Authored-By: Claude …` trailer naming the model active when the commit was written, and each
   pull request description since #1 ends with a "Generated with Claude Code" line.
@@ -346,6 +350,86 @@ tag, so it is recorded here.
   and `README.md`, checked in `docs/reproducibility.md` that the second clean clone reproduced
   the sha256 of the five CSVs, and compared two odds ratios of `results/estimates.csv` with the
   release notes.
+
+### Milestone `v1.0`
+
+The pull requests merged after the tag `v0.2-progress`, in the order they were merged. #65 and
+#78 closed issues of `v0.2-progress` (1.11.1, 1.12.2), but were merged after that tag, so they are
+recorded here. The three lines under each pull request are copied from its "AI assistance"
+section, in the author's voice, except the lines marked as written at the documentation closure.
+
+#### [#65](https://github.com/martinruhle/sinac-prenatal-truncation/pull/65) · Prepare the progress review of 30 October (1.11.1)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: read the planning entry, the README, the roadmap, the protocol and the published tables; wrote the page; drafted four questions for the Slack message, which the author moved out of the page; checked every result number against `results/`.
+- What I decided or checked myself:[^closure] Kept the review page in the repository. Said the review would be a written message to the teacher in a private Slack channel, so a short text on the structure of the repository and the results so far, with the open questions and what is left, would be enough. Moved the questions out of the page into the Slack message and asked for the merge. Sent the message later without the questions, which I found too specific.
+
+#### [#78](https://github.com/martinruhle/sinac-prenatal-truncation/pull/78) · Re-plan at the progress review (1.12.2)
+
+- Tool / model: Claude Code (Claude Opus 5.5)
+- What the assistant did:
+  - Measured the hour proxy from the session transcripts with a throwaway script, and read the guide, the issues, the milestones and the decisions.
+  - Recommended 2019 as future work and the month rule as the only cut to restore, then wrote D-126 and D-127 and aligned every mention.
+  - Wrote the week-by-week plan to submission and the checkpoint of 13 November, and created the issues and labels.
+- What I decided or checked myself: Asked before the work started whether the re-planning needed a decision of mine, and approved the three recommendations: re-planning without the teacher's feedback, 2019 as future work (D-126), and the APNCU month rule as the only cut that comes back (D-127). Read D-126 and D-127 in `docs/decisions.md` and approved them as written. Approved retiring the remaining-scenarios task (D-096) and keeping CI hardening (#77) conditional on the checkpoint of 13 November, and checked the week label of each issue from #66 to #77.
+
+#### [#79](https://github.com/martinruhle/sinac-prenatal-truncation/pull/79) · APNCU variants: NOM-007 calendar and month rule (1.6.5)
+
+- Tool / model: Claude Code, Claude Opus 5
+- What the assistant did: read the planning item and the decisions it cites; laid out the four open questions of the session with their options, pros and cons; measured every candidate rule on the analysis cohort of 2020–2023 before the choice; implemented the variants and the plumbing; wrote the NOM-007 reference table, the recipe and the tests of both rules; ran the pipeline and the suite; mutated each rule to see its tests red; drafted D-128 to D-130 and the protocol, README and SQL comment updates.
+- What I decided or checked myself: Chose the four open decisions of the session — the first week of the range (D-128), the visits that fall before the month care began (D-129), the month rule on the ACOG schedule alone, and crude plus adjusted models for every variant. Started Docker Desktop for the run.
+
+#### [#80](https://github.com/martinruhle/sinac-prenatal-truncation/pull/80) · Analysis image (`Dockerfile`), two-hour timebox (1.9.3)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: read the planning item and the issue; found the hole in the denylist `.dockerignore` and the need for `git` in the image; laid out the open choices with their pros and cons; wrote the `Dockerfile`, the allowlist and the documentation; checked the build context, built the image and ran the suite inside it; drafted D-131.
+- What I decided or checked myself: Chose the three options recommended at the start of the session: the assistant writes the image and I review it, one image with the dev group, and a new branch from `main`. Read the `Dockerfile`, the `.dockerignore` and D-131, and approved D-131. Built the image and ran `docker run --rm sinac-truncation pytest` myself: 586 passed, 84 skipped.
+
+#### [#81](https://github.com/martinruhle/sinac-prenatal-truncation/pull/81) · Period axis, insurance mapping and gradients by state and insurance (1.8.2)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: read the planning item and the decisions it cites; prototyped the period axis and the 76 stratified models on the real cohorts (read-only) and laid out the open questions with options, pros and cons; implemented the mapping, the aggregated table, the period axis and the gradients, with tests on synthetic fixtures; ran `cdm` and `publish` on 2020–2023; mutated two rules to see their tests red; drafted D-132 to D-135 and the documentation.
+- What I decided or checked myself:[^closure] Approved everything the assistant laid out before the work started: the period axis taken from the run on 2020–2023 (D-132), `AFILIACION` as an `OBSERVATION` row (D-133), the stratum columns of `exposure_distribution.csv` (D-134), the insurance groups of D-099 as written (D-135), and the minor choices listed with them. Asked for the merge.
+
+#### [#61](https://github.com/martinruhle/sinac-prenatal-truncation/pull/61) · Documented literature search on gestational-length truncation of prenatal-care measures (1.10.3)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: it drafted the protocol and ran the pilots, then ran the searches and the citation chasing. It screened every record and read the full texts. It extracted the included studies and wrote the report. It drew the blind sample.
+- What I decided or checked myself:[^closure] Set the task: its four review questions, that the search looks as hard for work that makes the project redundant as for work that supports it, and that no novelty claim is written. Reviewed protocol v1, raised four points on it, had the assistant's four recommendations on them applied, restricted the search to journal publications, and approved the other points listed for approval. Screened the 20 records of the blind sample on their titles and abstracts without the assistant's decisions; the five I would include went to full text, and one of them was included. Asked for the merge.
+
+#### [#82](https://github.com/martinruhle/sinac-prenatal-truncation/pull/82) · End-to-end smoke run in CI on synthetic fixtures (1.9.4)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: designed and wrote the synthetic source, the `--source fixtures` mode, the CI step, the tests, D-136 and the README section, and ran the smoke and the suite locally.
+- What I decided or checked myself: chose the three design options proposed: separate `smoke_*` schemas, the real `config/` with a synthetic vocabulary, and the whole study period. Did not review the code.
+
+#### [#84](https://github.com/martinruhle/sinac-prenatal-truncation/pull/84) · Set aside quasi-separated rows in the adjusted model (no planning ID, found by 1.9.4)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: reproduced the overflow, measured the options on the real models (read-only), wrote the separation check, the tests, D-137 and the protocol text, and ran the suite and the combined smoke run locally.
+- What I decided or checked myself: chose option A (generalise D-118 with a linear-program check) over an infinite limit, Firth's likelihood or a bare error.
+
+#### [#85](https://github.com/martinruhle/sinac-prenatal-truncation/pull/85) · Limitations (1.10.1)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: wrote the whole limitations text of the protocol and the README at the author's request (option B: the assistant drafts, the author approves), measured the three new orientation counts read-only, and wrote D-138.
+- What I decided or checked myself:[^closure] Chose option B: the assistant writes the whole text and I approve it. Had already done the blind re-screen of the literature search in its own session (#61). Approved the text and asked for the merge.
+
+#### [#87](https://github.com/martinruhle/sinac-prenatal-truncation/pull/87) · Keep the repository to the analysis (no planning ID)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: found every mention of the dropped milestone in the versioned files and on GitHub; at the author's request deleted the milestone, its issues and one comment; reworded D-013, D-085, D-126 and the two documents; and wrote D-139.
+- What I decided or checked myself:[^closure] Asked that nothing outside the analysis and its later publication appear in the repository (D-139), and asked for the merge.
+
+#### [#PR_CLOSURE](https://github.com/martinruhle/sinac-prenatal-truncation/pull/PR_CLOSURE) · Documentation closure (1.10.2)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: read the planning item and every document it names; laid out the three questions the closure left for the author with options, pros and cons; wrote `LICENSE` from GitHub's Apache-2.0 text, `CITATION.cff`, this section and its five author lines written at the closure, D-140 and the updates of the README, the roadmap, the protocol and the data dictionary; closed #77 as not planned.
+- What I decided or checked myself:[^closure] Gave my name, affiliation and ORCID for `CITATION.cff`. Asked the assistant to write the empty lines of #61, #65, #81, #85 and #87 from my messages in each session. Moved CI hardening (#77) to future work.
+
+[^closure]: Written by the assistant at the documentation closure, at the author's request, from
+    the author's own messages in the session of the pull request; the author confirmed it before
+    the closure merged.
 
 [^model]: The merge commits of #22 and #23 carry a `Co-Authored-By: Claude Sonnet 5` trailer,
     which names the model active when the commit was written. According to the author, most of

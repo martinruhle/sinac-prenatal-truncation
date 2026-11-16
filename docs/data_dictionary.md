@@ -1,4 +1,9 @@
-# Data dictionary v0
+# Data dictionary
+
+**Final for `v1.0`.** It covers every source column the ETL, the cohorts and the analysis of
+`v1.0` read: none of the 42 columns listed under [Staged but not in scope](#staged-but-not-in-scope)
+is read outside the `staging` schema. Version 0 (#26) covered the same 22 columns;
+`AFILIACION` gained its use with the gradient by insurance (D-133).
 
 The source variables this project reads, as DGIS publishes them for 2020–2023, and how they are
 held in the `staging` schema. Where each one lands in the OMOP CDM is in
