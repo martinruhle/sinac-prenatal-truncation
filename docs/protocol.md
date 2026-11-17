@@ -945,8 +945,9 @@ empty cells make that ratio infinite or 0 for every measure but (c).
 - **When it is reported.**
   - The observed confidence interval of the crude odds ratio must exclude 1, and the simulated
     difference must exist.
-  - A level the calendar cannot produce, such as more than eight visits or APNCU Adequate Plus,
-    has no simulated difference.
+  - A level the calendar cannot produce, such as more than eight visits, or APNCU Adequate Plus
+    in every variant but the last month of the trimester (`acog_last`), has no simulated
+    difference.
 - **Why the crude comparison.** The simulation has no covariates, so the observed crude odds ratio
   is the comparison. The adjusted one is reported beside it in `estimates.csv`.
 - **What it does not measure.** The null world produces no preterm birth with eight visits, while
@@ -1109,8 +1110,8 @@ on `data/interim/sinac_*.parquet`, on the singletons of resident mothers with 22
 ### The exposure measures
 
 - **APNCU is approximated from the trimester.** The month assigned within the trimester moves the
-  share of preterm births rated Adequate Plus from 19.7 % (first month) to 25.8 % (middle) to
-  36.9 % (last) (D-127), and the variants are reported (§APNCU).
+  share of preterm births rated Adequate Plus from 19.8 % (first month) to 25.8 % (middle) to
+  37.0 % (last) in `exposure_distribution.csv` (D-127), and the variants are reported (§APNCU).
   - *Affects* the levels of (b).
   - *Direction:* a later month inflates the artefact of (b).
 - **The ACOG schedule of the index is not the Mexican norm.** It asks for 14 visits at 40 weeks
