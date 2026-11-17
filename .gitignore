@@ -1,6 +1,22 @@
 # Data and secrets: never in git
 /data/
 .env
+.env.*
+!.env.example
+
+# Archive and columnar files, wherever they are written: the records live under /data/ only
+*.zip
+*.7z
+*.gz
+*.rar
+*.parquet
+*.feather
+*.dta
+*.sav
+*.xlsx
+
+# Local worktrees of a coding assistant, each with its own .env and data/
+.claude/worktrees/
 
 # Python environment
 .venv/
