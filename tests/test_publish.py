@@ -309,6 +309,15 @@ def test_a_change_outside_results_is_refused(repo: Path, change: str) -> None:
         publish.current_code(repo)
 
 
+def test_an_untracked_file_is_refused_whatever_git_is_set_to_show(repo: Path) -> None:
+    """``status.showUntrackedFiles = no`` hides untracked files from ``git status`` by default."""
+    git(repo, "config", "status.showUntrackedFiles", "no")
+    (repo / "sql").mkdir()
+    (repo / "sql" / "new.sql").write_text("SELECT 1;\n", encoding="utf-8")
+    with pytest.raises(publish.PublishError, match="new.sql"):
+        publish.current_code(repo)
+
+
 # --- Publishing a run on the compose database -----------------------------------------------------
 
 #: The code ``Source.run`` says the synthetic CDM was loaded from.

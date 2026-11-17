@@ -72,7 +72,10 @@ def current_code(repo_root: Path = REPO_ROOT) -> Code:
     try:
         remote = git("remote", "get-url", "origin")
         commit = git("rev-parse", "HEAD").strip()
-        changed = git("status", "--porcelain", "--", ".", ":(exclude)results").splitlines()
+        # Every untracked file counts, whatever status.showUntrackedFiles says on this machine.
+        changed = git(
+            "status", "--porcelain", "--untracked-files=all", "--", ".", ":(exclude)results"
+        ).splitlines()
     except (OSError, subprocess.CalledProcessError) as error:
         raise PublishError(f"git cannot tell which commit this is: {error}") from error
     if changed:
