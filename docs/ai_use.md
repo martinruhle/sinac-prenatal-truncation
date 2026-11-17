@@ -42,7 +42,8 @@ is assembled from the "AI assistance" section that every pull request carries si
   transcripts of the project show no subagent in any earlier pull request. The close of
   `v0.2-progress` (#64) is the first pull request in which it ran workflows, scripts that spread a
   task over several subagents running in parallel; its section below says for what. The session
-  transcripts of the pull requests merged after #64 show no subagent and no workflow.
+  transcripts of the pull requests merged after #64 show no subagent and no workflow until the
+  close of `v1.0` (#89), which ran two; its section says for what.
 - **The author's line.** "What I decided or checked myself" is the author's statement. In #62 and
   #63 the author asked the assistant to write it from what the author had done and decided in the
   session. In #61, #65, #81, #85 and #87 it was empty when the pull request merged; at the
@@ -426,6 +427,23 @@ section, in the author's voice, except the lines marked as written at the docume
 - Tool / model: Claude Code, Claude Opus 5.5
 - What the assistant did: read the planning item and every document it names; laid out the three questions the closure left for the author with options, pros and cons; wrote `LICENSE` from GitHub's Apache-2.0 text, `CITATION.cff`, this section and its five author lines written at the closure, D-140 and the updates of the README, the roadmap, the protocol and the data dictionary; closed #77 as not planned.
 - What I decided or checked myself:[^closure] Gave my name, affiliation and ORCID for `CITATION.cff`. Asked the assistant to write the empty lines of #61, #65, #81, #85 and #87 from my messages in each session. Moved CI hardening (#77) to future work.
+
+#### [#89](https://github.com/martinruhle/sinac-prenatal-truncation/pull/89) · Close milestone v1.0 (1.9.5)
+
+- Tool / model: Claude Code, Claude Opus 5.5, with workflows of subagents for the security review
+  and for how Zenodo reads `CITATION.cff`
+- What the assistant did:
+  - ran `/security-review` on the whole code and on the history of every ref in a workflow, with
+    one subagent per area and three false-positive filters per finding, and laid out the options
+    for its hardening notes with their pros and cons;
+  - wrote the four fixes the author chose test-first, `docs/security_review.md`, D-141 and D-142;
+  - checked in a second workflow, against the code and the documentation of Zenodo, how its GitHub
+    integration reads `CITATION.cff`, and verified the webhook;
+  - ran `cdm` and `publish` on 2020–2023 and committed `results/`;
+  - recomputed every number of the protocol and the README that comes from `results/`, and
+    corrected two statements of the protocol on the APNCU variants;
+  - ran the clean-clone reproduction and the history check, and drafted the release notes.
+- What I decided or checked myself:
 
 [^closure]: Written by the assistant at the documentation closure, at the author's request, from
     the author's own messages in the session of the pull request; the author confirmed it before
