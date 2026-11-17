@@ -8,6 +8,7 @@ from sinac_truncation.staging import (
     SOURCE_ROW,
     StagingError,
     count_mismatch,
+    extracted_name,
     sample_mismatches,
     scan_records,
     single_csv_member,
@@ -58,6 +59,30 @@ def test_single_csv_member_is_found_whatever_its_name() -> None:
 def test_single_csv_member_needs_exactly_one(names: list[str]) -> None:
     with pytest.raises(StagingError, match="exactly one CSV member"):
         single_csv_member(names)
+
+
+@pytest.mark.parametrize(
+    "member",
+    [
+        "Nacimientos_2023.csv",
+        "folder/Nacimientos_2023.csv",
+        "../../Nacimientos_2023.csv",
+        r"..\..\Nacimientos_2023.csv",
+        "/abs/Nacimientos_2023.csv",
+        "C:/Windows/Nacimientos_2023.csv",
+        "C:Nacimientos_2023.csv",
+        "//?/C:/x/Nacimientos_2023.csv",
+    ],
+)
+def test_a_member_is_extracted_under_the_last_part_of_its_name(member: str) -> None:
+    """The same name on every system, whatever folders, drive or root the archive gives it."""
+    assert extracted_name(member) == "Nacimientos_2023.csv"
+
+
+@pytest.mark.parametrize("member", ["//server/share.csv", r"\\server\share.csv"])
+def test_a_member_without_a_file_name_of_its_own_is_refused(member: str) -> None:
+    with pytest.raises(StagingError, match="no file name of its own"):
+        extracted_name(member)
 
 
 def test_a_blank_cell_is_null_and_nothing_else_is() -> None:

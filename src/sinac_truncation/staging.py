@@ -12,6 +12,7 @@ Staging keeps every source column as text (D-033). The one column it adds is ``s
 import csv
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import PureWindowsPath
 
 from sinac_truncation.sqltext import is_valid_identifier
 
@@ -22,6 +23,7 @@ __all__ = [
     "Record",
     "StagingError",
     "count_mismatch",
+    "extracted_name",
     "sample_mismatches",
     "scan_records",
     "single_csv_member",
@@ -88,6 +90,24 @@ def single_csv_member(names: Sequence[str]) -> str:
         listed = ", ".join(found) or "none"
         raise StagingError(f"expected exactly one CSV member in the ZIP, found {listed}")
     return found[0]
+
+
+def extracted_name(member: str) -> str:
+    """The file name a ZIP member is extracted under: the last part of its name, nothing more.
+
+    The name comes from the archive, so it can carry folders, ``..``, an absolute path, a drive
+    letter or a network share. Its last part is read with the rules of Windows, where both ``/``
+    and ``\\`` separate folders, so the file lands in the extraction folder, under the same name,
+    on every system (no ZIP slip).
+
+    Raises:
+        StagingError: the name has no last part of its own, as a network share such as
+            ``//server/share.csv`` has none.
+    """
+    name = PureWindowsPath(member).name
+    if not name:
+        raise StagingError(f"the ZIP member {member!r} has no file name of its own")
+    return name
 
 
 def staged_value(value: str) -> str | None:

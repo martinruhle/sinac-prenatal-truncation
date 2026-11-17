@@ -30,6 +30,7 @@ from sinac_truncation.staging import (
     Record,
     StagingError,
     count_mismatch,
+    extracted_name,
     sample_mismatches,
     scan_records,
     single_csv_member,
@@ -154,7 +155,7 @@ def extract(zip_path: Path, dest_dir: Path) -> tuple[Path, bool]:
     try:
         with zipfile.ZipFile(zip_path) as archive:
             member = archive.getinfo(single_csv_member(archive.namelist()))
-            target = dest_dir / Path(member.filename).name
+            target = dest_dir / extracted_name(member.filename)
             if (
                 target.exists()
                 and target.stat().st_size == member.file_size
