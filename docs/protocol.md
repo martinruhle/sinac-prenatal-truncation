@@ -475,7 +475,7 @@ sensitivity of D-127 is about; the NOM-007 variant keeps the middle month.
 **The two rules of the NOM-007 variant.** The algorithm is the one above, with the expected visits
 taken from [`../config/nom007_schedule.yml`](../config/nom007_schedule.yml) instead of the
 program's table. The norm gives ranges of weeks and no count of visits per completed week, so two
-rules are needed and both are the author's criterion, `FOR APPROVAL`:
+rules are needed. Both are the author's criterion, approved before `v1.0`:
 
 1. **A range of weeks is read by its first week** (D-128): a pregnancy is expected to have had a
    visit once it reaches the first week of its range, so the calendar expects 4 visits at 22 to 27
@@ -981,9 +981,10 @@ the same values at `v1.0`.
     more than 8.
   - The landmarks shrink the observed difference of 5–7 visits more than the simulated one, so the
     share rises with the week.
-- **(b).** In the observed records, Adequate has more preterm births (8.26 %) than Inadequate
-  (5.41 %) and Intermediate (4.27 %). The null world produces that inversion more than 20 times
-  over. This is the artefact of its construction ([§APNCU](#apncu-measure-b)).
+- **(b), in its main variant (`acog_midpoint`).** In the observed records, Adequate has more
+  preterm births (8.26 %) than Inadequate (5.41 %) and Intermediate (4.27 %). The null world
+  produces that inversion more than 20 times over. This is the artefact of its construction
+  ([§APNCU](#apncu-measure-b)).
 - **(c).** The built-in check holds.
   - The simulated odds ratio is 1.00 (0.997–1.012) in E1 and 1.00 (0.988–1.002) in E2.
   - The observed crude odds ratio is also 1.00 (0.993–1.008), so there is no association for
@@ -991,7 +992,11 @@ the same values at `v1.0`.
 
 **What truncation alone explains.** On the calendar of the norm, truncation alone can produce more
 than the whole observed crude association of every measure it truncates: (a), (a) per count, (b)
-and (d). The measure it does not truncate, (c), shows no crude association.
+on the ACOG schedule, with any of the three month rules, and (d). The measure it does not
+truncate, (c), shows no crude association. The one exception is the variant of (b) whose expected
+visits come from the NOM-007 calendar: truncation alone produces none of the difference of
+Inadequate (shares 0.0 in E1 and −0.3 in E2) and 0.9 of that of Intermediate in E2
+(`truncation_share.csv`, `v1.0`).
 
 ## Limitations
 
@@ -1116,7 +1121,7 @@ on `data/interim/sinac_*.parquet`, on the singletons of resident mothers with 22
   - *Direction:* a later month inflates the artefact of (b).
 - **The ACOG schedule of the index is not the Mexican norm.** It asks for 14 visits at 40 weeks
   where NOM-007 asks for 8, so more mothers fall in the lower levels than the norm would place
-  there. The NOM-007 variant rests on two rules of the author, `FOR APPROVAL` (D-128, D-129).
+  there. The NOM-007 variant rests on two rules of the author (D-128, D-129).
   - *Affects* the distribution of (b) and its comparison with the literature, which uses ACOG.
 - **The bounds of the trimesters have no published source** (§Trimester boundaries, D-092).
   - *Affects* the month rule of (b) and the null simulation. *Direction:* unknown.
