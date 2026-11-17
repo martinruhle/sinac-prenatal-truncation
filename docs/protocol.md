@@ -714,7 +714,7 @@ The columns take these values:
 ### What the models show
 
 Measured as orientation, on 2020–2023, in two runs with the same estimates. The table of record is
-`estimates.csv`, published at `v0.2-progress`.
+`estimates.csv`, published at `v0.2-progress` and with the same values at `v1.0`.
 
 - The aggregated table has 640,855 rows for definition 2, and 567,705 to 628,058 for the landmark
   cohorts.
@@ -752,7 +752,7 @@ Measured as orientation, on 2020–2023, in two runs with the same estimates. Th
 ### What the sensitivity analysis shows
 
 Measured as orientation, on 2020–2023, in the same run as the table above (D-124). The table of
-record is `estimates.csv`, published at `v0.2-progress`.
+record is `estimates.csv`, published at `v0.2-progress` and with the same values at `v1.0`.
 
 | Measure, level against the reference | Main analysis | Under 34 weeks | Under 32 weeks | With multiples |
 |---|---|---|---|---|
@@ -960,7 +960,8 @@ empty cells make that ratio infinite or 0 for every measure but (c).
 ### What the run shows
 
 Measured once as orientation, on definition 2 of 2020–2023 with seed 43: 6,203,597 pregnancies
-per scenario. The table of record is `truncation_share.csv`, published at `v0.2-progress`.
+per scenario. The table of record is `truncation_share.csv`, published at `v0.2-progress` and with
+the same values at `v1.0`.
 
 | Measure | Level, against the reference | Observed difference (points) | Share E1 | Share E2 |
 |---|---|---|---|---|
