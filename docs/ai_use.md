@@ -43,7 +43,7 @@ is assembled from the "AI assistance" section that every pull request carries si
   `v0.2-progress` (#64) is the first pull request in which it ran workflows, scripts that spread a
   task over several subagents running in parallel; its section below says for what. The session
   transcripts of the pull requests merged after #64 show no subagent and no workflow until the
-  close of `v1.0` (#89), which ran two; its section says for what.
+  close of `v1.0` (#89), which ran four; its section says for what.
 - **The author's line.** "What I decided or checked myself" is the author's statement. In #62 and
   #63 the author asked the assistant to write it from what the author had done and decided in the
   session. In #61, #65, #81, #85 and #87 it was empty when the pull request merged; at the
@@ -430,8 +430,8 @@ section, in the author's voice, except the lines marked as written at the docume
 
 #### [#89](https://github.com/martinruhle/sinac-prenatal-truncation/pull/89) · Close milestone v1.0 (1.9.5)
 
-- Tool / model: Claude Code, Claude Opus 5.5, with workflows of subagents for the security review
-  and for how Zenodo reads `CITATION.cff`
+- Tool / model: Claude Code, Claude Opus 5.5, with workflows of subagents for the security review,
+  for how Zenodo reads `CITATION.cff` and for two checks of the record of the clean clone
 - What the assistant did:
   - ran `/security-review` on the whole code and on the history of every ref in a workflow, with
     one subagent per area and three false-positive filters per finding, and laid out the options
@@ -442,7 +442,13 @@ section, in the author's voice, except the lines marked as written at the docume
   - ran `cdm` and `publish` on 2020–2023 and committed `results/`;
   - recomputed every number of the protocol and the README that comes from `results/`, and
     corrected two statements of the protocol on the APNCU variants;
-  - ran the clean-clone reproduction and the history check, and drafted the release notes.
+  - removed the `FOR APPROVAL` marks of D-128 and D-129, which the author approved, and narrowed
+    the conclusion on what truncation explains, in the wording the author chose among the options
+    the assistant drafted;
+  - ran the clean-clone reproduction and recorded it. A third workflow checked every number of the
+    record against the logs and files of the run, and found in the power log of Windows that the
+    laptop had slept during `checks.sql`; a fourth checked the record again once rewritten;
+  - ran the history check, and drafted the release notes.
 - What I decided or checked myself:
 
 [^closure]: Written by the assistant at the documentation closure, at the author's request, from

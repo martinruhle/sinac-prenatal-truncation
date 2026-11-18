@@ -36,6 +36,7 @@ The procedure is D-083.
 | `v0.1-cohort` | 2026-09-30 | `baa586e` | Windows 11 Pro, Docker Engine 28.4.0, uv 0.12.15 | 9 min 2 s | Passed | None |
 | `v0.2-progress`, first run | 2026-10-19 | `7d676ab` | Windows 11 Pro, Docker Engine 28.4.0, uv 0.12.15 | 1 h 19 min | Failed: one test, and `estimates.csv` in its last digits | None |
 | `v0.2-progress` | 2026-10-19 | `4f357e5` | Windows 11 Pro, Docker Engine 28.4.0, uv 0.12.15 | 1 h 32 min | Passed | None |
+| `v1.0` | 2026-11-17 | `ead987b` | Windows 11 Pro, Docker Engine 28.4.0, uv 0.12.15 | 4 h 34 min, 2 h 50 min of it awake | Passed | None |
 
 ### `v0.1-cohort`
 
@@ -95,3 +96,54 @@ held.
 - **Where the results come from.** `publish` ran on the working database, loaded many times
   since 2 October, and each clone on a fresh one. Since D-125 the order in which a database
   returns the aggregated table no longer reaches the estimates.
+
+### `v1.0`
+
+The run covered 2020–2023 at `ead987b`, the head of the closing branch on GitHub when it was
+cloned on 17 November 2026. The later commits of the branch change only documentation and two
+docstrings of `src/sinac_truncation/apncu.py`. The run followed README §Reproduce with
+`all --years 2020-2023`, set up as at `v0.1-cohort`. The four record files were downloaded again
+from DGIS and matched their sha256, `validate-concepts` passed all 30 concept ids, and every ETL
+check and attrition check held.
+
+- **The laptop slept for 1 h 43 min 53 s**, according to the Windows System log (Kernel-Power
+  event 507, `SleepDurationInUs`). The pipeline's timers place all of it in `checks.sql`, the last
+  file of `cdm`. The timers kept counting through it, so the times below also give the time awake
+  wherever the sleep falls.
+- **`all`** took 3 h 44 min 42 s, 2 h 0 min 49 s of it awake: `download` 2 min 2 s, `stage`
+  5 min 49 s, `vocab` and `validate-concepts` 9 min 49 s together, `cdm` 2 h 42 min 5 s (58 min
+  12 s awake), `cohorts` 31 min 5 s, `simulate` 2 min 10 s and `estimate` 11 min 44 s. Unlike the
+  runs of `v0.2-progress`, this one did not stamp each line of its output:
+  - `download` runs from the start of `all` to the time of the last ZIP it wrote;
+  - `stage` runs from there to the end of its last table load, which its own timer gives;
+  - the times from `cdm` to `estimate` are the pipeline's own;
+  - the rest of the total is the time of `vocab` and `validate-concepts`.
+- **`checks.sql`** took 2 h 16 min 27 s, 32 min 34 s of it awake. The same checks took 29 min 21 s
+  on the working database earlier that day, at `e9708d7`, whose code is that of `ead987b`.
+- **`vocab`** loads the same package with the same code as at `v0.2-progress`. Its three largest
+  tables took 9 min 36 s by its own timers, against 3 min 49 s for the whole step then, with no
+  sleep in them. The record does not show why, so the times awake are those of this run.
+- **`pytest`**: 738 passed, none skipped.
+- **`publish --years 2020-2023`** took 46 min 43 s and wrote the five files with the sha256 of
+  the committed manifest:
+
+  | File | sha256 |
+  |---|---|
+  | `attrition.csv` | `c9da90f71b1535cf6ba3d485fe2a2011e4f422441e72e54f20821b696531fc25` |
+  | `exposure_distribution.csv` | `52d84a6c845b662315853e84b1746650e0706dfa2020676d8950d3f9fd23fea4` |
+  | `estimates.csv` | `f025632df70e03e61d867b9122331bddf9e6e352856cd9e024b44c0e94f9c160` |
+  | `truncation_share.csv` | `057a5e760987c0c2dade0ba44bcd777875bb900845e9e6906b2c1c6cca1546a8` |
+  | `excluded_profile.csv` | `7cf8961669c0ee2bfb7cb314a71bd444ee782d59c56f1bee3b5f0d78e8a1b012` |
+
+  `git diff` changed two lines of `results/manifest.json`: the time, and the commit (`e9708d7`
+  became `ead987b`).
+- **In all**, 4 h 33 min 41 s from `git clone` to the end of `publish`, 2 h 49 min 48 s of it
+  awake.
+- **Disk.** `data/` held 2.35 GB. The Postgres data directory peaked at 28.5 GB while `publish`
+  rebuilt the cohorts, and held 24.8 GB at the end, in readings taken every 30 s while the laptop
+  was awake.
+- **Where the results come from.** The committed results were published on the working database
+  at `e9708d7`, and the clone rebuilt them on a fresh database, from the download on.
+- **A first attempt** the same day stopped right after `git clone`, before the first step of
+  README §Reproduce. The script that drove the run, under Git Bash, cloned into one folder and
+  then looked for the clone in another. The error was the script's, not the repository's.
