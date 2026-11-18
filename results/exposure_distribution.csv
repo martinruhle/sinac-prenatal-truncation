@@ -1,263 +1,793 @@
-source,cohort_definition_id,period,outcome_cutoff,measure,variant,level,outcome,births
-observed,2,2020-2023,32,a,,0,preterm,3507
-observed,2,2020-2023,32,a,,0,term,150859
-observed,2,2020-2023,32,a,,1-4,preterm,14131
-observed,2,2020-2023,32,a,,1-4,term,797791
-observed,2,2020-2023,32,a,,5-7,preterm,20031
-observed,2,2020-2023,32,a,,5-7,term,2138820
-observed,2,2020-2023,32,a,,8+,preterm,13216
-observed,2,2020-2023,32,a,,8+,term,3065242
-observed,2,2020-2023,32,c,,"trimester 0, 2 or 3",preterm,12661
-observed,2,2020-2023,32,c,,"trimester 0, 2 or 3",term,1398788
-observed,2,2020-2023,32,c,,trimester 1,preterm,38224
-observed,2,2020-2023,32,c,,trimester 1,term,4753924
-observed,2,2020-2023,34,a,,0,preterm,5909
-observed,2,2020-2023,34,a,,0,term,148457
-observed,2,2020-2023,34,a,,1-4,preterm,24890
-observed,2,2020-2023,34,a,,1-4,term,787032
-observed,2,2020-2023,34,a,,5-7,preterm,40419
-observed,2,2020-2023,34,a,,5-7,term,2118432
-observed,2,2020-2023,34,a,,8+,preterm,29034
-observed,2,2020-2023,34,a,,8+,term,3049424
-observed,2,2020-2023,34,c,,"trimester 0, 2 or 3",preterm,24819
-observed,2,2020-2023,34,c,,"trimester 0, 2 or 3",term,1386630
-observed,2,2020-2023,34,c,,trimester 1,preterm,75433
-observed,2,2020-2023,34,c,,trimester 1,term,4716715
-observed,2,2020-2023,37,a,,0,preterm,16422
-observed,2,2020-2023,37,a,,0,term,137944
-observed,2,2020-2023,37,a,,1-4,preterm,76750
-observed,2,2020-2023,37,a,,1-4,term,735172
-observed,2,2020-2023,37,a,,5-7,preterm,166277
-observed,2,2020-2023,37,a,,5-7,term,1992574
-observed,2,2020-2023,37,a,,8+,preterm,177704
-observed,2,2020-2023,37,a,,8+,term,2900754
-observed,2,2020-2023,37,a_count,,0,preterm,16422
-observed,2,2020-2023,37,a_count,,0,term,137944
-observed,2,2020-2023,37,a_count,,1,preterm,7029
-observed,2,2020-2023,37,a_count,,1,term,69782
-observed,2,2020-2023,37,a_count,,10,preterm,43254
-observed,2,2020-2023,37,a_count,,10,term,674037
-observed,2,2020-2023,37,a_count,,11,preterm,5437
-observed,2,2020-2023,37,a_count,,11,term,107497
-observed,2,2020-2023,37,a_count,,12,preterm,13115
-observed,2,2020-2023,37,a_count,,12,term,221375
-observed,2,2020-2023,37,a_count,,13,preterm,2835
-observed,2,2020-2023,37,a_count,,13,term,50387
-observed,2,2020-2023,37,a_count,,14,preterm,2377
-observed,2,2020-2023,37,a_count,,14,term,35378
-observed,2,2020-2023,37,a_count,,15,preterm,8998
-observed,2,2020-2023,37,a_count,,15,term,113484
-observed,2,2020-2023,37,a_count,,16,preterm,1450
-observed,2,2020-2023,37,a_count,,16,term,17771
-observed,2,2020-2023,37,a_count,,17,preterm,436
-observed,2,2020-2023,37,a_count,,17,term,5594
-observed,2,2020-2023,37,a_count,,18,preterm,984
-observed,2,2020-2023,37,a_count,,18,term,11648
-observed,2,2020-2023,37,a_count,,19,preterm,165
-observed,2,2020-2023,37,a_count,,19,term,2287
-observed,2,2020-2023,37,a_count,,2,preterm,12238
-observed,2,2020-2023,37,a_count,,2,term,111044
-observed,2,2020-2023,37,a_count,,20,preterm,3440
-observed,2,2020-2023,37,a_count,,20,term,31549
-observed,2,2020-2023,37,a_count,,21,preterm,88
-observed,2,2020-2023,37,a_count,,21,term,863
-observed,2,2020-2023,37,a_count,,22,preterm,134
-observed,2,2020-2023,37,a_count,,22,term,1291
-observed,2,2020-2023,37,a_count,,23,preterm,73
-observed,2,2020-2023,37,a_count,,23,term,699
-observed,2,2020-2023,37,a_count,,24,preterm,107
-observed,2,2020-2023,37,a_count,,24,term,916
-observed,2,2020-2023,37,a_count,,25,preterm,395
-observed,2,2020-2023,37,a_count,,25,term,3189
-observed,2,2020-2023,37,a_count,,26,preterm,46
-observed,2,2020-2023,37,a_count,,26,term,496
-observed,2,2020-2023,37,a_count,,27,preterm,43
-observed,2,2020-2023,37,a_count,,27,term,517
-observed,2,2020-2023,37,a_count,,28,preterm,62
-observed,2,2020-2023,37,a_count,,28,term,555
-observed,2,2020-2023,37,a_count,,29,preterm,34
-observed,2,2020-2023,37,a_count,,29,term,281
-observed,2,2020-2023,37,a_count,,3,preterm,21743
-observed,2,2020-2023,37,a_count,,3,term,205474
-observed,2,2020-2023,37,a_count,,30,preterm,457
-observed,2,2020-2023,37,a_count,,30,term,3164
-observed,2,2020-2023,37,a_count,,4,preterm,35740
-observed,2,2020-2023,37,a_count,,4,term,348872
-observed,2,2020-2023,37,a_count,,5,preterm,54187
-observed,2,2020-2023,37,a_count,,5,term,605524
-observed,2,2020-2023,37,a_count,,6,preterm,57819
-observed,2,2020-2023,37,a_count,,6,term,697277
-observed,2,2020-2023,37,a_count,,7,preterm,54271
-observed,2,2020-2023,37,a_count,,7,term,689773
-observed,2,2020-2023,37,a_count,,8,preterm,55862
-observed,2,2020-2023,37,a_count,,8,term,844790
-observed,2,2020-2023,37,a_count,,9,preterm,37912
-observed,2,2020-2023,37,a_count,,9,term,772986
-observed,2,2020-2023,37,b,acog_midpoint,Adequate,preterm,102984
-observed,2,2020-2023,37,b,acog_midpoint,Adequate,term,1143402
-observed,2,2020-2023,37,b,acog_midpoint,Adequate Plus,preterm,112953
-observed,2,2020-2023,37,b,acog_midpoint,Adequate Plus,term,254948
-observed,2,2020-2023,37,b,acog_midpoint,Inadequate,preterm,120578
-observed,2,2020-2023,37,b,acog_midpoint,Inadequate,term,2109134
-observed,2,2020-2023,37,b,acog_midpoint,Intermediate,preterm,100638
-observed,2,2020-2023,37,b,acog_midpoint,Intermediate,term,2258960
-observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,99476
-observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,1311973
-observed,2,2020-2023,37,c,,trimester 1,preterm,337677
-observed,2,2020-2023,37,c,,trimester 1,term,4454471
-observed,3,2020-2023,37,d,,0,preterm,15181
-observed,3,2020-2023,37,d,,0,term,137944
-observed,3,2020-2023,37,d,,1-4,preterm,72140
-observed,3,2020-2023,37,d,,1-4,term,735172
-observed,3,2020-2023,37,d,,5-7,preterm,161047
-observed,3,2020-2023,37,d,,5-7,term,1992574
-observed,3,2020-2023,37,d,,8+,preterm,174669
-observed,3,2020-2023,37,d,,8+,term,2900754
-observed,4,2020-2023,37,d,,0,preterm,12915
-observed,4,2020-2023,37,d,,0,term,137944
-observed,4,2020-2023,37,d,,1-4,preterm,62619
-observed,4,2020-2023,37,d,,1-4,term,735172
-observed,4,2020-2023,37,d,,5-7,preterm,146246
-observed,4,2020-2023,37,d,,5-7,term,1992574
-observed,4,2020-2023,37,d,,8+,preterm,164488
-observed,4,2020-2023,37,d,,8+,term,2900754
-observed,5,2020-2023,37,d,,0,preterm,10513
-observed,5,2020-2023,37,d,,0,term,137944
-observed,5,2020-2023,37,d,,1-4,preterm,51860
-observed,5,2020-2023,37,d,,1-4,term,735172
-observed,5,2020-2023,37,d,,5-7,preterm,125858
-observed,5,2020-2023,37,d,,5-7,term,1992574
-observed,5,2020-2023,37,d,,8+,preterm,148670
-observed,5,2020-2023,37,d,,8+,term,2900754
-observed,6,2020-2023,37,a,,0,preterm,17280
-observed,6,2020-2023,37,a,,0,term,138565
-observed,6,2020-2023,37,a,,1-4,preterm,83410
-observed,6,2020-2023,37,a,,1-4,term,739286
-observed,6,2020-2023,37,a,,5-7,preterm,186060
-observed,6,2020-2023,37,a,,5-7,term,2005256
-observed,6,2020-2023,37,a,,8+,preterm,215530
-observed,6,2020-2023,37,a,,8+,term,2925431
-observed,6,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,108714
-observed,6,2020-2023,37,c,,"trimester 0, 2 or 3",term,1319398
-observed,6,2020-2023,37,c,,trimester 1,preterm,393566
-observed,6,2020-2023,37,c,,trimester 1,term,4489140
-sim_e1,2,2020-2023,37,a,,0,preterm,11412
-sim_e1,2,2020-2023,37,a,,0,term,144232
-sim_e1,2,2020-2023,37,a,,1-4,preterm,64912
-sim_e1,2,2020-2023,37,a,,1-4,term,191320
-sim_e1,2,2020-2023,37,a,,5-7,preterm,360829
-sim_e1,2,2020-2023,37,a,,5-7,term,1419809
-sim_e1,2,2020-2023,37,a,,8+,preterm,0
-sim_e1,2,2020-2023,37,a,,8+,term,4011083
-sim_e1,2,2020-2023,37,a_count,,0,preterm,11412
-sim_e1,2,2020-2023,37,a_count,,0,term,144232
-sim_e1,2,2020-2023,37,a_count,,1,preterm,1213
-sim_e1,2,2020-2023,37,a_count,,1,term,0
-sim_e1,2,2020-2023,37,a_count,,2,preterm,8444
-sim_e1,2,2020-2023,37,a_count,,2,term,0
-sim_e1,2,2020-2023,37,a_count,,3,preterm,13017
-sim_e1,2,2020-2023,37,a_count,,3,term,19026
-sim_e1,2,2020-2023,37,a_count,,4,preterm,42238
-sim_e1,2,2020-2023,37,a_count,,4,term,172294
-sim_e1,2,2020-2023,37,a_count,,5,preterm,62811
-sim_e1,2,2020-2023,37,a_count,,5,term,97036
-sim_e1,2,2020-2023,37,a_count,,6,preterm,141493
-sim_e1,2,2020-2023,37,a_count,,6,term,879777
-sim_e1,2,2020-2023,37,a_count,,7,preterm,156525
-sim_e1,2,2020-2023,37,a_count,,7,term,442996
-sim_e1,2,2020-2023,37,a_count,,8,preterm,0
-sim_e1,2,2020-2023,37,a_count,,8,term,4011083
-sim_e1,2,2020-2023,37,b,acog_midpoint,Adequate,preterm,77436
-sim_e1,2,2020-2023,37,b,acog_midpoint,Adequate,term,0
-sim_e1,2,2020-2023,37,b,acog_midpoint,Inadequate,preterm,99809
-sim_e1,2,2020-2023,37,b,acog_midpoint,Inadequate,term,1312679
-sim_e1,2,2020-2023,37,b,acog_midpoint,Intermediate,preterm,259908
-sim_e1,2,2020-2023,37,b,acog_midpoint,Intermediate,term,4453765
-sim_e1,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,99809
-sim_e1,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,1312365
-sim_e1,2,2020-2023,37,c,,trimester 1,preterm,337344
-sim_e1,2,2020-2023,37,c,,trimester 1,term,4454079
-sim_e1,3,2020-2023,37,d,,0,preterm,10625
-sim_e1,3,2020-2023,37,d,,0,term,144232
-sim_e1,3,2020-2023,37,d,,1-4,preterm,51583
-sim_e1,3,2020-2023,37,d,,1-4,term,191320
-sim_e1,3,2020-2023,37,d,,5-7,preterm,360829
-sim_e1,3,2020-2023,37,d,,5-7,term,1419809
-sim_e1,3,2020-2023,37,d,,8+,preterm,0
-sim_e1,3,2020-2023,37,d,,8+,term,4011083
-sim_e1,4,2020-2023,37,d,,0,preterm,9695
-sim_e1,4,2020-2023,37,d,,0,term,144232
-sim_e1,4,2020-2023,37,d,,1-4,preterm,44182
-sim_e1,4,2020-2023,37,d,,1-4,term,191320
-sim_e1,4,2020-2023,37,d,,5-7,preterm,332391
-sim_e1,4,2020-2023,37,d,,5-7,term,1419809
-sim_e1,4,2020-2023,37,d,,8+,preterm,0
-sim_e1,4,2020-2023,37,d,,8+,term,4011083
-sim_e1,5,2020-2023,37,d,,0,preterm,8481
-sim_e1,5,2020-2023,37,d,,0,term,144232
-sim_e1,5,2020-2023,37,d,,1-4,preterm,34139
-sim_e1,5,2020-2023,37,d,,1-4,term,191320
-sim_e1,5,2020-2023,37,d,,5-7,preterm,294281
-sim_e1,5,2020-2023,37,d,,5-7,term,1419809
-sim_e1,5,2020-2023,37,d,,8+,preterm,0
-sim_e1,5,2020-2023,37,d,,8+,term,4011083
-sim_e2,2,2020-2023,37,a,,0,preterm,11289
-sim_e2,2,2020-2023,37,a,,0,term,143849
-sim_e2,2,2020-2023,37,a,,1-4,preterm,86796
-sim_e2,2,2020-2023,37,a,,1-4,term,255776
-sim_e2,2,2020-2023,37,a,,5-7,preterm,339068
-sim_e2,2,2020-2023,37,a,,5-7,term,2926881
-sim_e2,2,2020-2023,37,a,,8+,preterm,0
-sim_e2,2,2020-2023,37,a,,8+,term,2439938
-sim_e2,2,2020-2023,37,a_count,,0,preterm,11289
-sim_e2,2,2020-2023,37,a_count,,0,term,143849
-sim_e2,2,2020-2023,37,a_count,,1,preterm,1837
-sim_e2,2,2020-2023,37,a_count,,1,term,133
-sim_e2,2,2020-2023,37,a_count,,2,preterm,10232
-sim_e2,2,2020-2023,37,a_count,,2,term,4810
-sim_e2,2,2020-2023,37,a_count,,3,preterm,20494
-sim_e2,2,2020-2023,37,a_count,,3,term,52250
-sim_e2,2,2020-2023,37,a_count,,4,preterm,54233
-sim_e2,2,2020-2023,37,a_count,,4,term,198583
-sim_e2,2,2020-2023,37,a_count,,5,preterm,92121
-sim_e2,2,2020-2023,37,a_count,,5,term,358231
-sim_e2,2,2020-2023,37,a_count,,6,preterm,144354
-sim_e2,2,2020-2023,37,a_count,,6,term,1022302
-sim_e2,2,2020-2023,37,a_count,,7,preterm,102593
-sim_e2,2,2020-2023,37,a_count,,7,term,1546348
-sim_e2,2,2020-2023,37,a_count,,8,preterm,0
-sim_e2,2,2020-2023,37,a_count,,8,term,2439938
-sim_e2,2,2020-2023,37,b,acog_midpoint,Adequate,preterm,59376
-sim_e2,2,2020-2023,37,b,acog_midpoint,Adequate,term,0
-sim_e2,2,2020-2023,37,b,acog_midpoint,Inadequate,preterm,100607
-sim_e2,2,2020-2023,37,b,acog_midpoint,Inadequate,term,1464665
-sim_e2,2,2020-2023,37,b,acog_midpoint,Intermediate,preterm,277170
-sim_e2,2,2020-2023,37,b,acog_midpoint,Intermediate,term,4301779
-sim_e2,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,99151
-sim_e2,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,1312800
-sim_e2,2,2020-2023,37,c,,trimester 1,preterm,338002
-sim_e2,2,2020-2023,37,c,,trimester 1,term,4453644
-sim_e2,3,2020-2023,37,d,,0,preterm,10436
-sim_e2,3,2020-2023,37,d,,0,term,143849
-sim_e2,3,2020-2023,37,d,,1-4,preterm,73533
-sim_e2,3,2020-2023,37,d,,1-4,term,255776
-sim_e2,3,2020-2023,37,d,,5-7,preterm,339068
-sim_e2,3,2020-2023,37,d,,5-7,term,2926881
-sim_e2,3,2020-2023,37,d,,8+,preterm,0
-sim_e2,3,2020-2023,37,d,,8+,term,2439938
-sim_e2,4,2020-2023,37,d,,0,preterm,9487
-sim_e2,4,2020-2023,37,d,,0,term,143849
-sim_e2,4,2020-2023,37,d,,1-4,preterm,59005
-sim_e2,4,2020-2023,37,d,,1-4,term,255776
-sim_e2,4,2020-2023,37,d,,5-7,preterm,317776
-sim_e2,4,2020-2023,37,d,,5-7,term,2926881
-sim_e2,4,2020-2023,37,d,,8+,preterm,0
-sim_e2,4,2020-2023,37,d,,8+,term,2439938
-sim_e2,5,2020-2023,37,d,,0,preterm,8272
-sim_e2,5,2020-2023,37,d,,0,term,143849
-sim_e2,5,2020-2023,37,d,,1-4,preterm,47455
-sim_e2,5,2020-2023,37,d,,1-4,term,255776
-sim_e2,5,2020-2023,37,d,,5-7,preterm,281174
-sim_e2,5,2020-2023,37,d,,5-7,term,2926881
-sim_e2,5,2020-2023,37,d,,8+,preterm,0
-sim_e2,5,2020-2023,37,d,,8+,term,2439938
+source,cohort_definition_id,period,outcome_cutoff,measure,variant,level,outcome,stratum_variable,stratum_value,births
+observed,2,2020-2023,32,a,,0,preterm,,,3507
+observed,2,2020-2023,32,a,,0,term,,,150859
+observed,2,2020-2023,32,a,,1-4,preterm,,,14131
+observed,2,2020-2023,32,a,,1-4,term,,,797791
+observed,2,2020-2023,32,a,,5-7,preterm,,,20031
+observed,2,2020-2023,32,a,,5-7,term,,,2138820
+observed,2,2020-2023,32,a,,8+,preterm,,,13216
+observed,2,2020-2023,32,a,,8+,term,,,3065242
+observed,2,2020-2023,32,c,,"trimester 0, 2 or 3",preterm,,,12661
+observed,2,2020-2023,32,c,,"trimester 0, 2 or 3",term,,,1398788
+observed,2,2020-2023,32,c,,trimester 1,preterm,,,38224
+observed,2,2020-2023,32,c,,trimester 1,term,,,4753924
+observed,2,2020-2023,34,a,,0,preterm,,,5909
+observed,2,2020-2023,34,a,,0,term,,,148457
+observed,2,2020-2023,34,a,,1-4,preterm,,,24890
+observed,2,2020-2023,34,a,,1-4,term,,,787032
+observed,2,2020-2023,34,a,,5-7,preterm,,,40419
+observed,2,2020-2023,34,a,,5-7,term,,,2118432
+observed,2,2020-2023,34,a,,8+,preterm,,,29034
+observed,2,2020-2023,34,a,,8+,term,,,3049424
+observed,2,2020-2023,34,c,,"trimester 0, 2 or 3",preterm,,,24819
+observed,2,2020-2023,34,c,,"trimester 0, 2 or 3",term,,,1386630
+observed,2,2020-2023,34,c,,trimester 1,preterm,,,75433
+observed,2,2020-2023,34,c,,trimester 1,term,,,4716715
+observed,2,2020-2023,37,a,,0,preterm,,,16422
+observed,2,2020-2023,37,a,,0,preterm,insurance,IMSS,1255
+observed,2,2020-2023,37,a,,0,preterm,insurance,ISSSTE,68
+observed,2,2020-2023,37,a,,0,preterm,insurance,No social security,12427
+observed,2,2020-2023,37,a,,0,preterm,insurance,Other,496
+observed,2,2020-2023,37,a,,0,preterm,insurance,Other social security,48
+observed,2,2020-2023,37,a,,0,preterm,insurance,Unknown,2128
+observed,2,2020-2023,37,a,,0,preterm,state,01,230
+observed,2,2020-2023,37,a,,0,preterm,state,02,462
+observed,2,2020-2023,37,a,,0,preterm,state,03,90
+observed,2,2020-2023,37,a,,0,preterm,state,04,177
+observed,2,2020-2023,37,a,,0,preterm,state,05,647
+observed,2,2020-2023,37,a,,0,preterm,state,06,57
+observed,2,2020-2023,37,a,,0,preterm,state,07,1551
+observed,2,2020-2023,37,a,,0,preterm,state,08,857
+observed,2,2020-2023,37,a,,0,preterm,state,09,707
+observed,2,2020-2023,37,a,,0,preterm,state,10,445
+observed,2,2020-2023,37,a,,0,preterm,state,11,774
+observed,2,2020-2023,37,a,,0,preterm,state,12,584
+observed,2,2020-2023,37,a,,0,preterm,state,13,208
+observed,2,2020-2023,37,a,,0,preterm,state,14,1116
+observed,2,2020-2023,37,a,,0,preterm,state,15,1922
+observed,2,2020-2023,37,a,,0,preterm,state,16,422
+observed,2,2020-2023,37,a,,0,preterm,state,17,207
+observed,2,2020-2023,37,a,,0,preterm,state,18,227
+observed,2,2020-2023,37,a,,0,preterm,state,19,852
+observed,2,2020-2023,37,a,,0,preterm,state,20,426
+observed,2,2020-2023,37,a,,0,preterm,state,21,792
+observed,2,2020-2023,37,a,,0,preterm,state,22,208
+observed,2,2020-2023,37,a,,0,preterm,state,23,273
+observed,2,2020-2023,37,a,,0,preterm,state,24,252
+observed,2,2020-2023,37,a,,0,preterm,state,25,390
+observed,2,2020-2023,37,a,,0,preterm,state,26,537
+observed,2,2020-2023,37,a,,0,preterm,state,27,270
+observed,2,2020-2023,37,a,,0,preterm,state,28,406
+observed,2,2020-2023,37,a,,0,preterm,state,29,130
+observed,2,2020-2023,37,a,,0,preterm,state,30,749
+observed,2,2020-2023,37,a,,0,preterm,state,31,200
+observed,2,2020-2023,37,a,,0,preterm,state,32,254
+observed,2,2020-2023,37,a,,0,term,,,137944
+observed,2,2020-2023,37,a,,0,term,insurance,IMSS,7117
+observed,2,2020-2023,37,a,,0,term,insurance,ISSSTE,390
+observed,2,2020-2023,37,a,,0,term,insurance,No social security,108642
+observed,2,2020-2023,37,a,,0,term,insurance,Other,3639
+observed,2,2020-2023,37,a,,0,term,insurance,Other social security,303
+observed,2,2020-2023,37,a,,0,term,insurance,Unknown,17853
+observed,2,2020-2023,37,a,,0,term,state,01,1121
+observed,2,2020-2023,37,a,,0,term,state,02,4233
+observed,2,2020-2023,37,a,,0,term,state,03,638
+observed,2,2020-2023,37,a,,0,term,state,04,1501
+observed,2,2020-2023,37,a,,0,term,state,05,4631
+observed,2,2020-2023,37,a,,0,term,state,06,384
+observed,2,2020-2023,37,a,,0,term,state,07,24179
+observed,2,2020-2023,37,a,,0,term,state,08,6006
+observed,2,2020-2023,37,a,,0,term,state,09,4877
+observed,2,2020-2023,37,a,,0,term,state,10,3396
+observed,2,2020-2023,37,a,,0,term,state,11,4871
+observed,2,2020-2023,37,a,,0,term,state,12,6539
+observed,2,2020-2023,37,a,,0,term,state,13,984
+observed,2,2020-2023,37,a,,0,term,state,14,7864
+observed,2,2020-2023,37,a,,0,term,state,15,16934
+observed,2,2020-2023,37,a,,0,term,state,16,2741
+observed,2,2020-2023,37,a,,0,term,state,17,1486
+observed,2,2020-2023,37,a,,0,term,state,18,1770
+observed,2,2020-2023,37,a,,0,term,state,19,4060
+observed,2,2020-2023,37,a,,0,term,state,20,4565
+observed,2,2020-2023,37,a,,0,term,state,21,7692
+observed,2,2020-2023,37,a,,0,term,state,22,1080
+observed,2,2020-2023,37,a,,0,term,state,23,2462
+observed,2,2020-2023,37,a,,0,term,state,24,1213
+observed,2,2020-2023,37,a,,0,term,state,25,2794
+observed,2,2020-2023,37,a,,0,term,state,26,3684
+observed,2,2020-2023,37,a,,0,term,state,27,2583
+observed,2,2020-2023,37,a,,0,term,state,28,3522
+observed,2,2020-2023,37,a,,0,term,state,29,939
+observed,2,2020-2023,37,a,,0,term,state,30,6569
+observed,2,2020-2023,37,a,,0,term,state,31,1308
+observed,2,2020-2023,37,a,,0,term,state,32,1318
+observed,2,2020-2023,37,a,,1-4,preterm,,,76750
+observed,2,2020-2023,37,a,,1-4,preterm,insurance,IMSS,14294
+observed,2,2020-2023,37,a,,1-4,preterm,insurance,ISSSTE,1026
+observed,2,2020-2023,37,a,,1-4,preterm,insurance,No social security,49190
+observed,2,2020-2023,37,a,,1-4,preterm,insurance,Other,2474
+observed,2,2020-2023,37,a,,1-4,preterm,insurance,Other social security,425
+observed,2,2020-2023,37,a,,1-4,preterm,insurance,Unknown,9341
+observed,2,2020-2023,37,a,,1-4,preterm,state,01,1324
+observed,2,2020-2023,37,a,,1-4,preterm,state,02,1229
+observed,2,2020-2023,37,a,,1-4,preterm,state,03,414
+observed,2,2020-2023,37,a,,1-4,preterm,state,04,866
+observed,2,2020-2023,37,a,,1-4,preterm,state,05,1842
+observed,2,2020-2023,37,a,,1-4,preterm,state,06,391
+observed,2,2020-2023,37,a,,1-4,preterm,state,07,3826
+observed,2,2020-2023,37,a,,1-4,preterm,state,08,2391
+observed,2,2020-2023,37,a,,1-4,preterm,state,09,3652
+observed,2,2020-2023,37,a,,1-4,preterm,state,10,1875
+observed,2,2020-2023,37,a,,1-4,preterm,state,11,3913
+observed,2,2020-2023,37,a,,1-4,preterm,state,12,2582
+observed,2,2020-2023,37,a,,1-4,preterm,state,13,1449
+observed,2,2020-2023,37,a,,1-4,preterm,state,14,4890
+observed,2,2020-2023,37,a,,1-4,preterm,state,15,10439
+observed,2,2020-2023,37,a,,1-4,preterm,state,16,2870
+observed,2,2020-2023,37,a,,1-4,preterm,state,17,1321
+observed,2,2020-2023,37,a,,1-4,preterm,state,18,813
+observed,2,2020-2023,37,a,,1-4,preterm,state,19,2767
+observed,2,2020-2023,37,a,,1-4,preterm,state,20,2814
+observed,2,2020-2023,37,a,,1-4,preterm,state,21,4681
+observed,2,2020-2023,37,a,,1-4,preterm,state,22,1372
+observed,2,2020-2023,37,a,,1-4,preterm,state,23,1221
+observed,2,2020-2023,37,a,,1-4,preterm,state,24,1888
+observed,2,2020-2023,37,a,,1-4,preterm,state,25,1851
+observed,2,2020-2023,37,a,,1-4,preterm,state,26,1382
+observed,2,2020-2023,37,a,,1-4,preterm,state,27,2694
+observed,2,2020-2023,37,a,,1-4,preterm,state,28,1803
+observed,2,2020-2023,37,a,,1-4,preterm,state,29,623
+observed,2,2020-2023,37,a,,1-4,preterm,state,30,4388
+observed,2,2020-2023,37,a,,1-4,preterm,state,31,1704
+observed,2,2020-2023,37,a,,1-4,preterm,state,32,1475
+observed,2,2020-2023,37,a,,1-4,term,,,735172
+observed,2,2020-2023,37,a,,1-4,term,insurance,IMSS,95465
+observed,2,2020-2023,37,a,,1-4,term,insurance,ISSSTE,6859
+observed,2,2020-2023,37,a,,1-4,term,insurance,No social security,512840
+observed,2,2020-2023,37,a,,1-4,term,insurance,Other,21662
+observed,2,2020-2023,37,a,,1-4,term,insurance,Other social security,3270
+observed,2,2020-2023,37,a,,1-4,term,insurance,Unknown,95076
+observed,2,2020-2023,37,a,,1-4,term,state,01,8784
+observed,2,2020-2023,37,a,,1-4,term,state,02,14943
+observed,2,2020-2023,37,a,,1-4,term,state,03,4122
+observed,2,2020-2023,37,a,,1-4,term,state,04,7673
+observed,2,2020-2023,37,a,,1-4,term,state,05,16884
+observed,2,2020-2023,37,a,,1-4,term,state,06,3508
+observed,2,2020-2023,37,a,,1-4,term,state,07,62465
+observed,2,2020-2023,37,a,,1-4,term,state,08,20802
+observed,2,2020-2023,37,a,,1-4,term,state,09,29366
+observed,2,2020-2023,37,a,,1-4,term,state,10,15368
+observed,2,2020-2023,37,a,,1-4,term,state,11,31824
+observed,2,2020-2023,37,a,,1-4,term,state,12,34903
+observed,2,2020-2023,37,a,,1-4,term,state,13,12264
+observed,2,2020-2023,37,a,,1-4,term,state,14,39827
+observed,2,2020-2023,37,a,,1-4,term,state,15,102352
+observed,2,2020-2023,37,a,,1-4,term,state,16,24014
+observed,2,2020-2023,37,a,,1-4,term,state,17,11646
+observed,2,2020-2023,37,a,,1-4,term,state,18,7776
+observed,2,2020-2023,37,a,,1-4,term,state,19,20089
+observed,2,2020-2023,37,a,,1-4,term,state,20,33683
+observed,2,2020-2023,37,a,,1-4,term,state,21,49649
+observed,2,2020-2023,37,a,,1-4,term,state,22,10990
+observed,2,2020-2023,37,a,,1-4,term,state,23,12373
+observed,2,2020-2023,37,a,,1-4,term,state,24,14190
+observed,2,2020-2023,37,a,,1-4,term,state,25,16620
+observed,2,2020-2023,37,a,,1-4,term,state,26,13160
+observed,2,2020-2023,37,a,,1-4,term,state,27,28691
+observed,2,2020-2023,37,a,,1-4,term,state,28,19780
+observed,2,2020-2023,37,a,,1-4,term,state,29,5549
+observed,2,2020-2023,37,a,,1-4,term,state,30,41254
+observed,2,2020-2023,37,a,,1-4,term,state,31,12269
+observed,2,2020-2023,37,a,,1-4,term,state,32,8354
+observed,2,2020-2023,37,a,,5-7,preterm,,,166277
+observed,2,2020-2023,37,a,,5-7,preterm,insurance,IMSS,46748
+observed,2,2020-2023,37,a,,5-7,preterm,insurance,ISSSTE,3823
+observed,2,2020-2023,37,a,,5-7,preterm,insurance,No social security,92080
+observed,2,2020-2023,37,a,,5-7,preterm,insurance,Other,5280
+observed,2,2020-2023,37,a,,5-7,preterm,insurance,Other social security,1328
+observed,2,2020-2023,37,a,,5-7,preterm,insurance,Unknown,17018
+observed,2,2020-2023,37,a,,5-7,preterm,state,01,2691
+observed,2,2020-2023,37,a,,5-7,preterm,state,02,3704
+observed,2,2020-2023,37,a,,5-7,preterm,state,03,939
+observed,2,2020-2023,37,a,,5-7,preterm,state,04,1635
+observed,2,2020-2023,37,a,,5-7,preterm,state,05,3976
+observed,2,2020-2023,37,a,,5-7,preterm,state,06,840
+observed,2,2020-2023,37,a,,5-7,preterm,state,07,6449
+observed,2,2020-2023,37,a,,5-7,preterm,state,08,5683
+observed,2,2020-2023,37,a,,5-7,preterm,state,09,8290
+observed,2,2020-2023,37,a,,5-7,preterm,state,10,3336
+observed,2,2020-2023,37,a,,5-7,preterm,state,11,10087
+observed,2,2020-2023,37,a,,5-7,preterm,state,12,4156
+observed,2,2020-2023,37,a,,5-7,preterm,state,13,3579
+observed,2,2020-2023,37,a,,5-7,preterm,state,14,11354
+observed,2,2020-2023,37,a,,5-7,preterm,state,15,21079
+observed,2,2020-2023,37,a,,5-7,preterm,state,16,7462
+observed,2,2020-2023,37,a,,5-7,preterm,state,17,2713
+observed,2,2020-2023,37,a,,5-7,preterm,state,18,1733
+observed,2,2020-2023,37,a,,5-7,preterm,state,19,6988
+observed,2,2020-2023,37,a,,5-7,preterm,state,20,5171
+observed,2,2020-2023,37,a,,5-7,preterm,state,21,9364
+observed,2,2020-2023,37,a,,5-7,preterm,state,22,3750
+observed,2,2020-2023,37,a,,5-7,preterm,state,23,2293
+observed,2,2020-2023,37,a,,5-7,preterm,state,24,4570
+observed,2,2020-2023,37,a,,5-7,preterm,state,25,3956
+observed,2,2020-2023,37,a,,5-7,preterm,state,26,3360
+observed,2,2020-2023,37,a,,5-7,preterm,state,27,4682
+observed,2,2020-2023,37,a,,5-7,preterm,state,28,3837
+observed,2,2020-2023,37,a,,5-7,preterm,state,29,2192
+observed,2,2020-2023,37,a,,5-7,preterm,state,30,9197
+observed,2,2020-2023,37,a,,5-7,preterm,state,31,3585
+observed,2,2020-2023,37,a,,5-7,preterm,state,32,3626
+observed,2,2020-2023,37,a,,5-7,term,,,1992574
+observed,2,2020-2023,37,a,,5-7,term,insurance,IMSS,402535
+observed,2,2020-2023,37,a,,5-7,term,insurance,ISSSTE,30285
+observed,2,2020-2023,37,a,,5-7,term,insurance,No social security,1275627
+observed,2,2020-2023,37,a,,5-7,term,insurance,Other,57412
+observed,2,2020-2023,37,a,,5-7,term,insurance,Other social security,12649
+observed,2,2020-2023,37,a,,5-7,term,insurance,Unknown,214066
+observed,2,2020-2023,37,a,,5-7,term,state,01,21176
+observed,2,2020-2023,37,a,,5-7,term,state,02,49385
+observed,2,2020-2023,37,a,,5-7,term,state,03,11713
+observed,2,2020-2023,37,a,,5-7,term,state,04,17224
+observed,2,2020-2023,37,a,,5-7,term,state,05,47707
+observed,2,2020-2023,37,a,,5-7,term,state,06,10213
+observed,2,2020-2023,37,a,,5-7,term,state,07,125061
+observed,2,2020-2023,37,a,,5-7,term,state,08,59291
+observed,2,2020-2023,37,a,,5-7,term,state,09,84385
+observed,2,2020-2023,37,a,,5-7,term,state,10,35007
+observed,2,2020-2023,37,a,,5-7,term,state,11,114589
+observed,2,2020-2023,37,a,,5-7,term,state,12,68660
+observed,2,2020-2023,37,a,,5-7,term,state,13,43999
+observed,2,2020-2023,37,a,,5-7,term,state,14,119095
+observed,2,2020-2023,37,a,,5-7,term,state,15,257609
+observed,2,2020-2023,37,a,,5-7,term,state,16,78362
+observed,2,2020-2023,37,a,,5-7,term,state,17,31867
+observed,2,2020-2023,37,a,,5-7,term,state,18,19250
+observed,2,2020-2023,37,a,,5-7,term,state,19,62244
+observed,2,2020-2023,37,a,,5-7,term,state,20,82004
+observed,2,2020-2023,37,a,,5-7,term,state,21,131556
+observed,2,2020-2023,37,a,,5-7,term,state,22,38407
+observed,2,2020-2023,37,a,,5-7,term,state,23,30117
+observed,2,2020-2023,37,a,,5-7,term,state,24,48403
+observed,2,2020-2023,37,a,,5-7,term,state,25,40097
+observed,2,2020-2023,37,a,,5-7,term,state,26,36733
+observed,2,2020-2023,37,a,,5-7,term,state,27,56745
+observed,2,2020-2023,37,a,,5-7,term,state,28,51315
+observed,2,2020-2023,37,a,,5-7,term,state,29,22141
+observed,2,2020-2023,37,a,,5-7,term,state,30,129688
+observed,2,2020-2023,37,a,,5-7,term,state,31,38482
+observed,2,2020-2023,37,a,,5-7,term,state,32,30049
+observed,2,2020-2023,37,a,,8+,preterm,,,177704
+observed,2,2020-2023,37,a,,8+,preterm,insurance,IMSS,71316
+observed,2,2020-2023,37,a,,8+,preterm,insurance,ISSSTE,7446
+observed,2,2020-2023,37,a,,8+,preterm,insurance,No social security,76791
+observed,2,2020-2023,37,a,,8+,preterm,insurance,Other,6012
+observed,2,2020-2023,37,a,,8+,preterm,insurance,Other social security,1947
+observed,2,2020-2023,37,a,,8+,preterm,insurance,Unknown,14192
+observed,2,2020-2023,37,a,,8+,preterm,state,01,3322
+observed,2,2020-2023,37,a,,8+,preterm,state,02,4745
+observed,2,2020-2023,37,a,,8+,preterm,state,03,996
+observed,2,2020-2023,37,a,,8+,preterm,state,04,1172
+observed,2,2020-2023,37,a,,8+,preterm,state,05,5000
+observed,2,2020-2023,37,a,,8+,preterm,state,06,849
+observed,2,2020-2023,37,a,,8+,preterm,state,07,3681
+observed,2,2020-2023,37,a,,8+,preterm,state,08,5713
+observed,2,2020-2023,37,a,,8+,preterm,state,09,13708
+observed,2,2020-2023,37,a,,8+,preterm,state,10,2699
+observed,2,2020-2023,37,a,,8+,preterm,state,11,10074
+observed,2,2020-2023,37,a,,8+,preterm,state,12,3082
+observed,2,2020-2023,37,a,,8+,preterm,state,13,3766
+observed,2,2020-2023,37,a,,8+,preterm,state,14,12854
+observed,2,2020-2023,37,a,,8+,preterm,state,15,20654
+observed,2,2020-2023,37,a,,8+,preterm,state,16,8891
+observed,2,2020-2023,37,a,,8+,preterm,state,17,2268
+observed,2,2020-2023,37,a,,8+,preterm,state,18,1874
+observed,2,2020-2023,37,a,,8+,preterm,state,19,13265
+observed,2,2020-2023,37,a,,8+,preterm,state,20,4062
+observed,2,2020-2023,37,a,,8+,preterm,state,21,10554
+observed,2,2020-2023,37,a,,8+,preterm,state,22,4158
+observed,2,2020-2023,37,a,,8+,preterm,state,23,2123
+observed,2,2020-2023,37,a,,8+,preterm,state,24,5316
+observed,2,2020-2023,37,a,,8+,preterm,state,25,5164
+observed,2,2020-2023,37,a,,8+,preterm,state,26,4432
+observed,2,2020-2023,37,a,,8+,preterm,state,27,2380
+observed,2,2020-2023,37,a,,8+,preterm,state,28,4711
+observed,2,2020-2023,37,a,,8+,preterm,state,29,2280
+observed,2,2020-2023,37,a,,8+,preterm,state,30,7689
+observed,2,2020-2023,37,a,,8+,preterm,state,31,2887
+observed,2,2020-2023,37,a,,8+,preterm,state,32,3335
+observed,2,2020-2023,37,a,,8+,term,,,2900754
+observed,2,2020-2023,37,a,,8+,term,insurance,IMSS,988124
+observed,2,2020-2023,37,a,,8+,term,insurance,ISSSTE,89615
+observed,2,2020-2023,37,a,,8+,term,insurance,No social security,1467297
+observed,2,2020-2023,37,a,,8+,term,insurance,Other,81231
+observed,2,2020-2023,37,a,,8+,term,insurance,Other social security,24118
+observed,2,2020-2023,37,a,,8+,term,insurance,Unknown,250369
+observed,2,2020-2023,37,a,,8+,term,state,01,39121
+observed,2,2020-2023,37,a,,8+,term,state,02,90362
+observed,2,2020-2023,37,a,,8+,term,state,03,19991
+observed,2,2020-2023,37,a,,8+,term,state,04,15712
+observed,2,2020-2023,37,a,,8+,term,state,05,85246
+observed,2,2020-2023,37,a,,8+,term,state,06,17769
+observed,2,2020-2023,37,a,,8+,term,state,07,84227
+observed,2,2020-2023,37,a,,8+,term,state,08,80787
+observed,2,2020-2023,37,a,,8+,term,state,09,165233
+observed,2,2020-2023,37,a,,8+,term,state,10,41029
+observed,2,2020-2023,37,a,,8+,term,state,11,165225
+observed,2,2020-2023,37,a,,8+,term,state,12,64984
+observed,2,2020-2023,37,a,,8+,term,state,13,71755
+observed,2,2020-2023,37,a,,8+,term,state,14,231724
+observed,2,2020-2023,37,a,,8+,term,state,15,335484
+observed,2,2020-2023,37,a,,8+,term,state,16,152049
+observed,2,2020-2023,37,a,,8+,term,state,17,40812
+observed,2,2020-2023,37,a,,8+,term,state,18,28983
+observed,2,2020-2023,37,a,,8+,term,state,19,179985
+observed,2,2020-2023,37,a,,8+,term,state,20,86999
+observed,2,2020-2023,37,a,,8+,term,state,21,177321
+observed,2,2020-2023,37,a,,8+,term,state,22,64881
+observed,2,2020-2023,37,a,,8+,term,state,23,39316
+observed,2,2020-2023,37,a,,8+,term,state,24,77037
+observed,2,2020-2023,37,a,,8+,term,state,25,76135
+observed,2,2020-2023,37,a,,8+,term,state,26,66159
+observed,2,2020-2023,37,a,,8+,term,state,27,35744
+observed,2,2020-2023,37,a,,8+,term,state,28,82777
+observed,2,2020-2023,37,a,,8+,term,state,29,42618
+observed,2,2020-2023,37,a,,8+,term,state,30,156398
+observed,2,2020-2023,37,a,,8+,term,state,31,42524
+observed,2,2020-2023,37,a,,8+,term,state,32,42367
+observed,2,2020-2023,37,a_count,,0,preterm,,,16422
+observed,2,2020-2023,37,a_count,,0,term,,,137944
+observed,2,2020-2023,37,a_count,,1,preterm,,,7029
+observed,2,2020-2023,37,a_count,,1,term,,,69782
+observed,2,2020-2023,37,a_count,,10,preterm,,,43254
+observed,2,2020-2023,37,a_count,,10,term,,,674037
+observed,2,2020-2023,37,a_count,,11,preterm,,,5437
+observed,2,2020-2023,37,a_count,,11,term,,,107497
+observed,2,2020-2023,37,a_count,,12,preterm,,,13115
+observed,2,2020-2023,37,a_count,,12,term,,,221375
+observed,2,2020-2023,37,a_count,,13,preterm,,,2835
+observed,2,2020-2023,37,a_count,,13,term,,,50387
+observed,2,2020-2023,37,a_count,,14,preterm,,,2377
+observed,2,2020-2023,37,a_count,,14,term,,,35378
+observed,2,2020-2023,37,a_count,,15,preterm,,,8998
+observed,2,2020-2023,37,a_count,,15,term,,,113484
+observed,2,2020-2023,37,a_count,,16,preterm,,,1450
+observed,2,2020-2023,37,a_count,,16,term,,,17771
+observed,2,2020-2023,37,a_count,,17,preterm,,,436
+observed,2,2020-2023,37,a_count,,17,term,,,5594
+observed,2,2020-2023,37,a_count,,18,preterm,,,984
+observed,2,2020-2023,37,a_count,,18,term,,,11648
+observed,2,2020-2023,37,a_count,,19,preterm,,,165
+observed,2,2020-2023,37,a_count,,19,term,,,2287
+observed,2,2020-2023,37,a_count,,2,preterm,,,12238
+observed,2,2020-2023,37,a_count,,2,term,,,111044
+observed,2,2020-2023,37,a_count,,20,preterm,,,3440
+observed,2,2020-2023,37,a_count,,20,term,,,31549
+observed,2,2020-2023,37,a_count,,21,preterm,,,88
+observed,2,2020-2023,37,a_count,,21,term,,,863
+observed,2,2020-2023,37,a_count,,22,preterm,,,134
+observed,2,2020-2023,37,a_count,,22,term,,,1291
+observed,2,2020-2023,37,a_count,,23,preterm,,,73
+observed,2,2020-2023,37,a_count,,23,term,,,699
+observed,2,2020-2023,37,a_count,,24,preterm,,,107
+observed,2,2020-2023,37,a_count,,24,term,,,916
+observed,2,2020-2023,37,a_count,,25,preterm,,,395
+observed,2,2020-2023,37,a_count,,25,term,,,3189
+observed,2,2020-2023,37,a_count,,26,preterm,,,46
+observed,2,2020-2023,37,a_count,,26,term,,,496
+observed,2,2020-2023,37,a_count,,27,preterm,,,43
+observed,2,2020-2023,37,a_count,,27,term,,,517
+observed,2,2020-2023,37,a_count,,28,preterm,,,62
+observed,2,2020-2023,37,a_count,,28,term,,,555
+observed,2,2020-2023,37,a_count,,29,preterm,,,34
+observed,2,2020-2023,37,a_count,,29,term,,,281
+observed,2,2020-2023,37,a_count,,3,preterm,,,21743
+observed,2,2020-2023,37,a_count,,3,term,,,205474
+observed,2,2020-2023,37,a_count,,30,preterm,,,457
+observed,2,2020-2023,37,a_count,,30,term,,,3164
+observed,2,2020-2023,37,a_count,,4,preterm,,,35740
+observed,2,2020-2023,37,a_count,,4,term,,,348872
+observed,2,2020-2023,37,a_count,,5,preterm,,,54187
+observed,2,2020-2023,37,a_count,,5,term,,,605524
+observed,2,2020-2023,37,a_count,,6,preterm,,,57819
+observed,2,2020-2023,37,a_count,,6,term,,,697277
+observed,2,2020-2023,37,a_count,,7,preterm,,,54271
+observed,2,2020-2023,37,a_count,,7,term,,,689773
+observed,2,2020-2023,37,a_count,,8,preterm,,,55862
+observed,2,2020-2023,37,a_count,,8,term,,,844790
+observed,2,2020-2023,37,a_count,,9,preterm,,,37912
+observed,2,2020-2023,37,a_count,,9,term,,,772986
+observed,2,2020-2023,37,b,acog_first,Adequate,preterm,,,139782
+observed,2,2020-2023,37,b,acog_first,Adequate,term,,,823653
+observed,2,2020-2023,37,b,acog_first,Adequate Plus,preterm,,,86500
+observed,2,2020-2023,37,b,acog_first,Adequate Plus,term,,,208569
+observed,2,2020-2023,37,b,acog_first,Inadequate,preterm,,,65906
+observed,2,2020-2023,37,b,acog_first,Inadequate,term,,,1726719
+observed,2,2020-2023,37,b,acog_first,Intermediate,preterm,,,144965
+observed,2,2020-2023,37,b,acog_first,Intermediate,term,,,3007503
+observed,2,2020-2023,37,b,acog_last,Adequate,preterm,,,98714
+observed,2,2020-2023,37,b,acog_last,Adequate,term,,,1539849
+observed,2,2020-2023,37,b,acog_last,Adequate Plus,preterm,,,161641
+observed,2,2020-2023,37,b,acog_last,Adequate Plus,term,,,450580
+observed,2,2020-2023,37,b,acog_last,Inadequate,preterm,,,111917
+observed,2,2020-2023,37,b,acog_last,Inadequate,term,,,1880954
+observed,2,2020-2023,37,b,acog_last,Intermediate,preterm,,,64881
+observed,2,2020-2023,37,b,acog_last,Intermediate,term,,,1895061
+observed,2,2020-2023,37,b,acog_midpoint,Adequate,preterm,,,102984
+observed,2,2020-2023,37,b,acog_midpoint,Adequate,term,,,1143402
+observed,2,2020-2023,37,b,acog_midpoint,Adequate Plus,preterm,,,112953
+observed,2,2020-2023,37,b,acog_midpoint,Adequate Plus,term,,,254948
+observed,2,2020-2023,37,b,acog_midpoint,Inadequate,preterm,,,120578
+observed,2,2020-2023,37,b,acog_midpoint,Inadequate,term,,,2109134
+observed,2,2020-2023,37,b,acog_midpoint,Intermediate,preterm,,,100638
+observed,2,2020-2023,37,b,acog_midpoint,Intermediate,term,,,2258960
+observed,2,2020-2023,37,b,nom007_midpoint,Adequate,preterm,,,88438
+observed,2,2020-2023,37,b,nom007_midpoint,Adequate,term,,,1325721
+observed,2,2020-2023,37,b,nom007_midpoint,Adequate Plus,preterm,,,202583
+observed,2,2020-2023,37,b,nom007_midpoint,Adequate Plus,term,,,2029513
+observed,2,2020-2023,37,b,nom007_midpoint,Inadequate,preterm,,,109534
+observed,2,2020-2023,37,b,nom007_midpoint,Inadequate,term,,,1456915
+observed,2,2020-2023,37,b,nom007_midpoint,Intermediate,preterm,,,36598
+observed,2,2020-2023,37,b,nom007_midpoint,Intermediate,term,,,954295
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,,,99476
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,insurance,IMSS,20105
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,insurance,ISSSTE,1035
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,insurance,No social security,63942
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,insurance,Other,2894
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,insurance,Other social security,597
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,insurance,Unknown,10903
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,01,1463
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,02,2365
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,03,507
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,04,965
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,05,2720
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,06,352
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,07,5666
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,08,3337
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,09,4834
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,10,2098
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,11,4677
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,12,3224
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,13,1896
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,14,5651
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,15,13083
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,16,3314
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,17,1522
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,18,1065
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,19,5877
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,20,3182
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,21,6128
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,22,1844
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,23,1766
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,24,2538
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,25,1909
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,26,2020
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,27,2477
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,28,2278
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,29,1145
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,30,5917
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,31,1786
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,state,32,1870
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,,,1311973
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,insurance,IMSS,221316
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,insurance,ISSSTE,10483
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,insurance,No social security,893455
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,insurance,Other,34399
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,insurance,Other social security,6594
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,insurance,Unknown,145726
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,01,11874
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,02,33717
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,03,7315
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,04,11640
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,05,34067
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,06,4480
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,07,113914
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,08,36906
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,09,54362
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,10,22154
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,11,52330
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,12,57629
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,13,24843
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,14,63142
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,15,177229
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,16,40168
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,17,18646
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,18,12820
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,19,52621
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,20,59419
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,21,97781
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,22,19729
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,23,24033
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,24,26657
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,25,20524
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,26,23482
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,27,35120
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,28,33700
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,29,15380
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,30,90494
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,31,20722
+observed,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,state,32,15075
+observed,2,2020-2023,37,c,,trimester 1,preterm,,,337677
+observed,2,2020-2023,37,c,,trimester 1,preterm,insurance,IMSS,113508
+observed,2,2020-2023,37,c,,trimester 1,preterm,insurance,ISSSTE,11328
+observed,2,2020-2023,37,c,,trimester 1,preterm,insurance,No social security,166546
+observed,2,2020-2023,37,c,,trimester 1,preterm,insurance,Other,11368
+observed,2,2020-2023,37,c,,trimester 1,preterm,insurance,Other social security,3151
+observed,2,2020-2023,37,c,,trimester 1,preterm,insurance,Unknown,31776
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,01,6104
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,02,7775
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,03,1932
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,04,2885
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,05,8745
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,06,1785
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,07,9841
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,08,11307
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,09,21523
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,10,6257
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,11,20171
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,12,7180
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,13,7106
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,14,24563
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,15,41011
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,16,16331
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,17,4987
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,18,3582
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,19,17995
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,20,9291
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,21,19263
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,22,7644
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,23,4144
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,24,9488
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,25,9452
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,26,7691
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,27,7549
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,28,8479
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,29,4080
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,30,16106
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,31,6590
+observed,2,2020-2023,37,c,,trimester 1,preterm,state,32,6820
+observed,2,2020-2023,37,c,,trimester 1,term,,,4454471
+observed,2,2020-2023,37,c,,trimester 1,term,insurance,IMSS,1271925
+observed,2,2020-2023,37,c,,trimester 1,term,insurance,ISSSTE,116666
+observed,2,2020-2023,37,c,,trimester 1,term,insurance,No social security,2470951
+observed,2,2020-2023,37,c,,trimester 1,term,insurance,Other,129545
+observed,2,2020-2023,37,c,,trimester 1,term,insurance,Other social security,33746
+observed,2,2020-2023,37,c,,trimester 1,term,insurance,Unknown,431638
+observed,2,2020-2023,37,c,,trimester 1,term,state,01,58328
+observed,2,2020-2023,37,c,,trimester 1,term,state,02,125206
+observed,2,2020-2023,37,c,,trimester 1,term,state,03,29149
+observed,2,2020-2023,37,c,,trimester 1,term,state,04,30470
+observed,2,2020-2023,37,c,,trimester 1,term,state,05,120401
+observed,2,2020-2023,37,c,,trimester 1,term,state,06,27394
+observed,2,2020-2023,37,c,,trimester 1,term,state,07,182018
+observed,2,2020-2023,37,c,,trimester 1,term,state,08,129980
+observed,2,2020-2023,37,c,,trimester 1,term,state,09,229499
+observed,2,2020-2023,37,c,,trimester 1,term,state,10,72646
+observed,2,2020-2023,37,c,,trimester 1,term,state,11,264179
+observed,2,2020-2023,37,c,,trimester 1,term,state,12,117457
+observed,2,2020-2023,37,c,,trimester 1,term,state,13,104159
+observed,2,2020-2023,37,c,,trimester 1,term,state,14,335368
+observed,2,2020-2023,37,c,,trimester 1,term,state,15,535150
+observed,2,2020-2023,37,c,,trimester 1,term,state,16,216998
+observed,2,2020-2023,37,c,,trimester 1,term,state,17,67165
+observed,2,2020-2023,37,c,,trimester 1,term,state,18,44959
+observed,2,2020-2023,37,c,,trimester 1,term,state,19,213757
+observed,2,2020-2023,37,c,,trimester 1,term,state,20,147832
+observed,2,2020-2023,37,c,,trimester 1,term,state,21,268437
+observed,2,2020-2023,37,c,,trimester 1,term,state,22,95629
+observed,2,2020-2023,37,c,,trimester 1,term,state,23,60235
+observed,2,2020-2023,37,c,,trimester 1,term,state,24,114186
+observed,2,2020-2023,37,c,,trimester 1,term,state,25,115122
+observed,2,2020-2023,37,c,,trimester 1,term,state,26,96254
+observed,2,2020-2023,37,c,,trimester 1,term,state,27,88643
+observed,2,2020-2023,37,c,,trimester 1,term,state,28,123694
+observed,2,2020-2023,37,c,,trimester 1,term,state,29,55867
+observed,2,2020-2023,37,c,,trimester 1,term,state,30,243415
+observed,2,2020-2023,37,c,,trimester 1,term,state,31,73861
+observed,2,2020-2023,37,c,,trimester 1,term,state,32,67013
+observed,2,2022-2023,37,a,,0,preterm,,,8026
+observed,2,2022-2023,37,a,,0,term,,,61869
+observed,2,2022-2023,37,a,,1-4,preterm,,,36559
+observed,2,2022-2023,37,a,,1-4,term,,,323433
+observed,2,2022-2023,37,a,,5-7,preterm,,,83032
+observed,2,2022-2023,37,a,,5-7,term,,,943964
+observed,2,2022-2023,37,a,,8+,preterm,,,92678
+observed,2,2022-2023,37,a,,8+,term,,,1451009
+observed,2,2022-2023,37,c,,"trimester 0, 2 or 3",preterm,,,49195
+observed,2,2022-2023,37,c,,"trimester 0, 2 or 3",term,,,611721
+observed,2,2022-2023,37,c,,trimester 1,preterm,,,171100
+observed,2,2022-2023,37,c,,trimester 1,term,,,2168554
+observed,3,2020-2023,37,d,,0,preterm,,,15181
+observed,3,2020-2023,37,d,,0,term,,,137944
+observed,3,2020-2023,37,d,,1-4,preterm,,,72140
+observed,3,2020-2023,37,d,,1-4,term,,,735172
+observed,3,2020-2023,37,d,,5-7,preterm,,,161047
+observed,3,2020-2023,37,d,,5-7,term,,,1992574
+observed,3,2020-2023,37,d,,8+,preterm,,,174669
+observed,3,2020-2023,37,d,,8+,term,,,2900754
+observed,4,2020-2023,37,d,,0,preterm,,,12915
+observed,4,2020-2023,37,d,,0,term,,,137944
+observed,4,2020-2023,37,d,,1-4,preterm,,,62619
+observed,4,2020-2023,37,d,,1-4,term,,,735172
+observed,4,2020-2023,37,d,,5-7,preterm,,,146246
+observed,4,2020-2023,37,d,,5-7,term,,,1992574
+observed,4,2020-2023,37,d,,8+,preterm,,,164488
+observed,4,2020-2023,37,d,,8+,term,,,2900754
+observed,5,2020-2023,37,d,,0,preterm,,,10513
+observed,5,2020-2023,37,d,,0,term,,,137944
+observed,5,2020-2023,37,d,,1-4,preterm,,,51860
+observed,5,2020-2023,37,d,,1-4,term,,,735172
+observed,5,2020-2023,37,d,,5-7,preterm,,,125858
+observed,5,2020-2023,37,d,,5-7,term,,,1992574
+observed,5,2020-2023,37,d,,8+,preterm,,,148670
+observed,5,2020-2023,37,d,,8+,term,,,2900754
+observed,6,2020-2023,37,a,,0,preterm,,,17280
+observed,6,2020-2023,37,a,,0,term,,,138565
+observed,6,2020-2023,37,a,,1-4,preterm,,,83410
+observed,6,2020-2023,37,a,,1-4,term,,,739286
+observed,6,2020-2023,37,a,,5-7,preterm,,,186060
+observed,6,2020-2023,37,a,,5-7,term,,,2005256
+observed,6,2020-2023,37,a,,8+,preterm,,,215530
+observed,6,2020-2023,37,a,,8+,term,,,2925431
+observed,6,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,,,108714
+observed,6,2020-2023,37,c,,"trimester 0, 2 or 3",term,,,1319398
+observed,6,2020-2023,37,c,,trimester 1,preterm,,,393566
+observed,6,2020-2023,37,c,,trimester 1,term,,,4489140
+sim_e1,2,2020-2023,37,a,,0,preterm,,,11412
+sim_e1,2,2020-2023,37,a,,0,term,,,144232
+sim_e1,2,2020-2023,37,a,,1-4,preterm,,,64912
+sim_e1,2,2020-2023,37,a,,1-4,term,,,191320
+sim_e1,2,2020-2023,37,a,,5-7,preterm,,,360829
+sim_e1,2,2020-2023,37,a,,5-7,term,,,1419809
+sim_e1,2,2020-2023,37,a,,8+,preterm,,,0
+sim_e1,2,2020-2023,37,a,,8+,term,,,4011083
+sim_e1,2,2020-2023,37,a_count,,0,preterm,,,11412
+sim_e1,2,2020-2023,37,a_count,,0,term,,,144232
+sim_e1,2,2020-2023,37,a_count,,1,preterm,,,1213
+sim_e1,2,2020-2023,37,a_count,,1,term,,,0
+sim_e1,2,2020-2023,37,a_count,,2,preterm,,,8444
+sim_e1,2,2020-2023,37,a_count,,2,term,,,0
+sim_e1,2,2020-2023,37,a_count,,3,preterm,,,13017
+sim_e1,2,2020-2023,37,a_count,,3,term,,,19026
+sim_e1,2,2020-2023,37,a_count,,4,preterm,,,42238
+sim_e1,2,2020-2023,37,a_count,,4,term,,,172294
+sim_e1,2,2020-2023,37,a_count,,5,preterm,,,62811
+sim_e1,2,2020-2023,37,a_count,,5,term,,,97036
+sim_e1,2,2020-2023,37,a_count,,6,preterm,,,141493
+sim_e1,2,2020-2023,37,a_count,,6,term,,,879777
+sim_e1,2,2020-2023,37,a_count,,7,preterm,,,156525
+sim_e1,2,2020-2023,37,a_count,,7,term,,,442996
+sim_e1,2,2020-2023,37,a_count,,8,preterm,,,0
+sim_e1,2,2020-2023,37,a_count,,8,term,,,4011083
+sim_e1,2,2020-2023,37,b,acog_first,Adequate,preterm,,,27008
+sim_e1,2,2020-2023,37,b,acog_first,Adequate,term,,,0
+sim_e1,2,2020-2023,37,b,acog_first,Inadequate,preterm,,,25457
+sim_e1,2,2020-2023,37,b,acog_first,Inadequate,term,,,343925
+sim_e1,2,2020-2023,37,b,acog_first,Intermediate,preterm,,,384688
+sim_e1,2,2020-2023,37,b,acog_first,Intermediate,term,,,5422519
+sim_e1,2,2020-2023,37,b,acog_last,Adequate,preterm,,,322117
+sim_e1,2,2020-2023,37,b,acog_last,Adequate,term,,,1176834
+sim_e1,2,2020-2023,37,b,acog_last,Adequate Plus,preterm,,,15227
+sim_e1,2,2020-2023,37,b,acog_last,Adequate Plus,term,,,0
+sim_e1,2,2020-2023,37,b,acog_last,Inadequate,preterm,,,99809
+sim_e1,2,2020-2023,37,b,acog_last,Inadequate,term,,,1312513
+sim_e1,2,2020-2023,37,b,acog_last,Intermediate,preterm,,,0
+sim_e1,2,2020-2023,37,b,acog_last,Intermediate,term,,,3277097
+sim_e1,2,2020-2023,37,b,acog_midpoint,Adequate,preterm,,,77436
+sim_e1,2,2020-2023,37,b,acog_midpoint,Adequate,term,,,0
+sim_e1,2,2020-2023,37,b,acog_midpoint,Inadequate,preterm,,,99809
+sim_e1,2,2020-2023,37,b,acog_midpoint,Inadequate,term,,,1312679
+sim_e1,2,2020-2023,37,b,acog_midpoint,Intermediate,preterm,,,259908
+sim_e1,2,2020-2023,37,b,acog_midpoint,Intermediate,term,,,4453765
+sim_e1,2,2020-2023,37,b,nom007_midpoint,Adequate,preterm,,,337344
+sim_e1,2,2020-2023,37,b,nom007_midpoint,Adequate,term,,,4454079
+sim_e1,2,2020-2023,37,b,nom007_midpoint,Inadequate,preterm,,,99809
+sim_e1,2,2020-2023,37,b,nom007_midpoint,Inadequate,term,,,1312365
+sim_e1,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,,,99809
+sim_e1,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,,,1312365
+sim_e1,2,2020-2023,37,c,,trimester 1,preterm,,,337344
+sim_e1,2,2020-2023,37,c,,trimester 1,term,,,4454079
+sim_e1,3,2020-2023,37,d,,0,preterm,,,10625
+sim_e1,3,2020-2023,37,d,,0,term,,,144232
+sim_e1,3,2020-2023,37,d,,1-4,preterm,,,51583
+sim_e1,3,2020-2023,37,d,,1-4,term,,,191320
+sim_e1,3,2020-2023,37,d,,5-7,preterm,,,360829
+sim_e1,3,2020-2023,37,d,,5-7,term,,,1419809
+sim_e1,3,2020-2023,37,d,,8+,preterm,,,0
+sim_e1,3,2020-2023,37,d,,8+,term,,,4011083
+sim_e1,4,2020-2023,37,d,,0,preterm,,,9695
+sim_e1,4,2020-2023,37,d,,0,term,,,144232
+sim_e1,4,2020-2023,37,d,,1-4,preterm,,,44182
+sim_e1,4,2020-2023,37,d,,1-4,term,,,191320
+sim_e1,4,2020-2023,37,d,,5-7,preterm,,,332391
+sim_e1,4,2020-2023,37,d,,5-7,term,,,1419809
+sim_e1,4,2020-2023,37,d,,8+,preterm,,,0
+sim_e1,4,2020-2023,37,d,,8+,term,,,4011083
+sim_e1,5,2020-2023,37,d,,0,preterm,,,8481
+sim_e1,5,2020-2023,37,d,,0,term,,,144232
+sim_e1,5,2020-2023,37,d,,1-4,preterm,,,34139
+sim_e1,5,2020-2023,37,d,,1-4,term,,,191320
+sim_e1,5,2020-2023,37,d,,5-7,preterm,,,294281
+sim_e1,5,2020-2023,37,d,,5-7,term,,,1419809
+sim_e1,5,2020-2023,37,d,,8+,preterm,,,0
+sim_e1,5,2020-2023,37,d,,8+,term,,,4011083
+sim_e2,2,2020-2023,37,a,,0,preterm,,,11289
+sim_e2,2,2020-2023,37,a,,0,term,,,143849
+sim_e2,2,2020-2023,37,a,,1-4,preterm,,,86796
+sim_e2,2,2020-2023,37,a,,1-4,term,,,255776
+sim_e2,2,2020-2023,37,a,,5-7,preterm,,,339068
+sim_e2,2,2020-2023,37,a,,5-7,term,,,2926881
+sim_e2,2,2020-2023,37,a,,8+,preterm,,,0
+sim_e2,2,2020-2023,37,a,,8+,term,,,2439938
+sim_e2,2,2020-2023,37,a_count,,0,preterm,,,11289
+sim_e2,2,2020-2023,37,a_count,,0,term,,,143849
+sim_e2,2,2020-2023,37,a_count,,1,preterm,,,1837
+sim_e2,2,2020-2023,37,a_count,,1,term,,,133
+sim_e2,2,2020-2023,37,a_count,,2,preterm,,,10232
+sim_e2,2,2020-2023,37,a_count,,2,term,,,4810
+sim_e2,2,2020-2023,37,a_count,,3,preterm,,,20494
+sim_e2,2,2020-2023,37,a_count,,3,term,,,52250
+sim_e2,2,2020-2023,37,a_count,,4,preterm,,,54233
+sim_e2,2,2020-2023,37,a_count,,4,term,,,198583
+sim_e2,2,2020-2023,37,a_count,,5,preterm,,,92121
+sim_e2,2,2020-2023,37,a_count,,5,term,,,358231
+sim_e2,2,2020-2023,37,a_count,,6,preterm,,,144354
+sim_e2,2,2020-2023,37,a_count,,6,term,,,1022302
+sim_e2,2,2020-2023,37,a_count,,7,preterm,,,102593
+sim_e2,2,2020-2023,37,a_count,,7,term,,,1546348
+sim_e2,2,2020-2023,37,a_count,,8,preterm,,,0
+sim_e2,2,2020-2023,37,a_count,,8,term,,,2439938
+sim_e2,2,2020-2023,37,b,acog_first,Adequate,preterm,,,21408
+sim_e2,2,2020-2023,37,b,acog_first,Adequate,term,,,0
+sim_e2,2,2020-2023,37,b,acog_first,Inadequate,preterm,,,32311
+sim_e2,2,2020-2023,37,b,acog_first,Inadequate,term,,,813061
+sim_e2,2,2020-2023,37,b,acog_first,Intermediate,preterm,,,383434
+sim_e2,2,2020-2023,37,b,acog_first,Intermediate,term,,,4953383
+sim_e2,2,2020-2023,37,b,acog_last,Adequate,preterm,,,237079
+sim_e2,2,2020-2023,37,b,acog_last,Adequate,term,,,716110
+sim_e2,2,2020-2023,37,b,acog_last,Adequate Plus,preterm,,,11768
+sim_e2,2,2020-2023,37,b,acog_last,Adequate Plus,term,,,0
+sim_e2,2,2020-2023,37,b,acog_last,Inadequate,preterm,,,99556
+sim_e2,2,2020-2023,37,b,acog_last,Inadequate,term,,,1362062
+sim_e2,2,2020-2023,37,b,acog_last,Intermediate,preterm,,,88750
+sim_e2,2,2020-2023,37,b,acog_last,Intermediate,term,,,3688272
+sim_e2,2,2020-2023,37,b,acog_midpoint,Adequate,preterm,,,59376
+sim_e2,2,2020-2023,37,b,acog_midpoint,Adequate,term,,,0
+sim_e2,2,2020-2023,37,b,acog_midpoint,Inadequate,preterm,,,100607
+sim_e2,2,2020-2023,37,b,acog_midpoint,Inadequate,term,,,1464665
+sim_e2,2,2020-2023,37,b,acog_midpoint,Intermediate,preterm,,,277170
+sim_e2,2,2020-2023,37,b,acog_midpoint,Intermediate,term,,,4301779
+sim_e2,2,2020-2023,37,b,nom007_midpoint,Adequate,preterm,,,320251
+sim_e2,2,2020-2023,37,b,nom007_midpoint,Adequate,term,,,4113860
+sim_e2,2,2020-2023,37,b,nom007_midpoint,Inadequate,preterm,,,99252
+sim_e2,2,2020-2023,37,b,nom007_midpoint,Inadequate,term,,,1313034
+sim_e2,2,2020-2023,37,b,nom007_midpoint,Intermediate,preterm,,,17650
+sim_e2,2,2020-2023,37,b,nom007_midpoint,Intermediate,term,,,339550
+sim_e2,2,2020-2023,37,c,,"trimester 0, 2 or 3",preterm,,,99151
+sim_e2,2,2020-2023,37,c,,"trimester 0, 2 or 3",term,,,1312800
+sim_e2,2,2020-2023,37,c,,trimester 1,preterm,,,338002
+sim_e2,2,2020-2023,37,c,,trimester 1,term,,,4453644
+sim_e2,3,2020-2023,37,d,,0,preterm,,,10436
+sim_e2,3,2020-2023,37,d,,0,term,,,143849
+sim_e2,3,2020-2023,37,d,,1-4,preterm,,,73533
+sim_e2,3,2020-2023,37,d,,1-4,term,,,255776
+sim_e2,3,2020-2023,37,d,,5-7,preterm,,,339068
+sim_e2,3,2020-2023,37,d,,5-7,term,,,2926881
+sim_e2,3,2020-2023,37,d,,8+,preterm,,,0
+sim_e2,3,2020-2023,37,d,,8+,term,,,2439938
+sim_e2,4,2020-2023,37,d,,0,preterm,,,9487
+sim_e2,4,2020-2023,37,d,,0,term,,,143849
+sim_e2,4,2020-2023,37,d,,1-4,preterm,,,59005
+sim_e2,4,2020-2023,37,d,,1-4,term,,,255776
+sim_e2,4,2020-2023,37,d,,5-7,preterm,,,317776
+sim_e2,4,2020-2023,37,d,,5-7,term,,,2926881
+sim_e2,4,2020-2023,37,d,,8+,preterm,,,0
+sim_e2,4,2020-2023,37,d,,8+,term,,,2439938
+sim_e2,5,2020-2023,37,d,,0,preterm,,,8272
+sim_e2,5,2020-2023,37,d,,0,term,,,143849
+sim_e2,5,2020-2023,37,d,,1-4,preterm,,,47455
+sim_e2,5,2020-2023,37,d,,1-4,term,,,255776
+sim_e2,5,2020-2023,37,d,,5-7,preterm,,,281174
+sim_e2,5,2020-2023,37,d,,5-7,term,,,2926881
+sim_e2,5,2020-2023,37,d,,8+,preterm,,,0
+sim_e2,5,2020-2023,37,d,,8+,term,,,2439938

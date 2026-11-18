@@ -196,7 +196,7 @@ def _calendar_visits(calendar: Sequence[int], weeks: int) -> int:
     """UEXPVIS on another calendar: its visits whose first week the pregnancy reached.
 
     A range of weeks is read by its first week, the reading D-096 already gives the same
-    calendar in the null simulation (D-128, FOR APPROVAL). In the cohort, 22 completed weeks or
+    calendar in the null simulation (D-128). In the cohort, 22 completed weeks or
     more, that reading changes one visit of NOM-007: the eighth, between 38 and 41 weeks, which
     a birth at 38 weeks is expected to have had.
     """
@@ -205,7 +205,7 @@ def _calendar_visits(calendar: Sequence[int], weeks: int) -> int:
 
 def _calendar_missed(calendar: Sequence[int], start_month: int) -> int:
     """The second step of part 6 on another calendar: its visits that fall before the month care
-    began, a month being :data:`_WEEKS_IN_MONTH` completed weeks (D-129, FOR APPROVAL).
+    began, a month being :data:`_WEEKS_IN_MONTH` completed weeks (D-129).
 
     Month 0, no care, deducts nothing, as the program's table does. On NOM-007 the middle month
     of each trimester misses 0, 2 and 4 visits, which is also what the trimester boundaries of

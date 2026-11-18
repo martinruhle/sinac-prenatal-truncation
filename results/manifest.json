@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-20T02:36:27Z",
+  "generated_at": "2026-11-17T16:46:36Z",
   "code": {
     "repository": "https://github.com/martinruhle/sinac-prenatal-truncation",
-    "commit": "847b5f03d1bd3eec543bbd55b1b7d007f7c81cae"
+    "commit": "e9708d73540898955964bf9eef0b98cd9406ce61"
   },
   "period": [
     2020,
@@ -43,15 +43,15 @@
     },
     {
       "name": "exposure_distribution.csv",
-      "sha256": "d83c8dfa3198e54caf6d42734014c75227e04a3d4b03c1901b07861ecefd341d"
+      "sha256": "52d84a6c845b662315853e84b1746650e0706dfa2020676d8950d3f9fd23fea4"
     },
     {
       "name": "estimates.csv",
-      "sha256": "1fc083bb3b2b9262a791a81786ae17d5db8629ee74bce3bd10d6ecdda465a17b"
+      "sha256": "f025632df70e03e61d867b9122331bddf9e6e352856cd9e024b44c0e94f9c160"
     },
     {
       "name": "truncation_share.csv",
-      "sha256": "fdb7a53842714f2df18fc8b006eb56198a33b7149ca07a79d8d1cc9217c9946c"
+      "sha256": "057a5e760987c0c2dade0ba44bcd777875bb900845e9e6906b2c1c6cca1546a8"
     },
     {
       "name": "excluded_profile.csv",

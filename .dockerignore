@@ -16,7 +16,10 @@
 !config/
 !tests/
 
-# Re-excluded inside the allowed folders
+# Re-excluded inside the allowed folders: secrets and data first, then caches
+**/.env
+**/.env.*
+**/data/
 **/__pycache__/
 **/.pytest_cache/
 **/.mypy_cache/

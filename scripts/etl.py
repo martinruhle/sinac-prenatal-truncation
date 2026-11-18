@@ -227,7 +227,8 @@ def git_reference(repo_root: Path = REPO_ROOT) -> str | None:
     try:
         remote = git("remote", "get-url", "origin")
         commit = git("rev-parse", "HEAD")
-        dirty = bool(git("status", "--porcelain").strip())
+        # Every untracked file counts, whatever status.showUntrackedFiles says on this machine.
+        dirty = bool(git("status", "--porcelain", "--untracked-files=all").strip())
     except (OSError, subprocess.CalledProcessError):
         return None
     return etl_reference(remote, commit, dirty=dirty)

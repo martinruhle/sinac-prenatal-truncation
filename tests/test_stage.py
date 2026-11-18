@@ -222,6 +222,22 @@ def test_a_damaged_extracted_copy_is_replaced(source: Source) -> None:
     assert reused
 
 
+def test_a_member_name_that_climbs_out_is_extracted_inside_the_folder(tmp_path: Path) -> None:
+    source = make_source(tmp_path, members={f"../../{MEMBER}": csv_bytes(RECORDS)})
+    csv_path, _ = stage.extract(source.zip_path, source.extracted_dir)
+    assert csv_path == source.extracted_dir / MEMBER
+    assert [path.relative_to(tmp_path) for path in tmp_path.rglob("*.csv")] == [
+        Path("raw", "extracted", MEMBER)
+    ]
+
+
+def test_a_member_name_without_a_file_name_is_refused(tmp_path: Path) -> None:
+    source = make_source(tmp_path, members={"//server/share.csv": csv_bytes(RECORDS)})
+    with pytest.raises(stage.StageError, match="no file name of its own"):
+        stage.extract(source.zip_path, source.extracted_dir)
+    assert not source.extracted_dir.exists()
+
+
 def test_a_zip_with_two_csv_members_is_refused(tmp_path: Path) -> None:
     source = make_source(tmp_path, members={MEMBER: csv_bytes(RECORDS), "other.csv": b"A\r\n"})
     with pytest.raises(stage.StageError, match="exactly one CSV member"):

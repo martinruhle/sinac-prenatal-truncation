@@ -39,19 +39,22 @@ only. Every milestone is rebuilt this way from a clean clone before it is tagged
 
 The commands above rebuild the whole study period, 2020–2023, which is also what `all` runs
 without `--years` (D-041). Development runs on 2023 alone, with `--years 2023` (D-009). The clean
-clone of `v0.2-progress` measured them on 19 October 2026, on a laptop with an Intel Core
-i5-1240P, 16 GB of RAM and an NVMe SSD, under Windows 11 Pro with Docker Engine 28.4.0 limited to
-6 CPUs and 12.5 GB, keeping the Postgres defaults of [`compose.yml`](compose.yml)
+clone of `v1.0` measured them on 17 November 2026, on a laptop with an Intel Core i5-1240P,
+16 GiB of RAM and an NVMe SSD, under Windows 11 Pro with Docker Engine 28.4.0 in WSL 2, limited by
+`.wslconfig` to 6 CPUs and 12 GiB, keeping the Postgres defaults of [`compose.yml`](compose.yml)
 ([`docs/reproducibility.md`](docs/reproducibility.md)):
 
-- **Wall time: 62 min 24 s for `all`**, with the four record files downloaded again: `download`
-  1 min 38 s, `stage` 5 min 25 s, `vocab` 3 min 49 s, `validate-concepts` 3 s, `cdm` 31 min 19 s,
-  `cohorts` 13 min 52 s, `simulate` 1 min 5 s and `estimate` 5 min 10 s. `pytest` took 1 min 40 s
-  more, and `publish`, at a milestone, 27 min 12 s.
-- **Disk: 29.4 GB at the peak.** `data/` holds 2.35 GB: the four ZIPs (0.27 GB), their extracted
+- **Wall time: 3 h 44 min 42 s for `all`, 2 h 0 min 49 s of it awake**: the laptop slept for
+  1 h 43 min 53 s during the checks of `cdm`. With the four record files downloaded again,
+  `download` took 2 min 2 s, `stage` 5 min 49 s, `vocab` and `validate-concepts` 9 min 49 s, `cdm`
+  58 min 12 s awake, `cohorts` 31 min 5 s, `simulate` 2 min 10 s and `estimate` 11 min 44 s.
+  `pytest` took 1 min 34 s more, and `publish`, at a milestone, 46 min 43 s. `vocab`, which does
+  the same work as at `v0.2-progress`, took more than twice as long as in its clone, so a run on
+  this laptop can take less.
+- **Disk: 30.9 GB at the peak.** `data/` holds 2.35 GB: the four ZIPs (0.27 GB), their extracted
   CSVs (1.67 GB), the Parquet copies (0.21 GB) and the Athena package (0.20 GB). The Postgres data
-  directory peaked at 27.1 GB while `publish` rebuilt the cohorts, and held 22.5 GB at the end,
-  in samples taken every 30 s.
+  directory peaked at 28.5 GB while `publish` rebuilt the cohorts, and held 24.8 GB at the end, in
+  readings taken every 30 s while the laptop was awake.
 
 `download` fetches the record files of the years given in `--years` from
 [`config/sources.yml`](config/sources.yml) into `data/raw/dgis/`. It checks each sha256 against
@@ -126,7 +129,7 @@ built. It is a world where prenatal care has no effect on preterm birth:
 - **The cross-check.** Each run also computes the exact expectation of each scenario, without
   draws, and records how far the simulated shares are from it (D-115).
 - **Time.** On 2020–2023 the run took 12.9 s on 15 October 2026, about one of them simulating,
-  and 1 min 5 s in the clean clone of `v0.2-progress`.
+  and 2 min 10 s in the clean clone of `v1.0`.
 
 `estimate` computes the odds ratios of preterm birth of
 [`docs/protocol.md`](docs/protocol.md#model) on the cohorts that `cohorts` built:
@@ -168,8 +171,8 @@ It publishes what one commit produces end to end (D-080, D-122):
 
 - It refuses a working tree with changes outside `results/` and a CDM that `cdm` did not load from
   that commit.
-- It rebuilds the cohorts, the null simulation and the odds ratios: 27 min 12 s on 2020–2023 in
-  the clean clone of `v0.2-progress`.
+- It rebuilds the cohorts, the null simulation and the odds ratios: 46 min 43 s on 2020–2023 in
+  the clean clone of `v1.0`.
 - It reads each CSV back against the run and removes any other CSV of `results/`.
 
 The counts are exact, with no small-cell suppression, because the source records are public
@@ -215,15 +218,15 @@ still missing and when it lands.
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Real commit history | [Pull requests merged into `main`](https://github.com/martinruhle/sinac-prenatal-truncation/pulls?q=is%3Apr+is%3Amerged), each with its checks and its AI assistance section | **Met**: #1, then #18–#31, #33 and #35 in `v0.1-cohort`, #49–#57, #60, #62, #63 and #64 in `v0.2-progress`, and #65, #78–#82, #84, #61, #85, #87 and #88 in `v1.0`, one per issue |
-| README lets a third party reproduce the work | README §Reproduce, [`docs/reproducibility.md`](docs/reproducibility.md) | **Met** at `v0.2-progress`: rebuilt from a clean clone on 2020–2023, where `publish` wrote the five CSVs of `results/` with the sha256 of the committed manifest; the Athena package is the one file downloaded by hand. **Partial** for `v1.0`: its clean clone is part of the close of the milestone (#73) |
+| Real commit history | [Pull requests merged into `main`](https://github.com/martinruhle/sinac-prenatal-truncation/pulls?q=is%3Apr+is%3Amerged), each with its checks and its AI assistance section | **Met**: #1, then #18–#31, #33 and #35 in `v0.1-cohort`, #49–#57, #60, #62, #63 and #64 in `v0.2-progress`, and #65, #78–#82, #84, #61, #85, #87, #88 and #89 in `v1.0`, one per issue |
+| README lets a third party reproduce the work | README §Reproduce, [`docs/reproducibility.md`](docs/reproducibility.md) | **Met** at `v0.2-progress` and at `v1.0`: each was rebuilt from a clean clone on 2020–2023, where `publish` wrote the five CSVs of `results/` with the sha256 of the committed manifest; the Athena package is the one file downloaded by hand |
 | Containerized environment | [`compose.yml`](compose.yml), [`Dockerfile`](Dockerfile) | **Met**: `compose.yml` runs Postgres 16.15 with a healthcheck, the same file CI starts, and the analysis image runs the test suite without the database (D-015, D-131). What the image leaves out is future work ([`docs/roadmap.md`](docs/roadmap.md#44-engineering-left-for-later)) |
 | At least one documented cohort definition in SQL on OMOP | [`sql/cohorts/`](sql/cohorts/) (definitions 1 to 6), [`docs/protocol.md`](docs/protocol.md#base-cohort) §Base cohort and [§Records analysed](docs/protocol.md#records-analysed), [`results/attrition.csv`](results/attrition.csv), [`results/excluded_profile.csv`](results/excluded_profile.csv) | **Met**: six definitions on 2020–2023, each with its attrition per year and the profile of the records its validity steps remove. The base cohort holds 6,401,232 singleton births and the analysis cohort 6,203,597 |
-| Automated tests with pytest and CI | [`tests/`](tests/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml), CI badge | **Met**: 709 tests on synthetic fixtures, the `db` ones against the compose database. CI runs ruff, the format check, mypy, pytest with an 80 % coverage floor (D-030), and the smoke run `pipeline.py all --source fixtures` (D-136). Its actions are pinned by version tag, not by commit SHA (D-140) |
+| Automated tests with pytest and CI | [`tests/`](tests/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml), CI badge | **Met**: 738 tests on synthetic fixtures, the `db` ones against the compose database. CI runs ruff, the format check, mypy, pytest with an 80 % coverage floor (D-030), and the smoke run `pipeline.py all --source fixtures` (D-136). Its actions are pinned by version tag, not by commit SHA (D-140) |
 | Data dictionary | [`docs/data_dictionary.md`](docs/data_dictionary.md) | **Met**, final for `v1.0`: the 22 of 64 published columns the project uses (D-011), with the use of each in the analysis. `AFILIACION` gained its use with the gradient by insurance (D-133), and no other column is read outside the `staging` schema |
 | Honest limitations section | README §Limitations, [`docs/protocol.md`](docs/protocol.md#limitations) §Limitations | **Met** for v1.0: each limitation states the conclusion it affects and its direction, those that come from a cut of scope name the decision, and what the documented literature search found is set against what the study can claim |
 | AI assistance statement | [`docs/ai_use.md`](docs/ai_use.md), [`CLAUDE.md`](CLAUDE.md) | **Met**: one entry per pull request, taken from its AI assistance section. Five author lines left empty at the merge were written at the documentation closure from the author's messages, and are marked as such |
-| No credentials, no identifiable data | [`.gitignore`](.gitignore), [`.dockerignore`](.dockerignore), `results/` policy (D-014, D-040) | **Met** for `v0.2-progress`: `/data/` and `.env` are ignored, the build context of the image is an allowlist (D-131), CI generates its database password per run (D-039), `results/` holds aggregate counts only, and the history was checked at each tag ([`v0.1-cohort`](https://github.com/martinruhle/sinac-prenatal-truncation/releases/tag/v0.1-cohort), [`v0.2-progress`](https://github.com/martinruhle/sinac-prenatal-truncation/releases/tag/v0.2-progress)). **Partial** for `v1.0`: the security review and the history check of its tag are part of the close of the milestone (#73) |
+| No credentials, no identifiable data | [`.gitignore`](.gitignore), [`.dockerignore`](.dockerignore), `results/` policy (D-014, D-040) | **Met** for `v0.2-progress` and `v1.0`: `/data/`, `.env` and its variants are ignored, the build context of the image is an allowlist (D-131), CI generates its database password per run (D-039), and `results/` holds aggregate counts only. The security review of `v1.0` found no vulnerability, and the history was checked at each tag ([`v0.1-cohort`](https://github.com/martinruhle/sinac-prenatal-truncation/releases/tag/v0.1-cohort), [`v0.2-progress`](https://github.com/martinruhle/sinac-prenatal-truncation/releases/tag/v0.2-progress)) and before that of `v1.0` ([`docs/security_review.md`](docs/security_review.md)) |
 
 ## Changes from the proposal
 

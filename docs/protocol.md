@@ -475,7 +475,7 @@ sensitivity of D-127 is about; the NOM-007 variant keeps the middle month.
 **The two rules of the NOM-007 variant.** The algorithm is the one above, with the expected visits
 taken from [`../config/nom007_schedule.yml`](../config/nom007_schedule.yml) instead of the
 program's table. The norm gives ranges of weeks and no count of visits per completed week, so two
-rules are needed and both are the author's criterion, `FOR APPROVAL`:
+rules are needed. Both are the author's criterion, approved before `v1.0`:
 
 1. **A range of weeks is read by its first week** (D-128): a pregnancy is expected to have had a
    visit once it reaches the first week of its range, so the calendar expects 4 visits at 22 to 27
@@ -714,7 +714,7 @@ The columns take these values:
 ### What the models show
 
 Measured as orientation, on 2020–2023, in two runs with the same estimates. The table of record is
-`estimates.csv`, published at `v0.2-progress`.
+`estimates.csv`, published at `v0.2-progress` and with the same values at `v1.0`.
 
 - The aggregated table has 640,855 rows for definition 2, and 567,705 to 628,058 for the landmark
   cohorts.
@@ -752,7 +752,7 @@ Measured as orientation, on 2020–2023, in two runs with the same estimates. Th
 ### What the sensitivity analysis shows
 
 Measured as orientation, on 2020–2023, in the same run as the table above (D-124). The table of
-record is `estimates.csv`, published at `v0.2-progress`.
+record is `estimates.csv`, published at `v0.2-progress` and with the same values at `v1.0`.
 
 | Measure, level against the reference | Main analysis | Under 34 weeks | Under 32 weeks | With multiples |
 |---|---|---|---|---|
@@ -945,8 +945,9 @@ empty cells make that ratio infinite or 0 for every measure but (c).
 - **When it is reported.**
   - The observed confidence interval of the crude odds ratio must exclude 1, and the simulated
     difference must exist.
-  - A level the calendar cannot produce, such as more than eight visits or APNCU Adequate Plus,
-    has no simulated difference.
+  - A level the calendar cannot produce, such as more than eight visits, or APNCU Adequate Plus
+    in every variant but the last month of the trimester (`acog_last`), has no simulated
+    difference.
 - **Why the crude comparison.** The simulation has no covariates, so the observed crude odds ratio
   is the comparison. The adjusted one is reported beside it in `estimates.csv`.
 - **What it does not measure.** The null world produces no preterm birth with eight visits, while
@@ -960,7 +961,8 @@ empty cells make that ratio infinite or 0 for every measure but (c).
 ### What the run shows
 
 Measured once as orientation, on definition 2 of 2020–2023 with seed 43: 6,203,597 pregnancies
-per scenario. The table of record is `truncation_share.csv`, published at `v0.2-progress`.
+per scenario. The table of record is `truncation_share.csv`, published at `v0.2-progress` and with
+the same values at `v1.0`.
 
 | Measure | Level, against the reference | Observed difference (points) | Share E1 | Share E2 |
 |---|---|---|---|---|
@@ -979,9 +981,10 @@ per scenario. The table of record is `truncation_share.csv`, published at `v0.2-
     more than 8.
   - The landmarks shrink the observed difference of 5–7 visits more than the simulated one, so the
     share rises with the week.
-- **(b).** In the observed records, Adequate has more preterm births (8.26 %) than Inadequate
-  (5.41 %) and Intermediate (4.27 %). The null world produces that inversion more than 20 times
-  over. This is the artefact of its construction ([§APNCU](#apncu-measure-b)).
+- **(b), in its main variant (`acog_midpoint`).** In the observed records, Adequate has more
+  preterm births (8.26 %) than Inadequate (5.41 %) and Intermediate (4.27 %). The null world
+  produces that inversion more than 20 times over. This is the artefact of its construction
+  ([§APNCU](#apncu-measure-b)).
 - **(c).** The built-in check holds.
   - The simulated odds ratio is 1.00 (0.997–1.012) in E1 and 1.00 (0.988–1.002) in E2.
   - The observed crude odds ratio is also 1.00 (0.993–1.008), so there is no association for
@@ -989,7 +992,11 @@ per scenario. The table of record is `truncation_share.csv`, published at `v0.2-
 
 **What truncation alone explains.** On the calendar of the norm, truncation alone can produce more
 than the whole observed crude association of every measure it truncates: (a), (a) per count, (b)
-and (d). The measure it does not truncate, (c), shows no crude association.
+on the ACOG schedule, with any of the three month rules, and (d). The measure it does not
+truncate, (c), shows no crude association. The one exception is the variant of (b) whose expected
+visits come from the NOM-007 calendar: truncation alone produces none of the difference of
+Inadequate (shares 0.0 in E1 and −0.3 in E2) and 0.9 of that of Intermediate in E2
+(`truncation_share.csv`, `v1.0`).
 
 ## Limitations
 
@@ -1108,13 +1115,13 @@ on `data/interim/sinac_*.parquet`, on the singletons of resident mothers with 22
 ### The exposure measures
 
 - **APNCU is approximated from the trimester.** The month assigned within the trimester moves the
-  share of preterm births rated Adequate Plus from 19.7 % (first month) to 25.8 % (middle) to
-  36.9 % (last) (D-127), and the variants are reported (§APNCU).
+  share of preterm births rated Adequate Plus from 19.8 % (first month) to 25.8 % (middle) to
+  37.0 % (last) in `exposure_distribution.csv` (D-127), and the variants are reported (§APNCU).
   - *Affects* the levels of (b).
   - *Direction:* a later month inflates the artefact of (b).
 - **The ACOG schedule of the index is not the Mexican norm.** It asks for 14 visits at 40 weeks
   where NOM-007 asks for 8, so more mothers fall in the lower levels than the norm would place
-  there. The NOM-007 variant rests on two rules of the author, `FOR APPROVAL` (D-128, D-129).
+  there. The NOM-007 variant rests on two rules of the author (D-128, D-129).
   - *Affects* the distribution of (b) and its comparison with the literature, which uses ACOG.
 - **The bounds of the trimesters have no published source** (§Trimester boundaries, D-092).
   - *Affects* the month rule of (b) and the null simulation. *Direction:* unknown.

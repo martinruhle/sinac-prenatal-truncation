@@ -12,6 +12,7 @@ Tests marked ``db`` load into schemas created for this module and dropped after 
 import csv
 import datetime
 import re
+import subprocess
 from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import Any
@@ -191,6 +192,32 @@ def test_the_etl_reference_never_carries_credentials() -> None:
         etl_reference("git@github.com:o/r.git", "abc123", dirty=True)
         == "git@github.com:o/r at commit abc123, with uncommitted changes"
     )
+
+
+def test_an_untracked_file_counts_as_a_change_whatever_git_is_set_to_show(
+    tmp_path: Path,
+) -> None:
+    """``status.showUntrackedFiles = no`` hides untracked files from ``git status`` by default."""
+
+    def git(*args: str) -> None:
+        subprocess.run(
+            ["git", "-C", str(tmp_path), "-c", "user.name=t", "-c", "user.email=t@example.test"]
+            + list(args),
+            check=True,
+            capture_output=True,
+        )
+
+    (tmp_path / "code.py").write_text("x = 1\n", encoding="utf-8")
+    git("init", "--quiet")
+    git("remote", "add", "origin", "https://github.com/o/r.git")
+    git("add", ".")
+    git("commit", "--quiet", "-m", "first")
+    git("config", "status.showUntrackedFiles", "no")
+    (tmp_path / "new.sql").write_text("SELECT 1;\n", encoding="utf-8")
+
+    reference = etl.git_reference(tmp_path)
+    assert reference is not None
+    assert reference.endswith(", with uncommitted changes")
 
 
 def test_the_report_lists_tables_in_load_order_and_rows_first() -> None:
