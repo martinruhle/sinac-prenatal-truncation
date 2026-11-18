@@ -150,4 +150,18 @@ author chose to fix the first four in this milestone (D-141).
 
 ## Recheck at the tag
 
-PENDING: written at the close, after the last commit before the tag.
+On 18 November 2026 the commits of the closing branch after `9dfd584`, the head of `main` when the
+review was made, were checked as in §History of the repository. The check covered 13 commits, up
+to `d9c5443`, the commit before this section:
+
+| Check | Result |
+|---|---|
+| A path under `data/`, or a `.env`, committed | None among the 24 paths the 13 commits add, change or remove |
+| An archive or columnar file committed | None. No blob holds a NUL byte |
+| A CSV with record-level data | None. The three CSV paths are aggregate tables of `results/` |
+| Credentials in the lines added | None. No private key or token pattern matched, and no line assigns a password |
+| Absolute paths of a machine (rule 12) | None |
+| Largest blobs | All text. The largest is `docs/protocol.md` at 83 KB |
+
+The commit that adds this section changes only this file and the last row of the evidence map in
+`README.md`.
