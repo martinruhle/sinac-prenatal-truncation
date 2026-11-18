@@ -449,7 +449,11 @@ section, in the author's voice, except the lines marked as written at the docume
     record against the logs and files of the run, and found in the power log of Windows that the
     laptop had slept during `checks.sql`; a fourth checked the record again once rewritten;
   - ran the history check, and drafted the release notes.
-- What I decided or checked myself:
+- What I decided or checked myself: Chose option A for the hardening notes of the security review,
+  turned on the Zenodo integration, approved D-128 and D-129 as written, and chose the narrowed
+  wording of the conclusion on what truncation explains. Read the record of the clean clone
+  (docs/reproducibility.md, section v1.0) and the description of this pull request before the
+  merge.
 
 [^closure]: Written by the assistant at the documentation closure, at the author's request, from
     the author's own messages in the session of the pull request; the author confirmed it before
