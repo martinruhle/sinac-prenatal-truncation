@@ -43,15 +43,18 @@ is assembled from the "AI assistance" section that every pull request carries si
   `v0.2-progress` (#64) is the first pull request in which it ran workflows, scripts that spread a
   task over several subagents running in parallel; its section below says for what. The session
   transcripts of the pull requests merged after #64 show no subagent and no workflow until the
-  close of `v1.0` (#89), which ran four; its section says for what.
+  close of `v1.0` (#89), which ran four, and #91, which ran one; their sections say for what.
 - **The author's line.** "What I decided or checked myself" is the author's statement. In #62 and
   #63 the author asked the assistant to write it from what the author had done and decided in the
   session. In #61, #65, #81, #85 and #87 it was empty when the pull request merged; at the
   documentation closure the author asked the assistant to write it from the author's own messages
-  in each session, and the lines say no more than those messages do.
-- **Attribution.** The commit that merged each pull request, except #18, carries a
-  `Co-Authored-By: Claude …` trailer naming the model active when the commit was written, and each
-  pull request description since #1 ends with a "Generated with Claude Code" line.
+  in each session, and the lines say no more than those messages do. The author left the line of
+  #91 empty.
+- **Attribution.** The commit that merged each pull request carries a `Co-Authored-By: Claude …`
+  trailer naming the model active when the commit was written, except those of #18, #61, #64, #85,
+  #87 and #88. The last five were merged with a merge commit that carries none, and every commit
+  they merged carries it. Each pull request description since #1 ends with a "Generated with
+  Claude Code" line.
 
 ## Record by pull request
 
@@ -454,6 +457,21 @@ section, in the author's voice, except the lines marked as written at the docume
   wording of the conclusion on what truncation explains. Read the record of the clean clone
   (docs/reproducibility.md, section v1.0) and the description of this pull request before the
   merge.
+
+#### [#91](https://github.com/martinruhle/sinac-prenatal-truncation/pull/91) · Correct three statements of the documentation before the tag of v1.0 (no planning ID, found by 1.9.5)
+
+- Tool / model: Claude Code, Claude Opus 5.5, with a workflow of subagents for the check of the
+  release notes
+- What the assistant did:
+  - checked in a workflow, before the tag, every number and statement of the release notes of
+    `v1.0` and of its tag message against the repository, and `CITATION.cff` against the code of
+    Zenodo, with four checkers and a skeptic that tried to refute each finding. It found the
+    conclusion on what truncation alone explains wider than the levels the simulation produces,
+    and D-116 missing from the changes from the proposal;
+  - found that five merge commits contradict the sentence on the `Co-Authored-By` trailers above;
+  - asked the author whether to correct the three statements before or after the tag, and wrote
+    the corrections the author chose to make before it.
+- What I decided or checked myself:
 
 [^closure]: Written by the assistant at the documentation closure, at the author's request, from
     the author's own messages in the session of the pull request; the author confirmed it before

@@ -991,12 +991,14 @@ the same values at `v1.0`.
     truncation to explain.
 
 **What truncation alone explains.** On the calendar of the norm, truncation alone can produce more
-than the whole observed crude association of every measure it truncates: (a), (a) per count, (b)
-on the ACOG schedule, with any of the three month rules, and (d). The measure it does not
-truncate, (c), shows no crude association. The one exception is the variant of (b) whose expected
-visits come from the NOM-007 calendar: truncation alone produces none of the difference of
-Inadequate (shares 0.0 in E1 and −0.3 in E2) and 0.9 of that of Intermediate in E2
-(`truncation_share.csv`, `v1.0`).
+than the whole observed crude association at every level the simulation produces, in every
+measure it truncates: (a), (a) per count, (b) on the ACOG schedule, with any of the three month
+rules, and (d). The simulation produces no count above eight visits and, except with the last
+month of the trimester, no Adequate Plus, so truncation alone produces none of the associations
+of those levels. The measure it does not truncate, (c), shows no crude association. The one
+exception is the variant of (b) whose expected visits come from the NOM-007 calendar: truncation
+alone produces none of the difference of Inadequate (shares 0.0 in E1 and −0.3 in E2) and 0.9 of
+that of Intermediate in E2 (`truncation_share.csv`, `v1.0`).
 
 ## Limitations
 
@@ -1205,6 +1207,7 @@ on `data/interim/sinac_*.parquet`, on the singletons of resident mothers with 22
 | The full sensitivity of the definition for every measure | The full grid for measures (a) and (c) | **D-003 `[SCOPE CHANGE]`**, §Analysis |
 | Visits generated with variation in adherence | Two fixed scenarios, the perfect calendar and a calendar with misses | D-010, D-096, §Null simulation |
 | Birth weight under 2,500 g as an alternative outcome | Not run | **D-006 `[SCOPE CHANGE]`** |
+| Nothing about a search of the literature | A documented search states what is already known before the project states its contribution | **D-116 `[SCOPE CHANGE]`**, [`literature_search.md`](literature_search.md) |
 
 ## References
 
