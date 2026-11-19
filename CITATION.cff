@@ -20,6 +20,11 @@ repository-code: "https://github.com/martinruhle/sinac-prenatal-truncation"
 license: Apache-2.0
 version: "1.0"
 date-released: "2026-11-19"
+doi: "10.5281/zenodo.24371984"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.24371983"
+    description: "All versions of the software on Zenodo; it resolves to the latest version."
 keywords:
   - prenatal care
   - preterm birth
