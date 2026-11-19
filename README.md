@@ -1,6 +1,7 @@
 # SINAC prenatal care and truncation of the gestational window
 
 [![CI](https://github.com/martinruhle/sinac-prenatal-truncation/actions/workflows/ci.yml/badge.svg)](https://github.com/martinruhle/sinac-prenatal-truncation/actions/workflows/ci.yml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24371984.svg)](https://doi.org/10.5281/zenodo.24371984)
 
 How much the association between prenatal care and preterm birth in Mexico changes with the
 definition of the exposure and of the cohort, and how much of it truncation of the gestational
@@ -218,14 +219,14 @@ still missing and when it lands.
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Real commit history | [Pull requests merged into `main`](https://github.com/martinruhle/sinac-prenatal-truncation/pulls?q=is%3Apr+is%3Amerged), each with its checks and its AI assistance section | **Met**: #1, then #18–#31, #33 and #35 in `v0.1-cohort`, #49–#57, #60, #62, #63 and #64 in `v0.2-progress`, and #65, #78–#82, #84, #61, #85, #87, #88, #89 and #91 in `v1.0`, one per issue |
+| Real commit history | [Pull requests merged into `main`](https://github.com/martinruhle/sinac-prenatal-truncation/pulls?q=is%3Apr+is%3Amerged), each with its checks and its AI assistance section | **Met**: #1, then #18–#31, #33 and #35 in `v0.1-cohort`, #49–#57, #60, #62, #63 and #64 in `v0.2-progress`, and #65, #78–#82, #84, #61, #85, #87, #88, #89 and #91 in `v1.0`, and #93 after its tag, one per issue |
 | README lets a third party reproduce the work | README §Reproduce, [`docs/reproducibility.md`](docs/reproducibility.md) | **Met** at `v0.2-progress` and at `v1.0`: each was rebuilt from a clean clone on 2020–2023, where `publish` wrote the five CSVs of `results/` with the sha256 of the committed manifest; the Athena package is the one file downloaded by hand |
 | Containerized environment | [`compose.yml`](compose.yml), [`Dockerfile`](Dockerfile) | **Met**: `compose.yml` runs Postgres 16.15 with a healthcheck, the same file CI starts, and the analysis image runs the test suite without the database (D-015, D-131). What the image leaves out is future work ([`docs/roadmap.md`](docs/roadmap.md#44-engineering-left-for-later)) |
 | At least one documented cohort definition in SQL on OMOP | [`sql/cohorts/`](sql/cohorts/) (definitions 1 to 6), [`docs/protocol.md`](docs/protocol.md#base-cohort) §Base cohort and [§Records analysed](docs/protocol.md#records-analysed), [`results/attrition.csv`](results/attrition.csv), [`results/excluded_profile.csv`](results/excluded_profile.csv) | **Met**: six definitions on 2020–2023, each with its attrition per year and the profile of the records its validity steps remove. The base cohort holds 6,401,232 singleton births and the analysis cohort 6,203,597 |
 | Automated tests with pytest and CI | [`tests/`](tests/), [`.github/workflows/ci.yml`](.github/workflows/ci.yml), CI badge | **Met**: 738 tests on synthetic fixtures, the `db` ones against the compose database. CI runs ruff, the format check, mypy, pytest with an 80 % coverage floor (D-030), and the smoke run `pipeline.py all --source fixtures` (D-136). Its actions are pinned by version tag, not by commit SHA (D-140) |
 | Data dictionary | [`docs/data_dictionary.md`](docs/data_dictionary.md) | **Met**, final for `v1.0`: the 22 of 64 published columns the project uses (D-011), with the use of each in the analysis. `AFILIACION` gained its use with the gradient by insurance (D-133), and no other column is read outside the `staging` schema |
 | Honest limitations section | README §Limitations, [`docs/protocol.md`](docs/protocol.md#limitations) §Limitations | **Met** for v1.0: each limitation states the conclusion it affects and its direction, those that come from a cut of scope name the decision, and what the documented literature search found is set against what the study can claim |
-| AI assistance statement | [`docs/ai_use.md`](docs/ai_use.md), [`CLAUDE.md`](CLAUDE.md) | **Met**: one entry per pull request, taken from its AI assistance section. Five author lines left empty at the merge were written at the documentation closure from the author's messages, and are marked as such. The author left the line of #91 empty |
+| AI assistance statement | [`docs/ai_use.md`](docs/ai_use.md), [`CLAUDE.md`](CLAUDE.md) | **Met**: one entry per pull request, taken from its AI assistance section. Five author lines left empty at the merge were written at the documentation closure from the author's messages, and are marked as such. The author left the lines of #91 and #93 empty |
 | No credentials, no identifiable data | [`.gitignore`](.gitignore), [`.dockerignore`](.dockerignore), `results/` policy (D-014, D-040) | **Met** for `v0.2-progress` and `v1.0`: `/data/`, `.env` and its variants are ignored, the build context of the image is an allowlist (D-131), CI generates its database password per run (D-039), and `results/` holds aggregate counts only. The security review of `v1.0` found no vulnerability, and the history was checked at each tag ([`v0.1-cohort`](https://github.com/martinruhle/sinac-prenatal-truncation/releases/tag/v0.1-cohort), [`v0.2-progress`](https://github.com/martinruhle/sinac-prenatal-truncation/releases/tag/v0.2-progress)) and before that of `v1.0` ([`docs/security_review.md`](docs/security_review.md)) |
 
 ## Changes from the proposal
@@ -390,4 +391,7 @@ The code is released under the [Apache License 2.0](LICENSE) (D-024), the licens
 CommonDataModel package whose DDL is vendored in [`sql/ddl/ohdsi/`](sql/ddl/ohdsi/SOURCE.md).
 The data are not part of the repository and keep the Términos de Libre Uso of SSA/DGIS
 (§Data source and citation). [`CITATION.cff`](CITATION.cff) states how to cite the software;
-GitHub shows it as "Cite this repository".
+GitHub shows it as "Cite this repository". Version 1.0 is archived on Zenodo, from the tag
+`v1.0`, as [10.5281/zenodo.24371984](https://doi.org/10.5281/zenodo.24371984);
+[10.5281/zenodo.24371983](https://doi.org/10.5281/zenodo.24371983) names all its versions and
+resolves to the latest (D-025, D-143).

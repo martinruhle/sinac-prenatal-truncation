@@ -48,8 +48,8 @@ is assembled from the "AI assistance" section that every pull request carries si
   #63 the author asked the assistant to write it from what the author had done and decided in the
   session. In #61, #65, #81, #85 and #87 it was empty when the pull request merged; at the
   documentation closure the author asked the assistant to write it from the author's own messages
-  in each session, and the lines say no more than those messages do. The author left the line of
-  #91 empty.
+  in each session, and the lines say no more than those messages do. The author left the lines of
+  #91 and #93 empty.
 - **Attribution.** The commit that merged each pull request carries a `Co-Authored-By: Claude …`
   trailer naming the model active when the commit was written, except those of #18, #61, #64, #85,
   #87 and #88. The last five were merged with a merge commit that carries none, and every commit
@@ -471,6 +471,19 @@ section, in the author's voice, except the lines marked as written at the docume
   - found that five merge commits contradict the sentence on the `Co-Authored-By` trailers above;
   - asked the author whether to correct the three statements before or after the tag, and wrote
     the corrections the author chose to make before it.
+- What I decided or checked myself:
+
+### After the tag `v1.0`
+
+The pull request merged after the tag `v1.0`, which adds the DOI that Zenodo minted for it.
+
+#### [#93](https://github.com/martinruhle/sinac-prenatal-truncation/pull/93) · Add the Zenodo DOI of v1.0 to the README and CITATION.cff (no planning ID, follows 1.9.5)
+
+- Tool / model: Claude Code, Claude Opus 5.5
+- What the assistant did: cut the annotated tag `v1.0` on the merge of #91 and published its
+  release at the author's go-ahead, once CI had passed on that commit; confirmed from the record
+  and the deliveries of the webhook that Zenodo archived the release and minted its DOIs; added
+  them to `CITATION.cff` and the README, and logged D-143.
 - What I decided or checked myself:
 
 [^closure]: Written by the assistant at the documentation closure, at the author's request, from
